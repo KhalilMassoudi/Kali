@@ -1,10 +1,10 @@
 package kali.microservices.authservice.controller;
 
-
 import jakarta.validation.Valid;
 import kali.microservices.authservice.dto.AuthResponse;
 import kali.microservices.authservice.dto.LoginRequest;
 import kali.microservices.authservice.dto.RegisterRequest;
+import kali.microservices.authservice.dto.UserInfoDto;
 import kali.microservices.authservice.service.AuthService;
 import lombok.RequiredArgsConstructor;
 import org.springframework.http.ResponseEntity;
@@ -14,6 +14,7 @@ import org.springframework.web.bind.annotation.*;
 @RequestMapping("/api/auth")
 @RequiredArgsConstructor
 public class AuthController {
+
     private final AuthService authService;
 
     @PostMapping("/register")
@@ -29,6 +30,19 @@ public class AuthController {
     @GetMapping("/validate")
     public ResponseEntity<Boolean> validateToken(@RequestParam String token) {
         return ResponseEntity.ok(authService.validateToken(token));
+    }
+
+    @GetMapping("/me")
+    public ResponseEntity<UserInfoDto> getCurrentUser(
+            @RequestHeader("Authorization") String authorization) {
+        return ResponseEntity.ok(authService.getUserInfo(authorization));
+    }
+
+    @PostMapping("/admin/create")
+    public ResponseEntity<AuthResponse> createAdmin(
+            @Valid @RequestBody RegisterRequest request,
+            @RequestHeader("Authorization") String authorization) {
+        return ResponseEntity.ok(authService.createAdmin(request, authorization));
     }
 
     @GetMapping("/health")
