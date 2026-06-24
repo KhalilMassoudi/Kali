@@ -33,6 +33,9 @@ public class VpsServer {
     private Integer cpu;      // nombre de vCPU
     private Integer storage;  // en GB
 
+    @Column(unique = true)
+    private String externalId;  // OpenStack server UUID
+
     private String ipAddress;
     private String region;
 

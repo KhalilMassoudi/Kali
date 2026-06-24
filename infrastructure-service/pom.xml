@@ -55,6 +55,35 @@
             <artifactId>spring-boot-starter-test</artifactId>
             <scope>test</scope>
         </dependency>
+
+        <!-- OpenStack4j -->
+        <dependency>
+            <groupId>org.openstack4j</groupId>
+            <artifactId>openstack4j-core</artifactId>
+            <version>3.11</version>
+        </dependency>
+        <dependency>
+            <groupId>org.openstack4j</groupId>
+            <artifactId>openstack4j-httpclient</artifactId>
+            <version>3.11</version>
+        </dependency>
+
+        <!-- Google Guava -->
+        <dependency>
+            <groupId>com.google.guava</groupId>
+            <artifactId>guava</artifactId>
+            <version>31.1-jre</version>
+        </dependency>
+
+        <!-- Spring Retry -->
+        <dependency>
+            <groupId>org.springframework.retry</groupId>
+            <artifactId>spring-retry</artifactId>
+        </dependency>
+        <dependency>
+            <groupId>org.springframework.boot</groupId>
+            <artifactId>spring-boot-starter-aop</artifactId>
+        </dependency>
     </dependencies>
 
     <dependencyManagement>

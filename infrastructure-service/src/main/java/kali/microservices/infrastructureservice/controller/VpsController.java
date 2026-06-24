@@ -39,6 +39,16 @@ public class VpsController {
         return ResponseEntity.ok(vpsService.updateVpsStatus(id, status));
     }
 
+    @PostMapping("/{id}/stop")
+    public ResponseEntity<VpsServer> stopVps(@PathVariable Long id) {
+        return ResponseEntity.ok(vpsService.stopVps(id));
+    }
+
+    @PostMapping("/{id}/restart")
+    public ResponseEntity<VpsServer> restartVps(@PathVariable Long id) {
+        return ResponseEntity.ok(vpsService.restartVps(id));
+    }
+
     @DeleteMapping("/{id}")
     public ResponseEntity<Void> deleteVps(@PathVariable Long id) {
         vpsService.deleteVps(id);
