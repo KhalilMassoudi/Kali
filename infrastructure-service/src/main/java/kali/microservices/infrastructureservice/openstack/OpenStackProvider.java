@@ -18,6 +18,7 @@ import org.springframework.stereotype.Component;
 import java.util.List;
 import java.util.Map;
 import java.util.stream.Collectors;
+import java.util.Collections;
 
 @Slf4j
 @Component("openstack")
@@ -42,7 +43,7 @@ public class OpenStackProvider implements CloudProvider {
                 .name(serverName)
                 .image(imageId)
                 .flavor(flavorId)
-                .network(networkId)
+                .networks(Collections.singletonList(networkId))
                 .build();
 
         Server server = client.compute().servers().boot(sc);
@@ -231,7 +232,7 @@ public class OpenStackProvider implements CloudProvider {
                 .name(server.getName())
                 .status(server.getStatus() != null ? server.getStatus().name() : "UNKNOWN")
                 .ipAddress(extractPublicIp(server))
-                .os(server.getImageRef())
+                .os(server.getImageId())
                 .build();
     }
 }

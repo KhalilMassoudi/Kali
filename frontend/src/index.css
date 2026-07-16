@@ -1,0 +1,42 @@
+@import "tailwindcss";
+
+@theme {
+  --color-brand-bg: #080D14;
+  --color-brand-surface: #0E1825;
+  --color-brand-surface2: #131F2E;
+  --color-brand-border: #1A3354;
+  --color-primary: #0EA5E9;
+  --color-accent: #38BDF8;
+}
+
+* { margin: 0; padding: 0; box-sizing: border-box; }
+
+html { scroll-behavior: smooth; }
+
+body {
+  font-family: 'Inter', -apple-system, BlinkMacSystemFont, 'Segoe UI', 'Roboto', sans-serif;
+  -webkit-font-smoothing: antialiased;
+  -moz-osx-font-smoothing: grayscale;
+  background-color: #080D14;
+  /* Subtle dot grid + top blue glow — breaks up the solid black */
+  background-image:
+    radial-gradient(ellipse 90% 55% at 50% -5%, rgba(14,165,233,0.09) 0%, transparent 70%),
+    radial-gradient(circle at 1px 1px, rgba(26,51,84,0.5) 1px, transparent 0);
+  background-size: auto, 36px 36px;
+  color: #f1f5f9;
+  min-height: 100vh;
+}
+
+/* Nicer scrollbar */
+::-webkit-scrollbar { width: 5px; height: 5px; }
+::-webkit-scrollbar-track { background: transparent; }
+::-webkit-scrollbar-thumb { background: #1A3354; border-radius: 99px; }
+::-webkit-scrollbar-thumb:hover { background: #2A4E7F; }
+
+/* Smooth input focus transitions */
+input, select, textarea {
+  transition: border-color 0.15s, box-shadow 0.15s;
+}
+
+/* Prevent text selection on buttons */
+button { user-select: none; }

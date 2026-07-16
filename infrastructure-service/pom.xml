@@ -58,14 +58,14 @@
 
         <!-- OpenStack4j -->
         <dependency>
-            <groupId>org.openstack4j</groupId>
+            <groupId>com.github.openstack4j.core</groupId>
             <artifactId>openstack4j-core</artifactId>
-            <version>3.11</version>
+            <version>3.10</version>
         </dependency>
         <dependency>
-            <groupId>org.openstack4j</groupId>
-            <artifactId>openstack4j-httpclient</artifactId>
-            <version>3.11</version>
+            <groupId>com.github.openstack4j.core.connectors</groupId>
+            <artifactId>openstack4j-resteasy</artifactId>
+            <version>3.10</version>
         </dependency>
 
         <!-- Google Guava -->
@@ -75,14 +75,14 @@
             <version>31.1-jre</version>
         </dependency>
 
-        <!-- Spring Retry -->
+        <!-- Spring Retry + AOP (spring-boot-starter-aop renamed to starter-aspectj in Boot 4.x) -->
         <dependency>
             <groupId>org.springframework.retry</groupId>
             <artifactId>spring-retry</artifactId>
         </dependency>
         <dependency>
             <groupId>org.springframework.boot</groupId>
-            <artifactId>spring-boot-starter-aop</artifactId>
+            <artifactId>spring-boot-starter-aspectj</artifactId>
         </dependency>
     </dependencies>
 
@@ -152,3 +152,8 @@
     </build>
 
 </project>
+
+
+
+
+
