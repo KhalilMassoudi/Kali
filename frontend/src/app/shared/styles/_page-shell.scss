@@ -1,0 +1,147 @@
+// Shared page chrome (heading, generic card, empty/loading/error states) — used by every
+// protected page (Dashboard, Vms, Chat, Settings) to keep density/spacing consistent.
+
+.page {
+  width: 100%;
+  padding: 1.5rem;
+  display: flex;
+  flex-direction: column;
+  gap: 1.25rem;
+}
+
+.page-head {
+  display: flex;
+  align-items: flex-start;
+  justify-content: space-between;
+  gap: 1rem;
+  flex-wrap: wrap;
+
+  h2 { font-size: 1.25rem; font-weight: 700; color: #fff; }
+
+  .subtitle { margin-top: 0.25rem; font-size: 0.75rem; color: var(--text-dim); }
+}
+
+.head-actions {
+  display: flex;
+  gap: 0.5rem;
+  flex-shrink: 0;
+}
+
+.card {
+  border: 1px solid var(--brand-border);
+  background: var(--brand-surface);
+}
+
+.card-header {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  border-bottom: 1px solid var(--brand-border);
+  padding: 0.75rem 1rem;
+}
+
+.card-header-left {
+  display: flex;
+  align-items: center;
+  gap: 0.5rem;
+}
+
+.card-header-icon {
+  font-size: 0.9375rem;
+  color: var(--brand-primary);
+
+  &.good { color: var(--brand-good); }
+}
+
+.card-header-title {
+  font-size: 0.75rem;
+  font-weight: 700;
+  color: #fff;
+}
+
+.card-header-link {
+  display: flex;
+  align-items: center;
+  gap: 0.25rem;
+  font-size: 0.75rem;
+  font-weight: 700;
+  color: var(--brand-accent);
+  text-decoration: none;
+
+  &:hover { opacity: 0.8; }
+  i { font-size: 0.625rem; }
+}
+
+.empty-state {
+  display: flex;
+  flex: 1;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  gap: 1rem;
+  padding: 4rem 1rem;
+  text-align: center;
+}
+
+.empty-icon {
+  display: flex;
+  height: 4rem;
+  width: 4rem;
+  align-items: center;
+  justify-content: center;
+  background: var(--brand-surface2);
+
+  i { font-size: 2rem; color: #475569; }
+}
+
+.empty-title { font-size: 0.875rem; font-weight: 700; color: #cbd5e1; }
+.empty-text { margin-top: 0.25rem; font-size: 0.75rem; color: #64748b; }
+
+.loading-state {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  gap: 0.75rem;
+  padding: 5rem 1rem;
+  color: var(--text-dim);
+
+  i { font-size: 1.5rem; }
+  p { font-size: 0.8125rem; }
+}
+
+.error-banner {
+  display: flex;
+  align-items: center;
+  gap: 0.75rem;
+  padding: 0.75rem 1rem;
+  border: 1px solid rgba(242, 85, 91, 0.3);
+  background: rgba(242, 85, 91, 0.06);
+
+  .dot {
+    height: 0.375rem;
+    width: 0.375rem;
+    flex-shrink: 0;
+    background: var(--brand-crit);
+  }
+
+  i { font-size: 1rem; color: var(--brand-crit); flex-shrink: 0; }
+
+  p { flex: 1; font-size: 0.75rem; color: var(--brand-crit); }
+
+  strong { font-weight: 700; }
+
+  a, button {
+    flex-shrink: 0;
+    font-size: 0.75rem;
+    font-weight: 600;
+    color: var(--brand-crit);
+    text-decoration: none;
+    background: none;
+    border: none;
+    cursor: pointer;
+    font-family: inherit;
+
+    &:hover { opacity: 0.8; }
+  }
+}

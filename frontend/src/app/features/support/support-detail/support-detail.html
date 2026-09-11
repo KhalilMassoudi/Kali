@@ -1,0 +1,96 @@
+<div class="page">
+  <div class="page-head">
+    <div>
+      <a routerLink="/support" class="back-link"><i class="pi pi-arrow-left"></i> Retour</a>
+      @if (ticket(); as t) {
+        <h2>{{ t.title }}</h2>
+        <p class="subtitle">#{{ t.id }} · {{ priorityLabel(t.priority) }} · Ouvert le {{ t.createdAt | date: 'medium' }}</p>
+      }
+    </div>
+    @if (ticket(); as t) {
+      <div class="head-actions">
+        <p-tag [value]="statusLabel(t.status)" [severity]="statusSeverity(t.status)" [rounded]="true" />
+        @if (!isClosed()) {
+          <p-button label="Fermer le ticket" [outlined]="true" size="small" severity="danger" [loading]="closing()" (onClick)="close()" />
+        }
+      </div>
+    }
+  </div>
+
+  @if (error()) {
+    <div class="error-banner">
+      <span class="dot"></span>
+      <p>{{ error() }}</p>
+    </div>
+  }
+
+  @if (loading() && !ticket()) {
+    <div class="loading-state">
+      <i class="pi pi-spin pi-spinner"></i>
+      <p>Chargement...</p>
+    </div>
+  } @else if (ticket(); as t) {
+    <div class="card description-card">
+      <p>{{ t.description }}</p>
+      @if (ticketAttachments().length > 0) {
+        <div class="attachments">
+          @for (a of ticketAttachments(); track a.id) {
+            <button type="button" class="attachment-chip" (click)="download(a.id, a.filename)">
+              <i class="pi pi-paperclip"></i>
+              <span>{{ a.filename }}</span>
+              <span class="attachment-size">{{ formatSize(a.size) }}</span>
+            </button>
+          }
+        </div>
+      }
+    </div>
+
+    <div class="thread">
+      @for (comment of comments(); track comment.id) {
+        <div class="comment" [class.agent]="comment.isAgent">
+          <div class="comment-meta">
+            <span class="author">{{ comment.isAgent ? 'Équipe support' : 'Vous' }}</span>
+            <span class="date">{{ comment.createdAt | date: 'short' }}</span>
+          </div>
+          <p class="comment-content">{{ comment.content }}</p>
+          @if (attachmentsFor(comment.id).length > 0) {
+            <div class="attachments">
+              @for (a of attachmentsFor(comment.id); track a.id) {
+                <button type="button" class="attachment-chip" (click)="download(a.id, a.filename)">
+                  <i class="pi pi-paperclip"></i>
+                  <span>{{ a.filename }}</span>
+                  <span class="attachment-size">{{ formatSize(a.size) }}</span>
+                </button>
+              }
+            </div>
+          }
+        </div>
+      }
+      @if (comments().length === 0) {
+        <p class="empty-thread">Aucun message pour le moment.</p>
+      }
+    </div>
+
+    @if (!isClosed()) {
+      <div class="card reply-card">
+        <textarea
+          pTextarea
+          [ngModel]="replyText()"
+          (ngModelChange)="replyText.set($event)"
+          rows="3"
+          placeholder="Écrire une réponse..."
+          fluid
+        ></textarea>
+        <div class="reply-actions">
+          <input
+            type="file"
+            class="reply-file-input"
+            accept="image/png,image/jpeg,image/gif,image/webp,application/pdf,text/plain"
+            (change)="onReplyFileSelected($event)"
+          />
+          <p-button label="Envoyer" icon="pi pi-send" size="small" [loading]="sending()" (onClick)="sendReply()" />
+        </div>
+      </div>
+    }
+  }
+</div>

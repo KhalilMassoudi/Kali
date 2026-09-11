@@ -1,0 +1,64 @@
+@use '../../../shared/styles/page-shell' as *;
+
+:host {
+  display: block;
+}
+
+.add-image-card {
+  padding: 1.25rem;
+  margin-bottom: 1rem;
+}
+
+.mode-tabs {
+  display: flex;
+  gap: 0.5rem;
+  margin-bottom: 0.75rem;
+}
+
+.mode-btn {
+  padding: 0.375rem 0.875rem;
+  border: 1px solid var(--brand-border);
+  background: var(--brand-surface);
+  font-size: 0.75rem;
+  font-weight: 700;
+  color: #94a3b8;
+  cursor: pointer;
+  font-family: inherit;
+
+  &.active {
+    color: #fff;
+    background: linear-gradient(135deg, #2e9ee0, #5cc8f7);
+    border-color: transparent;
+  }
+}
+
+.mode-hint {
+  font-size: 0.75rem;
+  color: var(--text-dim);
+  margin-bottom: 0.875rem;
+}
+
+.form-grid {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(14rem, 1fr));
+  gap: 0.625rem;
+  margin-bottom: 0.875rem;
+}
+
+.table-wrap {
+  overflow-x: auto;
+}
+
+.action-group {
+  display: flex;
+  align-items: center;
+  justify-content: flex-end;
+  gap: 0.375rem;
+}
+
+.empty-row {
+  padding: 2rem;
+  text-align: center;
+  color: var(--text-dim);
+  font-size: 0.875rem;
+}

@@ -1,0 +1,50 @@
+<p-dialog
+  [visible]="visible()"
+  (visibleChange)="onHide()"
+  [modal]="true"
+  [header]="'Snapshots — ' + (volume()?.name ?? '')"
+  [style]="{ width: '32rem' }"
+  [dismissableMask]="true"
+>
+  @if (error()) {
+    <p-message severity="error" styleClass="dialog-error">{{ error() }}</p-message>
+  }
+
+  <div class="snapshot-list">
+    @if (snapshotService.loading() && snapshots().length === 0) {
+      <p class="hint">Chargement...</p>
+    } @else if (snapshots().length === 0) {
+      <p class="hint">Aucun snapshot pour ce volume</p>
+    } @else {
+      @for (snapshot of snapshots(); track snapshot.id) {
+        <div class="snapshot-row">
+          <div class="snapshot-info">
+            <p class="snapshot-name">{{ snapshot.name }}</p>
+            <p class="snapshot-meta mono">{{ snapshot.sizeGb ? snapshot.sizeGb + ' GB · ' : '' }}{{ snapshot.createdAt | date: 'short' }}</p>
+          </div>
+          <p-tag [value]="snapshot.status" [rounded]="true" />
+          <p-button
+            [outlined]="true"
+            size="small"
+            severity="danger"
+            [icon]="isDeleting(snapshot.id) ? 'pi pi-spin pi-spinner' : 'pi pi-trash'"
+            [disabled]="isDeleting(snapshot.id)"
+            (onClick)="remove(snapshot.id)"
+          />
+        </div>
+      }
+    }
+  </div>
+
+  <div class="create-form">
+    <input pInputText [ngModel]="name()" (ngModelChange)="name.set($event)" placeholder="Nom du snapshot" fluid />
+    <input pInputText [ngModel]="description()" (ngModelChange)="description.set($event)" placeholder="Description (optionnel)" fluid />
+    <p-button
+      [label]="creating() ? 'Création...' : 'Créer un snapshot'"
+      icon="pi pi-plus"
+      [loading]="creating()"
+      [disabled]="!name().trim()"
+      (onClick)="createSnapshot()"
+    />
+  </div>
+</p-dialog>

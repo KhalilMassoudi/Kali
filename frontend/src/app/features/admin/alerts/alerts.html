@@ -1,0 +1,138 @@
+<div class="page">
+  <div class="page-head">
+    <div>
+      <h2>Alertes</h2>
+      <p class="subtitle">
+        {{ alerts().length }} alerte{{ alerts().length !== 1 ? 's' : '' }} active{{ alerts().length !== 1 ? 's' : '' }}
+        @if (critical() > 0) {
+          · <span class="crit-count">{{ critical() }} critique{{ critical() !== 1 ? 's' : '' }}</span>
+        }
+        @if (warning() > 0) {
+          · {{ warning() }} avertissement{{ warning() !== 1 ? 's' : '' }}
+        }
+      </p>
+    </div>
+    <p-button [outlined]="true" size="small" icon="pi pi-refresh" label="Actualiser" (onClick)="refresh()" />
+  </div>
+
+  @if (error()) {
+    <div class="error-banner">
+      <span class="dot"></span>
+      <p>{{ error() }}</p>
+    </div>
+  }
+
+  @if (loading()) {
+    <div class="loading-state">
+      <i class="pi pi-spin pi-spinner"></i>
+      <p>Chargement...</p>
+    </div>
+  } @else {
+    @if (alerts().length === 0) {
+      <div class="card empty-alerts">
+        <i class="pi pi-check-circle"></i>
+        <h3>Aucune alerte active</h3>
+        <p>Tout est calme. Les alertes apparaissent ici dès qu'une règle ci-dessous est franchie.</p>
+      </div>
+    } @else {
+      <div class="alert-list">
+        @for (alert of alerts(); track alert.id) {
+          <div class="alert-card" [class.critical]="alert.severity === 'CRITICAL'">
+            <p-tag [value]="alert.severity" [severity]="severityTag(alert.severity)" [rounded]="true" />
+            <div class="alert-body">
+              <p class="alert-message">{{ alert.message }}</p>
+              <p class="alert-meta">
+                {{ typeLabel(alert.alertType) }} · {{ alert.serviceName }} ·
+                déclenchée {{ alert.firedAt | date: 'short' }}
+              </p>
+            </div>
+          </div>
+        }
+      </div>
+    }
+
+    <div class="section-title">
+      <h3>Règles d'alerte</h3>
+      <p class="subtitle">{{ rules().length }} règle{{ rules().length !== 1 ? 's' : '' }} configurée{{ rules().length !== 1 ? 's' : '' }}</p>
+    </div>
+
+    <div class="card suggestions-card">
+      <p class="suggestions-title">Suggestions — cliquez pour préremplir le formulaire, rien n'est créé automatiquement</p>
+      <div class="suggestion-chips">
+        @for (s of suggestions; track s.label) {
+          <button type="button" class="suggestion-chip" [pTooltip]="s.hint" tooltipPosition="top" (click)="applySuggestion(s)">
+            {{ s.label }}
+          </button>
+        }
+      </div>
+    </div>
+
+    <div class="card create-rule-card">
+      @if (formError()) {
+        <p class="form-error">{{ formError() }}</p>
+      }
+      <div class="create-rule-form">
+        <div class="field">
+          <label>Service</label>
+          <p-select [options]="serviceOptions" [ngModel]="formService()" (ngModelChange)="formService.set($event)" optionLabel="label" optionValue="value" />
+        </div>
+        <div class="field">
+          <label>Type d'alerte</label>
+          <p-select [options]="typeOptions" [ngModel]="formType()" (ngModelChange)="formType.set($event)" optionLabel="label" optionValue="value" />
+        </div>
+        <div class="field">
+          <label>Seuil</label>
+          <p-inputnumber [ngModel]="formThreshold()" (ngModelChange)="formThreshold.set($event)" [min]="0" />
+        </div>
+        <p-button label="Créer la règle" icon="pi pi-plus" [loading]="creating()" (onClick)="createRule()" />
+      </div>
+    </div>
+
+    <div class="card">
+      <div class="table-wrap">
+        <table class="rules-table">
+          <thead>
+            <tr>
+              <th>Service</th>
+              <th>Type</th>
+              <th>Seuil</th>
+              <th>Actif</th>
+              <th></th>
+            </tr>
+          </thead>
+          <tbody>
+            @for (rule of rules(); track rule.id) {
+              <tr>
+                <td>{{ rule.serviceName || 'Tous les services' }}</td>
+                <td>{{ typeLabel(rule.alertType) }}</td>
+                <td class="mono">{{ rule.threshold }}</td>
+                <td>
+                  <p-toggleswitch
+                    [ngModel]="rule.enabled"
+                    (ngModelChange)="toggleRule(rule.id, $event)"
+                    [disabled]="!!ruleActionLoading()[rule.id]"
+                  />
+                </td>
+                <td>
+                  <p-button
+                    [outlined]="true"
+                    size="small"
+                    severity="danger"
+                    icon="pi pi-trash"
+                    [disabled]="!!ruleActionLoading()[rule.id]"
+                    (onClick)="deleteRule(rule.id)"
+                  />
+                </td>
+              </tr>
+            }
+            @if (rules().length === 0) {
+              <tr>
+                <td colspan="5" class="empty-row">Aucune règle — utilisez une suggestion ci-dessus pour commencer</td>
+              </tr>
+            }
+          </tbody>
+        </table>
+      </div>
+    </div>
+  }
+</div>

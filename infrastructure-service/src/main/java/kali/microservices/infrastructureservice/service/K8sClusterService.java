@@ -33,6 +33,10 @@ public class K8sClusterService {
         return k8sClusterRepository.findByUserId(userId);
     }
 
+    public List<K8sCluster> getAllClusters() {
+        return k8sClusterRepository.findAll();
+    }
+
     public K8sCluster getClusterById(Long id) {
         return k8sClusterRepository.findById(id)
                 .orElseThrow(() -> new RuntimeException("Cluster K8s non trouvé: " + id));

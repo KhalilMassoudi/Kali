@@ -1,0 +1,42 @@
+<p-dialog
+  [visible]="visible()"
+  (visibleChange)="onHide()"
+  [modal]="true"
+  [header]="'Règles — ' + (group()?.name ?? '')"
+  [style]="{ width: '34rem' }"
+  [dismissableMask]="true"
+>
+  @if (error()) {
+    <p-message severity="error" styleClass="dialog-error">{{ error() }}</p-message>
+  }
+
+  @if (loading()) {
+    <p class="hint">Chargement des règles...</p>
+  } @else if (rules().length === 0) {
+    <p class="hint">Aucune règle — ce groupe bloque tout le trafic par défaut.</p>
+  } @else {
+    <div class="rule-list">
+      @for (rule of rules(); track rule.id) {
+        <div class="rule-row">
+          <span class="rule-badge" [class.egress]="rule.direction === 'egress'">{{ rule.direction }}</span>
+          <span class="rule-proto">{{ rule.protocol || '*' }}</span>
+          <span class="rule-ports">{{ rule.portMin ?? '*' }}@if (rule.portMax && rule.portMax !== rule.portMin) { - {{ rule.portMax }} }</span>
+          <span class="rule-cidr mono">{{ rule.remoteCidr || '0.0.0.0/0' }}</span>
+          <button type="button" class="rule-remove" (click)="removeRule(rule.id)"><i class="pi pi-times"></i></button>
+        </div>
+      }
+    </div>
+  }
+
+  <div class="add-rule-form">
+    <p class="add-rule-title">Ajouter une règle</p>
+    <div class="add-rule-grid">
+      <p-select [options]="directionOptions" [ngModel]="direction()" (ngModelChange)="direction.set($event)" optionLabel="label" optionValue="value" [fluid]="true" />
+      <p-select [options]="protocolOptions" [ngModel]="protocol()" (ngModelChange)="protocol.set($event)" optionLabel="label" optionValue="value" [fluid]="true" />
+      <p-inputnumber placeholder="Port min" [ngModel]="portMin()" (ngModelChange)="portMin.set($event)" [min]="1" [max]="65535" [fluid]="true" />
+      <p-inputnumber placeholder="Port max" [ngModel]="portMax()" (ngModelChange)="portMax.set($event)" [min]="1" [max]="65535" [fluid]="true" />
+      <input pInputText placeholder="0.0.0.0/0" [ngModel]="cidr()" (ngModelChange)="cidr.set($event)" class="cidr-input" fluid />
+      <p-button label="Ajouter" icon="pi pi-plus" (onClick)="addRule()" />
+    </div>
+  </div>
+</p-dialog>

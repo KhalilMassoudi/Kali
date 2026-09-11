@@ -1,0 +1,53 @@
+<p-dialog
+  [(visible)]="visible"
+  [modal]="true"
+  header="Créer un réseau privé"
+  [style]="{ width: '28rem' }"
+  [dismissableMask]="true"
+  styleClass="create-network-dialog"
+>
+  <p class="dialog-subtitle">Provisionnez un réseau privé (Neutron) avec son sous-réseau</p>
+
+  @if (error()) {
+    <p-message severity="error" styleClass="dialog-error">{{ error() }}</p-message>
+  }
+
+  <form [formGroup]="form" (ngSubmit)="submit()" class="dialog-form">
+    <div class="field">
+      <label for="name">Nom du réseau</label>
+      <input
+        id="name"
+        pInputText
+        formControlName="name"
+        placeholder="mon-reseau-prive"
+        fluid
+        [invalid]="!!nameError"
+      />
+      @if (nameError) {
+        <p class="field-error">{{ nameError }}</p>
+      } @else {
+        <p class="field-hint">Lettres minuscules, chiffres et tirets uniquement</p>
+      }
+    </div>
+
+    <div class="field">
+      <label for="cidr">Plage d'adresses (CIDR)</label>
+      <input id="cidr" pInputText formControlName="cidr" placeholder="192.168.100.0/24" fluid [invalid]="!!cidrError" />
+      @if (cidrError) {
+        <p class="field-error">{{ cidrError }}</p>
+      } @else {
+        <p class="field-hint">Sous-réseau IPv4 avec DHCP activé</p>
+      }
+    </div>
+
+    <div class="dialog-footer">
+      <p-button label="Annuler" severity="secondary" [outlined]="true" type="button" styleClass="footer-btn" (onClick)="close()" />
+      <p-button
+        [label]="loading() ? 'Création...' : 'Créer le réseau'"
+        type="submit"
+        [loading]="loading()"
+        styleClass="footer-btn"
+      />
+    </div>
+  </form>
+</p-dialog>

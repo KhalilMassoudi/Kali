@@ -1,0 +1,42 @@
+<div class="page">
+  <div class="page-head">
+    <div>
+      <h2>Support</h2>
+      <p class="subtitle">Vos tickets d'assistance</p>
+    </div>
+    <p-button label="Nouveau ticket" icon="pi pi-plus" size="small" routerLink="/support/new" />
+  </div>
+
+  @if (error()) {
+    <div class="error-banner">
+      <span class="dot"></span>
+      <p>{{ error() }}</p>
+    </div>
+  }
+
+  @if (loading()) {
+    <div class="loading-state">
+      <i class="pi pi-spin pi-spinner"></i>
+      <p>Chargement...</p>
+    </div>
+  } @else if (tickets().length === 0) {
+    <div class="card empty-state">
+      <div class="empty-icon"><i class="pi pi-ticket"></i></div>
+      <h3 class="empty-title">Aucun ticket</h3>
+      <p class="empty-text">Ouvrez un ticket si vous avez besoin d'aide.</p>
+      <p-button label="Ouvrir un ticket" icon="pi pi-plus" size="small" routerLink="/support/new" />
+    </div>
+  } @else {
+    <div class="ticket-list">
+      @for (ticket of tickets(); track ticket.id) {
+        <div class="card ticket-row" (click)="openTicket(ticket.id)">
+          <div class="ticket-main">
+            <p class="ticket-title">{{ ticket.title }}</p>
+            <p class="ticket-meta">#{{ ticket.id }} · {{ priorityLabel(ticket.priority) }} · {{ ticket.createdAt | date: 'short' }}</p>
+          </div>
+          <p-tag [value]="statusLabel(ticket.status)" [severity]="statusSeverity(ticket.status)" [rounded]="true" />
+        </div>
+      }
+    </div>
+  }
+</div>

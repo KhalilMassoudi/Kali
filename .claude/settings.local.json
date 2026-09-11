@@ -10,7 +10,14 @@
       "Bash(else)",
       "Bash(fi)",
       "Bash(done)",
-      "Bash(dir:*)"
+      "Bash(dir:*)",
+      "Bash(xargs -I{} echo {})",
+      "Bash(xargs cat)",
+      "Bash(npm run *)",
+      "Bash(npx -y @angular/cli@latest new frontend --routing --style=scss --skip-git --ai-config=none --zoneless --ssr=false --defaults --package-manager=npm)",
+      "Bash(npm install *)",
+      "Bash(npx ng *)",
+      "Bash(curl -s -X POST http://localhost:8080/api/auth/reset-password -H 'Content-Type: application/json' -d '{\"token\":\"f3ffd96e-de57-4871-a0ab-b2d074e11755\",\"newPassword\":\"AnotherPass789\"}')"
     ]
   }
 }

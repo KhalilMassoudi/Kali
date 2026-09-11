@@ -1,5 +1,6 @@
 package kali.microservices.chatservice.entities;
 
+import com.fasterxml.jackson.annotation.JsonIgnore;
 import jakarta.persistence.*;
 import lombok.AllArgsConstructor;
 import lombok.Data;
@@ -21,6 +22,7 @@ public class Message {
 
     @ManyToOne(fetch = FetchType.LAZY)
     @JoinColumn(name = "conversation_id", nullable = false)
+    @JsonIgnore
     private Conversation conversation;
 
     @Enumerated(EnumType.STRING)
@@ -30,9 +32,11 @@ public class Message {
     @Column(columnDefinition = "TEXT", nullable = false)
     private String content;
 
-    // Action cloud détectée par OpenAI (optionnel)
+    // Action cloud détectée par l'agent IA (optionnel)
     private String detectedAction;   // ex: create_vps, list_domains...
-    private String actionResult;     // résultat de l'action (JSON)
+
+    @Column(columnDefinition = "TEXT")
+    private String actionResult;     // résultat de l'action (JSON, peut être long en cas d'erreur détaillée)
 
     @CreationTimestamp
     private LocalDateTime createdAt;

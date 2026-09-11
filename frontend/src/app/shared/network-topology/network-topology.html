@@ -1,0 +1,37 @@
+<div class="topology-wrap">
+  @if (isEmpty()) {
+    <div class="topology-empty">
+      <i class="pi pi-share-alt"></i>
+      <span>Aucun réseau ou routeur à afficher pour l'instant</span>
+    </div>
+  } @else {
+    <svg [attr.viewBox]="'0 0 ' + width + ' ' + height" class="topology-svg" preserveAspectRatio="xMidYMid meet">
+      @for (edge of edges(); track $index) {
+        <line [attr.x1]="edge.x1" [attr.y1]="edge.y1" [attr.x2]="edge.x2" [attr.y2]="edge.y2" class="topology-edge" />
+      }
+      @for (node of allNodes(); track node.id) {
+        <g [attr.transform]="'translate(' + (node.x - nodeWidth / 2) + ',' + (node.y - nodeHeight / 2) + ')'">
+          <rect
+            [attr.width]="nodeWidth"
+            [attr.height]="nodeHeight"
+            rx="8"
+            class="topology-node"
+            [class.node-external]="node.kind === 'external'"
+            [class.node-router]="node.kind === 'router'"
+            [class.node-private]="node.kind === 'private'"
+          />
+          <text [attr.x]="nodeWidth / 2" [attr.y]="nodeHeight / 2 - 6" text-anchor="middle" class="topology-node-kind">
+            @switch (node.kind) {
+              @case ('external') { Réseau externe }
+              @case ('router') { Routeur }
+              @case ('private') { Réseau privé }
+            }
+          </text>
+          <text [attr.x]="nodeWidth / 2" [attr.y]="nodeHeight / 2 + 14" text-anchor="middle" class="topology-node-label">
+            {{ node.label }}
+          </text>
+        </g>
+      }
+    </svg>
+  }
+</div>

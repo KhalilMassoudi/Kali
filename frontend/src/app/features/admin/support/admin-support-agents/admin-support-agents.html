@@ -1,0 +1,88 @@
+<div class="page">
+  <div class="page-head">
+    <div>
+      <h2>Gestion des agents support</h2>
+      <p class="subtitle">
+        Les administrateurs listés ici peuvent voir et gérer tous les tickets. Être administrateur seul ne suffit pas —
+        cette permission doit être accordée explicitement.
+      </p>
+    </div>
+    <p-button [outlined]="true" size="small" icon="pi pi-refresh" label="Actualiser" (onClick)="refresh()" />
+  </div>
+
+  @if (error()) {
+    <div class="error-banner">
+      <span class="dot"></span>
+      <p>{{ error() }}</p>
+    </div>
+  }
+
+  <div class="card grant-card">
+    <p class="grant-title">Accorder la permission à un administrateur</p>
+    <div class="grant-form">
+      <p-select
+        [options]="grantableAdmins()"
+        [ngModel]="selectedUserId()"
+        (ngModelChange)="selectedUserId.set($event)"
+        optionLabel="label"
+        optionValue="value"
+        placeholder="Choisir un administrateur"
+        [style]="{ minWidth: '20rem' }"
+      />
+      <p-button label="Accorder" icon="pi pi-plus" size="small" [loading]="granting()" [disabled]="!selectedUserId()" (onClick)="grant()" />
+    </div>
+    @if (grantableAdmins().length === 0) {
+      <p class="grant-hint">Tous les comptes administrateur ont déjà cette permission (ou aucun n'existe).</p>
+    }
+  </div>
+
+  @if (loading()) {
+    <div class="loading-state">
+      <i class="pi pi-spin pi-spinner"></i>
+      <p>Chargement...</p>
+    </div>
+  } @else {
+    <div class="card">
+      <div class="table-wrap">
+        <table class="agents-table">
+          <thead>
+            <tr>
+              <th>Administrateur</th>
+              <th>Accordé le</th>
+              <th></th>
+            </tr>
+          </thead>
+          <tbody>
+            @for (row of agentRows(); track row.id) {
+              <tr>
+                <td>
+                  <span class="agent-email">{{ row.email }}</span>
+                  @if (row.name) {
+                    <span class="agent-name">{{ row.name }}</span>
+                  }
+                </td>
+                <td>{{ row.grantedAt | date: 'short' }}</td>
+                <td>
+                  <p-button
+                    [outlined]="true"
+                    size="small"
+                    severity="danger"
+                    icon="pi pi-times"
+                    label="Retirer"
+                    [disabled]="!!actionLoading()[row.userId]"
+                    (onClick)="revoke(row.userId)"
+                  />
+                </td>
+              </tr>
+            }
+            @if (agentRows().length === 0) {
+              <tr>
+                <td colspan="3" class="empty-row">Aucun agent — accordez la permission à un administrateur ci-dessus</td>
+              </tr>
+            }
+          </tbody>
+        </table>
+      </div>
+    </div>
+  }
+</div>

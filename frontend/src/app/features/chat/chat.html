@@ -1,0 +1,79 @@
+<div class="page chat-page">
+  <div class="page-head">
+    <div>
+      <h2>Assistant IA</h2>
+      <p class="subtitle">Gérez votre infrastructure en langage naturel</p>
+    </div>
+  </div>
+
+  <div class="chat-layout">
+    <aside class="chat-sidebar">
+      <button type="button" class="new-chat-btn" (click)="newConversation()">
+        <i class="pi pi-plus"></i> Nouvelle conversation
+      </button>
+
+      <div class="conversation-list">
+        @if (conversations().length === 0) {
+          <p class="conversation-empty">Aucune conversation pour l'instant</p>
+        }
+        @for (c of conversations(); track c.id) {
+          <button
+            type="button"
+            class="conversation-item"
+            [class.active]="c.id === activeConversationId()"
+            (click)="selectConversation(c.id)"
+          >
+            {{ c.title || 'Nouvelle conversation' }}
+          </button>
+        }
+      </div>
+    </aside>
+
+    <div class="card chat-card">
+      <div class="messages">
+        @if (messages().length === 0) {
+          <div class="chat-empty">
+            <div class="chat-empty-icon"><i class="pi pi-comments"></i></div>
+            <p class="chat-empty-title">Posez votre première question</p>
+            <p class="chat-empty-text">« Crée un VPS Ubuntu 4 GB » ou « Combien de VMs ai-je actives ? »</p>
+          </div>
+        }
+
+        @for (m of messages(); track m.id) {
+          <div class="msg-row" [class.mine]="m.role === 'user'">
+            <div class="bubble" [class.mine]="m.role === 'user'" [class.err]="m.role === 'error'">
+              <p>{{ m.content }}</p>
+            </div>
+          </div>
+        }
+
+        @if (loading()) {
+          <div class="msg-row">
+            <div class="bubble typing">
+              <div class="typing-dots"><span></span><span></span><span></span></div>
+              @if (chatService.waitElapsedMs() > 25000) {
+                <p class="wait-hint">Toujours en cours… la création de ressources cloud (VPS, cluster…) peut prendre plusieurs minutes.</p>
+              } @else if (chatService.waitElapsedMs() > 8000) {
+                <p class="wait-hint">Toujours en cours…</p>
+              }
+            </div>
+          </div>
+        }
+
+        <div #scrollAnchor></div>
+      </div>
+
+      <div class="composer">
+        <textarea
+          class="composer-input"
+          rows="1"
+          placeholder="Écrivez un message..."
+          [ngModel]="draft()"
+          (ngModelChange)="draft.set($event)"
+          (keydown)="onKeydown($event)"
+        ></textarea>
+        <p-button icon="pi pi-send" [disabled]="!draft().trim() || loading()" (onClick)="send()" />
+      </div>
+    </div>
+  </div>
+</div>

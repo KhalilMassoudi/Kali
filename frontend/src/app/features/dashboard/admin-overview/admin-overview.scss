@@ -1,0 +1,153 @@
+@use '../../../shared/styles/page-shell' as *;
+
+:host {
+  display: block;
+}
+
+.admin-overview {
+  display: flex;
+  flex-direction: column;
+  gap: 1.5rem;
+}
+
+.telemetry-strip {
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  margin-bottom: 0;
+
+  @media (min-width: 640px) {
+    grid-template-columns: repeat(4, 1fr);
+  }
+}
+
+.tcell {
+  padding: 1.25rem;
+  border-right: 1px solid var(--brand-border);
+
+  &:last-child { border-right: none; }
+}
+
+.tcell-label {
+  font-size: 0.6875rem;
+  font-weight: 600;
+  color: var(--text-dim);
+  text-transform: uppercase;
+  letter-spacing: 0.03em;
+}
+
+.tcell-value {
+  margin: 0.25rem 0 0;
+  font-size: 1.5rem;
+  font-weight: 700;
+  color: #fff;
+
+  small {
+    font-size: 0.875rem;
+    font-weight: 600;
+    color: var(--text-dim);
+  }
+}
+
+.gauge-card {
+  padding: 1.25rem;
+
+  h3 {
+    font-size: 0.9375rem;
+    font-weight: 700;
+    color: #fff;
+    margin-bottom: 1rem;
+  }
+}
+
+.gauge-grid {
+  display: grid;
+  grid-template-columns: repeat(2, 1fr);
+  gap: 1rem;
+
+  @media (min-width: 640px) {
+    grid-template-columns: repeat(4, 1fr);
+  }
+
+  @media (min-width: 1200px) {
+    grid-template-columns: repeat(7, 1fr);
+  }
+}
+
+.chart-card {
+  padding: 1.25rem;
+}
+
+.chart-head {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  margin-bottom: 1rem;
+
+  h3 {
+    font-size: 0.9375rem;
+    font-weight: 700;
+    color: #fff;
+  }
+}
+
+.chart-empty {
+  padding: 2rem 0;
+  text-align: center;
+  font-size: 0.8125rem;
+  color: var(--text-dim);
+}
+
+.telemetry-link {
+  display: inline-flex;
+  align-items: center;
+  gap: 0.5rem;
+  font-size: 0.8125rem;
+  color: var(--text-dim);
+  text-decoration: none;
+
+  i { color: var(--brand-accent, #2563eb); }
+
+  &:hover { color: #fff; }
+}
+
+.shortcut-grid {
+  display: grid;
+  grid-template-columns: repeat(2, 1fr);
+  gap: 1rem;
+
+  @media (min-width: 640px) {
+    grid-template-columns: repeat(4, 1fr);
+  }
+}
+
+.shortcut-card {
+  display: flex;
+  align-items: center;
+  gap: 0.875rem;
+  padding: 1.25rem;
+  border-radius: 0.75rem;
+  border: 1px solid var(--brand-border);
+  background: var(--card-bg, rgba(255, 255, 255, 0.02));
+  text-decoration: none;
+  transition: border-color 0.15s ease;
+
+  &:hover {
+    border-color: var(--brand-primary, #2563eb);
+  }
+
+  i {
+    font-size: 1.5rem;
+    color: var(--brand-primary, #2563eb);
+  }
+}
+
+.shortcut-count {
+  font-size: 1.25rem;
+  font-weight: 700;
+  color: #fff;
+}
+
+.shortcut-label {
+  font-size: 0.75rem;
+  color: var(--text-dim);
+}

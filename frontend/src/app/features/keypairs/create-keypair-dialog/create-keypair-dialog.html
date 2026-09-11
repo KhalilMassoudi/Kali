@@ -1,0 +1,59 @@
+<p-dialog
+  [(visible)]="visible"
+  [modal]="true"
+  [header]="revealedPrivateKey() ? 'Clé privée générée' : 'Créer une paire de clés'"
+  [style]="{ width: '32rem' }"
+  [dismissableMask]="!revealedPrivateKey()"
+  [closable]="!revealedPrivateKey()"
+  styleClass="create-keypair-dialog"
+>
+  @if (revealedPrivateKey()) {
+    <p-message severity="warn" styleClass="dialog-error">
+      Copiez cette clé privée maintenant — elle ne sera plus jamais affichée.
+    </p-message>
+    <textarea class="private-key-box" readonly rows="10">{{ revealedPrivateKey() }}</textarea>
+    <div class="dialog-footer">
+      <p-button label="Copier" icon="pi pi-copy" severity="secondary" [outlined]="true" styleClass="footer-btn" (onClick)="copyPrivateKey()" />
+      <p-button label="J'ai copié ma clé, fermer" styleClass="footer-btn" (onClick)="close()" />
+    </div>
+  } @else {
+    <p class="dialog-subtitle">Générez une nouvelle clé (recommandé) ou importez votre propre clé publique</p>
+
+    @if (error()) {
+      <p-message severity="error" styleClass="dialog-error">{{ error() }}</p-message>
+    }
+
+    <div class="mode-tabs">
+      <button type="button" class="mode-btn" [class.active]="mode() === 'generate'" (click)="mode.set('generate')">
+        Générer une nouvelle clé
+      </button>
+      <button type="button" class="mode-btn" [class.active]="mode() === 'import'" (click)="mode.set('import')">
+        Importer ma clé publique
+      </button>
+    </div>
+
+    <form [formGroup]="form" (ngSubmit)="submit()" class="dialog-form">
+      <div class="field">
+        <label for="name">Nom de la paire de clés</label>
+        <input id="name" pInputText formControlName="name" placeholder="ma-cle-perso" fluid />
+      </div>
+
+      @if (mode() === 'import') {
+        <div class="field">
+          <label for="publicKey">Clé publique (OpenSSH)</label>
+          <textarea id="publicKey" pTextarea formControlName="publicKey" rows="4" placeholder="ssh-ed25519 AAAA..." fluid></textarea>
+        </div>
+      }
+
+      <div class="dialog-footer">
+        <p-button label="Annuler" severity="secondary" [outlined]="true" type="button" styleClass="footer-btn" (onClick)="close()" />
+        <p-button
+          [label]="loading() ? 'Création...' : 'Créer'"
+          type="submit"
+          [loading]="loading()"
+          styleClass="footer-btn"
+        />
+      </div>
+    </form>
+  }
+</p-dialog>

@@ -1,0 +1,127 @@
+<div class="page">
+  <div class="page-head">
+    <div>
+      <h2>Télémétrie infrastructure</h2>
+      <p class="subtitle">Métriques temps réel issues de Gnocchi (Ceilometer)</p>
+    </div>
+    <p-button
+      [outlined]="true"
+      size="small"
+      icon="pi pi-refresh"
+      label="Actualiser"
+      (onClick)="refresh()"
+    />
+  </div>
+
+  @if (error()) {
+    <div class="error-banner">
+      <span class="dot"></span>
+      <p>{{ error() }}</p>
+    </div>
+  }
+
+  @if (loading()) {
+    <div class="loading-state">
+      <i class="pi pi-spin pi-spinner"></i>
+      <p>Chargement des ressources...</p>
+    </div>
+  } @else if (!configured()) {
+    <div class="card empty-config">
+      <i class="pi pi-info-circle"></i>
+      <h3>Gnocchi n'est pas encore configuré</h3>
+      <p>
+        Définissez les variables d'environnement <code>OS_KEYSTONE_URL</code>, <code>OS_GNOCCHI_URL</code>,
+        <code>OS_USERNAME</code>, <code>OS_PASSWORD</code>, <code>OS_PROJECT_NAME</code> et <code>OS_USER_DOMAIN</code>
+        sur infrastructure-service pour activer cette page.
+      </p>
+    </div>
+  } @else {
+    <div class="type-tabs">
+      <button type="button" class="type-tab" [class.active]="selectedType() === 'all'" (click)="selectType('all')">
+        Tout ({{ resources().length }})
+      </button>
+      @for (group of typeGroups(); track group.type) {
+        <button type="button" class="type-tab" [class.active]="selectedType() === group.type" (click)="selectType(group.type)">
+          {{ group.label }} ({{ group.count }})
+        </button>
+      }
+    </div>
+
+    <div class="card resource-list">
+      <div class="table-wrap">
+        <p-table [value]="filteredResources()" styleClass="resources-table" [rowHover]="true" [scrollable]="true" scrollHeight="360px">
+          <ng-template #header>
+            <tr>
+              <th>Ressource</th>
+              <th>Type</th>
+              <th>Métriques</th>
+            </tr>
+          </ng-template>
+          <ng-template #body let-resource>
+            <tr
+              [class.selected-row]="selectedResource()?.id === resource.id"
+              (click)="selectResource(resource)"
+            >
+              <td class="res-name">{{ resourceName(resource) }}</td>
+              <td>{{ resource.type }}</td>
+              <td>{{ (resource.metrics | keyvalue)?.length || 0 }}</td>
+            </tr>
+          </ng-template>
+          <ng-template #emptymessage>
+            <tr>
+              <td colspan="3" class="empty-row">Aucune ressource dans cette catégorie</td>
+            </tr>
+          </ng-template>
+        </p-table>
+      </div>
+    </div>
+
+    <div class="card metric-panel">
+      @if (!selectedResource()) {
+        <div class="chart-empty-hint">
+          <i class="pi pi-arrow-up"></i>
+          <p>Sélectionnez une ressource ci-dessus pour voir ses métriques</p>
+        </div>
+      } @else {
+        <div class="metric-head">
+          <div>
+            <h3>{{ resourceName(selectedResource()!) }}</h3>
+            <p class="subtitle mono">{{ selectedResource()?.id }}</p>
+          </div>
+          <p-select
+            [options]="granularityOptions"
+            [ngModel]="granularity()"
+            (ngModelChange)="granularity.set($event)"
+            optionLabel="label"
+            optionValue="value"
+            (onChange)="onGranularityChange()"
+          />
+        </div>
+
+        <div class="metric-tabs">
+          @for (metric of metricNames(); track metric) {
+            <button
+              type="button"
+              class="metric-tab"
+              [class.active]="selectedMetric() === metric"
+              (click)="selectMetric(metric)"
+            >
+              {{ metric }}
+            </button>
+          }
+        </div>
+
+        @if (measuresLoading()) {
+          <div class="loading-state small">
+            <i class="pi pi-spin pi-spinner"></i>
+            <p>Chargement des mesures...</p>
+          </div>
+        } @else if (measuresError()) {
+          <p class="metric-error">{{ measuresError() }}</p>
+        } @else {
+          <app-timeseries-chart [points]="measures()" />
+        }
+      }
+    </div>
+  }
+</div>

@@ -1,0 +1,189 @@
+<div class="page">
+  <div class="page-head">
+    <div>
+      <h2>Réseau</h2>
+      <p class="subtitle">Topologie, réseaux, routeurs, sécurité et IP flottantes</p>
+    </div>
+    <p-button [outlined]="true" size="small" icon="pi pi-refresh" label="Actualiser" (onClick)="refresh()" />
+  </div>
+
+  <div class="tab-bar">
+    <button type="button" class="tab-btn" [class.active]="tab() === 'topology'" (click)="selectTab('topology')">
+      <i class="pi pi-sitemap"></i> Topologie
+    </button>
+    <button type="button" class="tab-btn" [class.active]="tab() === 'networks'" (click)="selectTab('networks')">
+      <i class="pi pi-share-alt"></i> Réseaux
+    </button>
+    <button type="button" class="tab-btn" [class.active]="tab() === 'routers'" (click)="selectTab('routers')">
+      <i class="pi pi-directions"></i> Routeurs ({{ routers().length }})
+    </button>
+    <button type="button" class="tab-btn" [class.active]="tab() === 'security-groups'" (click)="selectTab('security-groups')">
+      <i class="pi pi-shield"></i> Sécurité
+    </button>
+    <button type="button" class="tab-btn" [class.active]="tab() === 'floating-ips'" (click)="selectTab('floating-ips')">
+      <i class="pi pi-globe"></i> IP flottantes ({{ floatingIps().length }})
+    </button>
+  </div>
+
+  @switch (tab()) {
+    @case ('topology') {
+      <div class="card topology-card">
+        <app-network-topology [networks]="topologyNetworks()" [routers]="topologyRouters()" />
+      </div>
+    }
+    @case ('networks') {
+      <app-networks />
+    }
+    @case ('security-groups') {
+      <app-security-groups />
+    }
+    @case ('routers') {
+      <div class="sub-head">
+        <p class="subtitle">{{ routers().length }} routeur{{ routers().length !== 1 ? 's' : '' }}</p>
+        <p-button label="Créer un routeur" icon="pi pi-plus" size="small" (onClick)="showCreateRouterDialog.set(true)" />
+      </div>
+      @if (routers().length === 0) {
+        <div class="card empty-state">
+          <div class="empty-icon"><i class="pi pi-directions"></i></div>
+          <p class="empty-title">Aucun routeur</p>
+          <p class="empty-text">Créez un routeur pour relier vos réseaux privés entre eux ou à un réseau externe.</p>
+          <p-button label="Créer un routeur" icon="pi pi-plus" size="large" (onClick)="showCreateRouterDialog.set(true)" />
+        </div>
+      } @else {
+        <div class="card">
+          <div class="table-wrap">
+            <p-table [value]="routers()" [rowHover]="true">
+              <ng-template #header>
+                <tr>
+                  <th>Nom</th>
+                  <th>Passerelle externe</th>
+                  <th>Créé le</th>
+                  <th></th>
+                </tr>
+              </ng-template>
+              <ng-template #body let-router>
+                <tr>
+                  <td class="row-name">{{ router.name }}</td>
+                  <td><p-tag [value]="router.externalGatewayNetworkId ? 'Oui' : 'Aucune'" [rounded]="true" /></td>
+                  <td class="mono">{{ router.createdAt | date: 'mediumDate' }}</td>
+                  <td>
+                    <div class="action-group">
+                      <p-button
+                        [outlined]="true"
+                        size="small"
+                        severity="danger"
+                        [icon]="routerRowState(router).deleting ? 'pi pi-spin pi-spinner' : 'pi pi-trash'"
+                        [disabled]="routerRowState(router).deleting"
+                        pTooltip="Supprimer"
+                        tooltipPosition="top"
+                        (onClick)="removeRouter(router)"
+                      />
+                    </div>
+                  </td>
+                </tr>
+              </ng-template>
+              <ng-template #emptymessage>
+                <tr>
+                  <td colspan="4" class="empty-row">Aucun routeur</td>
+                </tr>
+              </ng-template>
+            </p-table>
+          </div>
+        </div>
+      }
+    }
+    @case ('floating-ips') {
+      <div class="sub-head">
+        <p class="subtitle">{{ floatingIps().length }} IP flottante{{ floatingIps().length !== 1 ? 's' : '' }}</p>
+        <p-button label="Allouer une IP" icon="pi pi-plus" size="small" (onClick)="showAllocateFloatingIpDialog.set(true)" />
+      </div>
+      @if (floatingIps().length === 0) {
+        <div class="card empty-state">
+          <div class="empty-icon"><i class="pi pi-globe"></i></div>
+          <p class="empty-title">Aucune IP flottante</p>
+          <p class="empty-text">Allouez une IP flottante pour rendre une VM accessible depuis l'extérieur.</p>
+          <p-button label="Allouer une IP" icon="pi pi-plus" size="large" (onClick)="showAllocateFloatingIpDialog.set(true)" />
+        </div>
+      } @else {
+        <div class="card">
+          <div class="table-wrap">
+            <p-table [value]="floatingIps()" [rowHover]="true">
+              <ng-template #header>
+                <tr>
+                  <th>Adresse IP</th>
+                  <th>Pool</th>
+                  <th>Statut</th>
+                  <th>VM associée</th>
+                  <th></th>
+                </tr>
+              </ng-template>
+              <ng-template #body let-ip>
+                <tr>
+                  <td class="mono row-name">{{ ip.floatingIpAddress }}</td>
+                  <td>{{ ip.pool || '—' }}</td>
+                  <td>
+                    <p-tag
+                      [value]="ip.associatedVpsId ? 'Associée' : 'Disponible'"
+                      [severity]="ip.associatedVpsId ? 'success' : 'secondary'"
+                      [rounded]="true"
+                    />
+                  </td>
+                  <td>{{ vmName(ip.associatedVpsId) }}</td>
+                  <td>
+                    <div class="action-group">
+                      @if (!ip.associatedVpsId) {
+                        <p-button
+                          [outlined]="true"
+                          size="small"
+                          severity="secondary"
+                          icon="pi pi-link"
+                          pTooltip="Associer à une VM"
+                          tooltipPosition="top"
+                          (onClick)="assignFloatingIp(ip)"
+                        />
+                      } @else {
+                        <p-button
+                          [outlined]="true"
+                          size="small"
+                          severity="secondary"
+                          [icon]="floatingIpRowState(ip).busy ? 'pi pi-spin pi-spinner' : 'pi pi-minus-circle'"
+                          [disabled]="floatingIpRowState(ip).busy"
+                          pTooltip="Dissocier"
+                          tooltipPosition="top"
+                          (onClick)="disassociateFloatingIp(ip)"
+                        />
+                      }
+                      <p-button
+                        [outlined]="true"
+                        size="small"
+                        severity="danger"
+                        [icon]="floatingIpRowState(ip).busy ? 'pi pi-spin pi-spinner' : 'pi pi-trash'"
+                        [disabled]="floatingIpRowState(ip).busy"
+                        pTooltip="Libérer"
+                        tooltipPosition="top"
+                        (onClick)="releaseFloatingIp(ip)"
+                      />
+                    </div>
+                  </td>
+                </tr>
+              </ng-template>
+              <ng-template #emptymessage>
+                <tr>
+                  <td colspan="5" class="empty-row">Aucune IP flottante</td>
+                </tr>
+              </ng-template>
+            </p-table>
+          </div>
+        </div>
+      }
+    }
+  }
+
+  <app-create-router-dialog
+    [(visible)]="showCreateRouterDialog"
+    [externalNetworks]="externalNetworkOptions()"
+    (created)="refresh()"
+  />
+  <app-allocate-floating-ip-dialog [(visible)]="showAllocateFloatingIpDialog" [pools]="pools()" (created)="refresh()" />
+  <app-associate-floating-ip-dialog [floatingIp]="associateTarget()" [vms]="vms()" (closed)="associateTarget.set(null)" />
+</div>

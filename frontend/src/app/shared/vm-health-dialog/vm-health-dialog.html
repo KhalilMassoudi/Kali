@@ -1,0 +1,84 @@
+<p-dialog
+  [(visible)]="visible"
+  [modal]="true"
+  [header]="vm() ? 'Santé — ' + vm()!.name : 'Santé de la VM'"
+  [style]="{ width: '30rem' }"
+  [dismissableMask]="true"
+  styleClass="vm-health-dialog"
+>
+  @if (loading()) {
+    <div class="health-loading">
+      <i class="pi pi-spin pi-spinner"></i>
+      <p>Interrogation d'OpenStack en direct...</p>
+    </div>
+  } @else if (error()) {
+    <div class="health-error">
+      <i class="pi pi-exclamation-circle"></i>
+      <p>{{ error() }}</p>
+      <button type="button" class="retry-link" (click)="refresh()">Réessayer</button>
+    </div>
+  } @else if (health(); as h) {
+    <div class="health-body">
+      <div class="health-line">
+        <span class="health-label">Statut OpenStack</span>
+        <p-tag [value]="statusLabel(h.status)" [severity]="statusSeverity(h.status)" [rounded]="true" />
+      </div>
+      <div class="health-line">
+        <span class="health-label">Adresse IP</span>
+        <span class="mono">{{ h.ipAddress || '—' }}</span>
+      </div>
+      <div class="health-line">
+        <span class="health-label">IP flottante</span>
+        <span class="mono">{{ h.floatingIp || '—' }}</span>
+      </div>
+
+      <div class="ip-actions">
+        @if (h.floatingIp) {
+          <p-button
+            label="Libérer l'IP flottante"
+            severity="danger"
+            [outlined]="true"
+            size="small"
+            [loading]="ipActionLoading()"
+            (onClick)="releaseFloatingIp()"
+          />
+        } @else {
+          <p-button
+            label="Allouer une IP flottante"
+            severity="secondary"
+            [outlined]="true"
+            size="small"
+            [loading]="ipActionLoading()"
+            (onClick)="allocateFloatingIp()"
+          />
+        }
+      </div>
+      @if (ipActionError()) {
+        <p class="ip-action-error">{{ ipActionError() }}</p>
+      }
+
+      <div class="diagnostics">
+        <p class="diagnostics-title">Diagnostics hyperviseur</p>
+        @if (diagnosticsEntries().length === 0) {
+          <p class="diagnostics-empty">Aucune métrique disponible pour cette VM (dépend de l'hyperviseur OpenStack).</p>
+        } @else {
+          <div class="diagnostics-grid">
+            @for (entry of diagnosticsEntries(); track entry[0]) {
+              <div class="diag-row">
+                <span class="diag-key mono">{{ entry[0] }}</span>
+                <span class="diag-val mono">{{ entry[1] }}</span>
+              </div>
+            }
+          </div>
+        }
+      </div>
+
+      <p class="checked-at">Vérifié à {{ h.checkedAt | date: 'HH:mm:ss' }}</p>
+    </div>
+  }
+
+  <div class="dialog-footer">
+    <p-button label="Actualiser" icon="pi pi-refresh" severity="secondary" [outlined]="true" [disabled]="loading()" (onClick)="refresh()" />
+    <p-button label="Fermer" (onClick)="close()" />
+  </div>
+</p-dialog>

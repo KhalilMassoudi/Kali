@@ -1,0 +1,144 @@
+<div class="page">
+  <div class="page-head">
+    <div>
+      <h2>Configuration SMTP</h2>
+      <p class="subtitle">Serveur d'envoi d'emails utilisé pour les notifications et la réinitialisation de mot de passe</p>
+    </div>
+  </div>
+
+  @if (loading()) {
+    <div class="loading-state">
+      <i class="pi pi-spin pi-spinner"></i>
+      <p>Chargement de la configuration...</p>
+    </div>
+  } @else {
+    <div class="card">
+      <div class="security-header">
+        <div class="security-icon"><i class="pi pi-server"></i></div>
+        <div>
+          <h3>Serveur SMTP</h3>
+          <p>Ces paramètres s'appliquent immédiatement, sans redémarrage</p>
+        </div>
+      </div>
+
+      <div class="status-row">
+        <span class="status-dot" [class.configured]="config()?.passwordConfigured" [class.unconfigured]="!config()?.passwordConfigured"></span>
+        <span>{{ config()?.passwordConfigured ? 'Mot de passe SMTP configuré' : 'Aucun mot de passe SMTP enregistré' }}</span>
+        @if (config()?.updatedAt) {
+          <span>· Dernière mise à jour {{ config()!.updatedAt | date: 'medium' }}</span>
+        }
+      </div>
+
+      @if (saveError()) {
+        <p class="banner-error">{{ saveError() }}</p>
+      }
+      @if (savedOk()) {
+        <p class="banner-success">Configuration SMTP mise à jour avec succès</p>
+      }
+
+      <form [formGroup]="form" (ngSubmit)="save()" class="smtp-form">
+        <div class="name-row">
+          <div class="field">
+            <label for="host">Hôte SMTP</label>
+            <input id="host" pInputText formControlName="host" placeholder="smtp.zimbra.exemple.com" fluid />
+            @if (hostError) {
+              <p class="field-error">{{ hostError }}</p>
+            }
+          </div>
+          <div class="field">
+            <label for="port">Port</label>
+            <p-inputnumber inputId="port" formControlName="port" [useGrouping]="false" fluid />
+          </div>
+        </div>
+
+        <div class="name-row">
+          <div class="field">
+            <label for="username">Nom d'utilisateur</label>
+            <input id="username" pInputText formControlName="username" placeholder="notifications@entreprise.com" fluid />
+          </div>
+          <div class="field">
+            <label for="password">Mot de passe</label>
+            <input id="password" pInputText type="password" formControlName="password" placeholder="Laisser vide pour conserver l'actuel" fluid />
+          </div>
+        </div>
+
+        <div class="name-row">
+          <div class="field">
+            <label for="fromAddress">Adresse d'expédition</label>
+            <input id="fromAddress" pInputText type="email" formControlName="fromAddress" placeholder="noreply@entreprise.com" fluid />
+            @if (fromAddressError) {
+              <p class="field-error">{{ fromAddressError }}</p>
+            }
+          </div>
+          <div class="field">
+            <label for="fromName">Nom d'expéditeur</label>
+            <input id="fromName" pInputText formControlName="fromName" placeholder="Safozi Cloud" fluid />
+          </div>
+        </div>
+
+        <div class="field">
+          <label for="encryption">Chiffrement</label>
+          <p-select
+            inputId="encryption"
+            formControlName="encryption"
+            [options]="encryptionOptions"
+            optionLabel="label"
+            optionValue="value"
+            [fluid]="true"
+          />
+        </div>
+
+        <div class="field-row">
+          <div class="field-row-text">
+            <p>Authentification requise</p>
+            <p>Active l'authentification username/mot de passe sur le serveur SMTP</p>
+          </div>
+          <p-toggleswitch formControlName="authEnabled" />
+        </div>
+
+        <div class="form-footer">
+          <p-button
+            type="submit"
+            [label]="saving() ? 'Enregistrement...' : 'Enregistrer'"
+            [icon]="saving() ? 'pi pi-spin pi-spinner' : 'pi pi-save'"
+            [loading]="saving()"
+            [disabled]="saving()"
+          />
+        </div>
+      </form>
+    </div>
+
+    <div class="card">
+      <div class="security-header">
+        <div class="security-icon"><i class="pi pi-send"></i></div>
+        <div>
+          <h3>Envoyer un email de test</h3>
+          <p>Vérifiez que la configuration fonctionne réellement avec votre serveur</p>
+        </div>
+      </div>
+
+      @if (testError()) {
+        <p class="banner-error">{{ testError() }}</p>
+      }
+      @if (testOk()) {
+        <p class="banner-success">Email de test envoyé avec succès</p>
+      }
+
+      <form [formGroup]="testForm" (ngSubmit)="sendTest()" class="test-form">
+        <div class="field">
+          <label for="recipient">Destinataire</label>
+          <input id="recipient" pInputText type="email" formControlName="recipient" placeholder="vous@entreprise.com" fluid />
+        </div>
+        <p-button
+          type="submit"
+          [label]="testing() ? 'Envoi...' : 'Envoyer le test'"
+          [icon]="testing() ? 'pi pi-spin pi-spinner' : 'pi pi-send'"
+          severity="secondary"
+          [outlined]="true"
+          [loading]="testing()"
+          [disabled]="testing()"
+        />
+      </form>
+    </div>
+  }
+</div>

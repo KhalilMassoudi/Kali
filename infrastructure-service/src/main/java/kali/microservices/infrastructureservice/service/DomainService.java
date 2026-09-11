@@ -37,6 +37,10 @@ public class DomainService {
         return domainRepository.findByUserId(userId);
     }
 
+    public List<Domain> getAllDomains() {
+        return domainRepository.findAll();
+    }
+
     public Domain getDomainById(Long id) {
         return domainRepository.findById(id)
                 .orElseThrow(() -> new RuntimeException("Domaine non trouvé: " + id));

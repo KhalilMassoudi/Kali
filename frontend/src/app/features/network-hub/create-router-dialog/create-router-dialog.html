@@ -1,0 +1,42 @@
+<p-dialog
+  [(visible)]="visible"
+  [modal]="true"
+  header="Créer un routeur"
+  [style]="{ width: '28rem' }"
+  [dismissableMask]="true"
+>
+  <p class="dialog-subtitle">Un routeur relie vos réseaux privés entre eux et, optionnellement, à un réseau externe</p>
+
+  @if (error()) {
+    <p-message severity="error" styleClass="dialog-error">{{ error() }}</p-message>
+  }
+
+  <form [formGroup]="form" (ngSubmit)="submit()" class="dialog-form">
+    <div class="field">
+      <label for="name">Nom du routeur</label>
+      <input id="name" pInputText formControlName="name" placeholder="mon-routeur" fluid />
+    </div>
+
+    <div class="field">
+      <label for="gateway">Passerelle externe (optionnel)</label>
+      <p-select
+        id="gateway"
+        [options]="gatewayOptions()"
+        optionLabel="label"
+        optionValue="value"
+        formControlName="externalNetworkId"
+        [fluid]="true"
+      />
+    </div>
+
+    <div class="dialog-footer">
+      <p-button label="Annuler" severity="secondary" [outlined]="true" type="button" styleClass="footer-btn" (onClick)="close()" />
+      <p-button
+        [label]="loading() ? 'Création...' : 'Créer le routeur'"
+        type="submit"
+        [loading]="loading()"
+        styleClass="footer-btn"
+      />
+    </div>
+  </form>
+</p-dialog>

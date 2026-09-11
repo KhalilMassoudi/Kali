@@ -1,0 +1,19 @@
+<div class="chart-wrap">
+  @if (hasData()) {
+    <svg [attr.viewBox]="'0 0 ' + width + ' ' + height" class="chart-svg" preserveAspectRatio="xMidYMid meet">
+      <polyline [attr.points]="polylinePoints()" class="chart-line" fill="none" />
+    </svg>
+    <div class="chart-meta">
+      <span>{{ formatTimestamp(firstTimestamp()) }}</span>
+      <span class="chart-current">
+        Dernière valeur : <strong>{{ lastValue() | number: '1.0-2' }}{{ unit() }}</strong>
+      </span>
+      <span>{{ formatTimestamp(lastTimestamp()) }}</span>
+    </div>
+  } @else {
+    <div class="chart-empty">
+      <i class="pi pi-chart-line"></i>
+      <span>Aucune donnée pour ce point de mesure pour l'instant</span>
+    </div>
+  }
+</div>

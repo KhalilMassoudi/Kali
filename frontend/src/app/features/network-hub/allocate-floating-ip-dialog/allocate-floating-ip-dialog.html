@@ -1,0 +1,28 @@
+<p-dialog
+  [(visible)]="visible"
+  [modal]="true"
+  header="Allouer une IP flottante"
+  [style]="{ width: '26rem' }"
+  [dismissableMask]="true"
+>
+  @if (error()) {
+    <p-message severity="error" styleClass="dialog-error">{{ error() }}</p-message>
+  }
+
+  <div class="field">
+    <label for="pool">Pool</label>
+    <p-select
+      id="pool"
+      [options]="pools()"
+      [ngModel]="selectedPool()"
+      (ngModelChange)="selectedPool.set($event)"
+      placeholder="Pool par défaut"
+      [fluid]="true"
+    />
+  </div>
+
+  <div class="dialog-footer">
+    <p-button label="Annuler" severity="secondary" [outlined]="true" type="button" styleClass="footer-btn" (onClick)="close()" />
+    <p-button [label]="loading() ? 'Allocation...' : 'Allouer'" [loading]="loading()" styleClass="footer-btn" (onClick)="submit()" />
+  </div>
+</p-dialog>

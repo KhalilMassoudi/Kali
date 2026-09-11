@@ -1,0 +1,24 @@
+<div class="gauge">
+  <svg [attr.viewBox]="'0 0 ' + size + ' ' + size" class="gauge-svg">
+    <circle
+      [attr.cx]="size / 2"
+      [attr.cy]="size / 2"
+      [attr.r]="radius"
+      class="gauge-track"
+      fill="none"
+    />
+    <circle
+      [attr.cx]="size / 2"
+      [attr.cy]="size / 2"
+      [attr.r]="radius"
+      class="gauge-fill"
+      fill="none"
+      [style.stroke]="color()"
+      [attr.stroke-dasharray]="circumference"
+      [attr.stroke-dashoffset]="dashOffset()"
+      [attr.transform]="'rotate(-90 ' + size / 2 + ' ' + size / 2 + ')'"
+    />
+    <text [attr.x]="size / 2" [attr.y]="size / 2 + 4" class="gauge-text" text-anchor="middle">{{ centerText() }}</text>
+  </svg>
+  <p class="gauge-label">{{ label() }}</p>
+</div>

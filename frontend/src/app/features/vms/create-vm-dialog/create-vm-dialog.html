@@ -1,0 +1,200 @@
+<p-dialog
+  [(visible)]="visible"
+  [modal]="true"
+  header="Créer une VM"
+  [style]="{ width: '32rem' }"
+  [dismissableMask]="true"
+  styleClass="create-vm-dialog"
+>
+  <p class="dialog-subtitle">Configurez votre machine virtuelle</p>
+
+  @if (error()) {
+    <p-message severity="error" styleClass="dialog-error">{{ error() }}</p-message>
+  }
+
+  <form [formGroup]="form" (ngSubmit)="submit()" class="dialog-form">
+    @if (isAdmin()) {
+      <div class="field">
+        <label for="targetClient">Client</label>
+        <p-select
+          inputId="targetClient"
+          [options]="clientOptions()"
+          [ngModel]="targetUserId()"
+          (ngModelChange)="onTargetUserChange($event)"
+          [ngModelOptions]="{ standalone: true }"
+          optionLabel="label"
+          optionValue="value"
+          placeholder="Choisir un client"
+          [fluid]="true"
+        />
+        <p class="field-hint">En tant qu'administrateur, choisissez pour quel client cette VM est créée</p>
+      </div>
+    }
+
+    <div class="field">
+      <label for="name">Nom de la VM</label>
+      <input
+        id="name"
+        pInputText
+        formControlName="name"
+        placeholder="mon-serveur-web"
+        fluid
+        [invalid]="!!nameError"
+      />
+      @if (nameError) {
+        <p class="field-error">{{ nameError }}</p>
+      } @else {
+        <p class="field-hint">Lettres minuscules, chiffres et tirets uniquement</p>
+      }
+    </div>
+
+    <div class="field">
+      <label>Source de l'image</label>
+      <div class="source-toggle">
+        <button type="button" class="source-btn" [class.active]="source() === 'catalog'" (click)="source.set('catalog')">
+          Catalogue d'images
+        </button>
+        <button type="button" class="source-btn" [class.active]="source() === 'backup'" (click)="source.set('backup')">
+          Depuis un snapshot/backup
+        </button>
+      </div>
+    </div>
+
+    @if (source() === 'catalog') {
+      <div class="field">
+        <label for="os">Système d'exploitation</label>
+        <p-select
+          inputId="os"
+          formControlName="os"
+          [options]="osOptions()"
+          optionLabel="label"
+          optionValue="value"
+          [fluid]="true"
+        />
+        @if (!usingCatalog()) {
+          <p class="field-hint">Aucune image publiée dans le catalogue — liste par défaut utilisée.</p>
+        }
+      </div>
+    } @else {
+      <div class="field">
+        <label>VM source</label>
+        <p-select
+          [options]="myVms()"
+          [ngModel]="backupSourceVmId()"
+          (ngModelChange)="selectBackupSourceVm($event)"
+          [ngModelOptions]="{ standalone: true }"
+          optionLabel="name"
+          optionValue="id"
+          placeholder="Choisir une VM"
+          [fluid]="true"
+        />
+      </div>
+      <div class="field">
+        <label>Snapshot / backup</label>
+        <p-select
+          [options]="backupOptions()"
+          [ngModel]="selectedBackupId()"
+          (ngModelChange)="selectedBackupId.set($event)"
+          [ngModelOptions]="{ standalone: true }"
+          optionLabel="name"
+          optionValue="id"
+          [loading]="backupsLoading()"
+          placeholder="Choisir un snapshot"
+          [disabled]="!backupSourceVmId()"
+          [fluid]="true"
+        />
+        <p class="field-hint">Redéploie une nouvelle VM à partir de ce snapshot/backup.</p>
+      </div>
+    }
+
+    <div class="field-row">
+      <div class="field">
+        <label for="ram">RAM</label>
+        <p-select inputId="ram" formControlName="ram" [options]="ramOptions" optionLabel="label" optionValue="value" [fluid]="true" />
+      </div>
+      <div class="field">
+        <label for="cpu">CPU (vCPU)</label>
+        <p-select inputId="cpu" formControlName="cpu" [options]="cpuOptions" optionLabel="label" optionValue="value" [fluid]="true" />
+      </div>
+    </div>
+
+    <div class="field">
+      <label for="storage">Stockage</label>
+      <p-select
+        inputId="storage"
+        formControlName="storage"
+        [options]="storageOptions"
+        optionLabel="label"
+        optionValue="value"
+        [fluid]="true"
+      />
+    </div>
+
+    <div class="field">
+      <label for="network">Réseau <span class="field-optional">(optionnel)</span></label>
+      <p-select
+        inputId="network"
+        formControlName="networkId"
+        [options]="networkOptions()"
+        optionLabel="name"
+        optionValue="id"
+        placeholder="Sélection automatique"
+        [showClear]="true"
+        [loading]="catalogLoading()"
+        [fluid]="true"
+      />
+      <p class="field-hint">Laissez vide pour une sélection automatique du réseau OpenStack</p>
+    </div>
+
+    <div class="field">
+      <label for="securityGroups">Groupes de sécurité <span class="field-optional">(optionnel)</span></label>
+      <p-multiselect
+        inputId="securityGroups"
+        formControlName="securityGroups"
+        [options]="securityGroupOptions()"
+        optionLabel="name"
+        optionValue="name"
+        placeholder="Aucun groupe sélectionné"
+        [loading]="catalogLoading()"
+        [fluid]="true"
+      />
+    </div>
+
+    <div class="field">
+      <label for="keypair">Paire de clés SSH <span class="field-optional">(optionnel)</span></label>
+      <p-select
+        inputId="keypair"
+        formControlName="keypairId"
+        [options]="keypairOptions()"
+        optionLabel="label"
+        optionValue="value"
+        [fluid]="true"
+      />
+      <p class="field-hint">Gérez vos paires de clés depuis <a routerLink="/keypairs">Paires de clés SSH</a></p>
+    </div>
+
+    <div class="field">
+      <label for="serverGroup">Groupe de serveurs <span class="field-optional">(optionnel)</span></label>
+      <p-select
+        inputId="serverGroup"
+        formControlName="serverGroupId"
+        [options]="serverGroupSelectOptions()"
+        optionLabel="label"
+        optionValue="value"
+        [fluid]="true"
+      />
+      <p class="field-hint">Gérez vos groupes depuis <a routerLink="/server-groups">Groupes de serveurs</a></p>
+    </div>
+
+    <div class="dialog-footer">
+      <p-button label="Annuler" severity="secondary" [outlined]="true" type="button" styleClass="footer-btn" (onClick)="close()" />
+      <p-button
+        [label]="loading() ? 'Création...' : 'Créer la VM'"
+        type="submit"
+        [loading]="loading()"
+        [disabled]="(isAdmin() && !targetUserId()) || (source() === 'backup' && !selectedBackupId())"
+        styleClass="footer-btn"
+      />
+    </div>
+  </form>
+</p-dialog>

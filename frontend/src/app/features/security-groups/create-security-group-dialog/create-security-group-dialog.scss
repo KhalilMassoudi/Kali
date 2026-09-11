@@ -1,0 +1,60 @@
+:host {
+  display: block;
+}
+
+.dialog-subtitle {
+  margin-top: -0.5rem;
+  margin-bottom: 1.25rem;
+  font-size: 0.75rem;
+  color: var(--text-dim);
+}
+
+::ng-deep .dialog-error {
+  display: block;
+  margin-bottom: 1.25rem;
+  width: 100%;
+}
+
+.dialog-form {
+  display: flex;
+  flex-direction: column;
+  gap: 1.25rem;
+}
+
+.field {
+  label {
+    display: block;
+    margin-bottom: 0.5rem;
+    font-size: 0.8125rem;
+    font-weight: 600;
+    color: #cbd5e1;
+  }
+}
+
+.field-optional {
+  font-weight: 400;
+  color: var(--text-faint);
+}
+
+.field-error {
+  margin-top: 0.375rem;
+  font-size: 0.75rem;
+  color: var(--brand-crit);
+}
+
+.field-hint {
+  margin-top: 0.375rem;
+  font-size: 0.6875rem;
+  color: var(--text-faint);
+}
+
+.dialog-footer {
+  display: flex;
+  gap: 0.75rem;
+  padding-top: 0.5rem;
+
+  ::ng-deep .footer-btn {
+    flex: 1;
+    width: 100%;
+  }
+}

@@ -1,0 +1,41 @@
+<p-dialog
+  [(visible)]="visible"
+  [modal]="true"
+  [header]="volume() ? 'Attacher — ' + volume()!.name : 'Attacher le volume'"
+  [style]="{ width: '26rem' }"
+  [dismissableMask]="true"
+  styleClass="attach-volume-dialog"
+>
+  @if (error()) {
+    <p-message severity="error" styleClass="dialog-error">{{ error() }}</p-message>
+  }
+
+  @if (vmOptions().length === 0) {
+    <p class="no-vms">Aucune machine virtuelle disponible pour l'attachement.</p>
+  } @else {
+    <div class="field">
+      <label for="vps">Machine virtuelle</label>
+      <p-select
+        inputId="vps"
+        [options]="vmOptions()"
+        optionLabel="name"
+        optionValue="id"
+        placeholder="Choisir une VM"
+        [ngModel]="selectedVpsId()"
+        (ngModelChange)="selectedVpsId.set($event)"
+        [fluid]="true"
+      />
+    </div>
+  }
+
+  <div class="dialog-footer">
+    <p-button label="Annuler" severity="secondary" [outlined]="true" type="button" styleClass="footer-btn" (onClick)="close()" />
+    <p-button
+      [label]="loading() ? 'Attachement...' : 'Attacher'"
+      [loading]="loading()"
+      [disabled]="!selectedVpsId()"
+      styleClass="footer-btn"
+      (onClick)="attach()"
+    />
+  </div>
+</p-dialog>

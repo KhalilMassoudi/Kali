@@ -1,0 +1,39 @@
+:host {
+  display: block;
+}
+
+.gauge {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 0.5rem;
+}
+
+.gauge-svg {
+  width: 6rem;
+  height: 6rem;
+}
+
+.gauge-track {
+  stroke: var(--brand-border, rgba(255, 255, 255, 0.08));
+  stroke-width: 9;
+}
+
+.gauge-fill {
+  stroke-width: 9;
+  stroke-linecap: round;
+  transition: stroke-dashoffset 0.4s ease;
+}
+
+.gauge-text {
+  font-size: 0.9375rem;
+  font-weight: 700;
+  fill: #fff;
+}
+
+.gauge-label {
+  font-size: 0.75rem;
+  font-weight: 600;
+  color: var(--text-dim);
+  text-align: center;
+}

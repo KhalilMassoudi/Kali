@@ -1,0 +1,84 @@
+<div class="page">
+  <div class="page-head">
+    <div>
+      <h2>Paires de clés SSH</h2>
+      <p class="subtitle">{{ keypairs().length }} paire{{ keypairs().length !== 1 ? 's' : '' }} de clés</p>
+    </div>
+    <div class="head-actions">
+      <p-button
+        label="Actualiser"
+        [icon]="loading() ? 'pi pi-spin pi-spinner' : 'pi pi-refresh'"
+        severity="secondary"
+        [outlined]="true"
+        [disabled]="loading()"
+        (onClick)="refresh()"
+      />
+      <p-button label="Créer une paire de clés" icon="pi pi-plus" (onClick)="showCreateDialog.set(true)" />
+    </div>
+  </div>
+
+  @if (error()) {
+    <div class="error-banner">
+      <span class="dot"></span>
+      <p>{{ error() }}</p>
+      <button type="button" (click)="clearError()">Fermer</button>
+    </div>
+  }
+
+  @if (loading() && keypairs().length === 0) {
+    <div class="loading-state">
+      <i class="pi pi-spin pi-spinner"></i>
+      <p>Chargement des paires de clés...</p>
+    </div>
+  } @else if (keypairs().length === 0) {
+    <div class="card empty-state">
+      <div class="empty-icon"><i class="pi pi-key"></i></div>
+      <p class="empty-title">Aucune paire de clés</p>
+      <p class="empty-text">Créez une paire de clés pour vous connecter en SSH à vos VMs sans mot de passe.</p>
+      <p-button label="Créer une paire de clés" icon="pi pi-plus" size="large" (onClick)="showCreateDialog.set(true)" />
+    </div>
+  } @else {
+    <div class="card">
+      <div class="table-wrap">
+        <p-table [value]="keypairs()" [rowHover]="true">
+          <ng-template #header>
+            <tr>
+              <th>Nom</th>
+              <th>Empreinte</th>
+              <th>Créée le</th>
+              <th></th>
+            </tr>
+          </ng-template>
+          <ng-template #body let-keypair>
+            <tr>
+              <td class="kp-name">{{ keypair.displayName }}</td>
+              <td class="mono">{{ keypair.fingerprint || '—' }}</td>
+              <td class="mono">{{ keypair.createdAt | date: 'mediumDate' }}</td>
+              <td>
+                <div class="action-group">
+                  <p-button
+                    [outlined]="true"
+                    size="small"
+                    severity="danger"
+                    [icon]="rowState(keypair).deleting ? 'pi pi-spin pi-spinner' : 'pi pi-trash'"
+                    [disabled]="rowState(keypair).deleting"
+                    pTooltip="Supprimer"
+                    tooltipPosition="top"
+                    (onClick)="remove(keypair)"
+                  />
+                </div>
+              </td>
+            </tr>
+          </ng-template>
+          <ng-template #emptymessage>
+            <tr>
+              <td colspan="4" class="empty-row">Aucune paire de clés</td>
+            </tr>
+          </ng-template>
+        </p-table>
+      </div>
+    </div>
+  }
+
+  <app-create-keypair-dialog [(visible)]="showCreateDialog" (created)="refresh()" />
+</div>

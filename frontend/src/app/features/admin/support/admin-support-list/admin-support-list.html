@@ -1,0 +1,78 @@
+<div class="page">
+  <div class="page-head">
+    <div>
+      <h2>Tickets support</h2>
+      <p class="subtitle">{{ tickets().length }} ticket{{ tickets().length !== 1 ? 's' : '' }}</p>
+    </div>
+    <div class="head-actions">
+      <p-button [outlined]="true" size="small" icon="pi pi-users" label="Agents" routerLink="/admin/support/agents" />
+      <p-button size="small" icon="pi pi-plus" label="Nouveau ticket" routerLink="/admin/support/new" />
+    </div>
+  </div>
+
+  @if (forbidden()) {
+    <div class="card empty-state">
+      <div class="empty-icon"><i class="pi pi-lock"></i></div>
+      <h3 class="empty-title">Permission requise</h3>
+      <p class="empty-text">
+        Vous n'avez pas la permission de gestion des tickets — demandez à un autre administrateur de vous l'accorder
+        dans la section Agents.
+      </p>
+    </div>
+  } @else {
+    @if (error()) {
+      <div class="error-banner">
+        <span class="dot"></span>
+        <p>{{ error() }}</p>
+      </div>
+    }
+
+    <div class="card filters-card">
+      <div class="filters">
+        <p-select [options]="statusOptions" [ngModel]="filterStatus()" (ngModelChange)="filterStatus.set($event); applyFilters()" optionLabel="label" optionValue="value" />
+        <p-select [options]="priorityOptions" [ngModel]="filterPriority()" (ngModelChange)="filterPriority.set($event); applyFilters()" optionLabel="label" optionValue="value" />
+        <p-select [options]="categoryOptions" [ngModel]="filterCategory()" (ngModelChange)="filterCategory.set($event); applyFilters()" optionLabel="label" optionValue="value" />
+      </div>
+    </div>
+
+    @if (loading()) {
+      <div class="loading-state">
+        <i class="pi pi-spin pi-spinner"></i>
+        <p>Chargement...</p>
+      </div>
+    } @else if (tickets().length === 0) {
+      <div class="card empty-state">
+        <div class="empty-icon"><i class="pi pi-ticket"></i></div>
+        <h3 class="empty-title">Aucun ticket</h3>
+        <p class="empty-text">Aucun ticket ne correspond aux filtres actuels.</p>
+      </div>
+    } @else {
+      <div class="card">
+        <div class="table-wrap">
+          <table class="tickets-table">
+            <thead>
+              <tr>
+                <th>Titre</th>
+                <th>Client</th>
+                <th>Priorité</th>
+                <th>Statut</th>
+                <th>Créé le</th>
+              </tr>
+            </thead>
+            <tbody>
+              @for (ticket of tickets(); track ticket.id) {
+                <tr (click)="openTicket(ticket.id)">
+                  <td>#{{ ticket.id }} — {{ ticket.title }}</td>
+                  <td>{{ clientLabel(ticket.userId) }}</td>
+                  <td>{{ priorityLabel(ticket.priority) }}</td>
+                  <td><p-tag [value]="statusLabel(ticket.status)" [severity]="statusSeverity(ticket.status)" [rounded]="true" /></td>
+                  <td>{{ ticket.createdAt | date: 'short' }}</td>
+                </tr>
+              }
+            </tbody>
+          </table>
+        </div>
+      </div>
+    }
+  }
+</div>

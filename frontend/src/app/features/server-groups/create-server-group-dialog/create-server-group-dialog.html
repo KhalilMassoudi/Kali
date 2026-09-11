@@ -1,0 +1,36 @@
+<p-dialog
+  [(visible)]="visible"
+  [modal]="true"
+  header="Créer un groupe de serveurs"
+  [style]="{ width: '28rem' }"
+  [dismissableMask]="true"
+  styleClass="create-server-group-dialog"
+>
+  <p class="dialog-subtitle">Un groupe de serveurs indique à OpenStack comment placer vos VMs les unes par rapport aux autres</p>
+
+  @if (error()) {
+    <p-message severity="error" styleClass="dialog-error">{{ error() }}</p-message>
+  }
+
+  <form [formGroup]="form" (ngSubmit)="submit()" class="dialog-form">
+    <div class="field">
+      <label for="name">Nom du groupe</label>
+      <input id="name" pInputText formControlName="name" placeholder="web-servers" fluid />
+    </div>
+
+    <div class="field">
+      <label for="policy">Politique de placement</label>
+      <p-select id="policy" [options]="policies" optionLabel="label" optionValue="value" formControlName="policy" [fluid]="true" />
+    </div>
+
+    <div class="dialog-footer">
+      <p-button label="Annuler" severity="secondary" [outlined]="true" type="button" styleClass="footer-btn" (onClick)="close()" />
+      <p-button
+        [label]="loading() ? 'Création...' : 'Créer le groupe'"
+        type="submit"
+        [loading]="loading()"
+        styleClass="footer-btn"
+      />
+    </div>
+  </form>
+</p-dialog>

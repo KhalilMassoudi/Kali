@@ -1,0 +1,23 @@
+@use '../../shared/styles/auth-panel' as *;
+
+:host {
+  display: block;
+}
+
+.field-label-row {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  margin-bottom: 0.5rem;
+
+  label { margin-bottom: 0; }
+}
+
+.forgot-link {
+  font-size: 0.75rem;
+  font-weight: 600;
+  color: var(--brand-primary);
+  text-decoration: none;
+
+  &:hover { color: var(--brand-accent); }
+}

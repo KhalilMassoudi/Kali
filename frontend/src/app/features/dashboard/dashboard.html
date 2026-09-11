@@ -1,0 +1,210 @@
+<div class="page">
+@if (isAdmin()) {
+  <app-admin-overview />
+} @else {
+  <!-- Head -->
+  <div class="page-head">
+    <div>
+      <h2>Bonjour, {{ firstName() }}</h2>
+      <p class="subtitle">
+        @if (running() > 0) {
+          {{ running() }} VM{{ running() > 1 ? 's' : '' }} en marche sur {{ vms().length }} — infrastructure globalement stable
+        } @else {
+          Démarrez votre première machine virtuelle dès maintenant
+        }
+      </p>
+    </div>
+    <div class="head-actions">
+      <p-button label="Assistant IA" icon="pi pi-comments" severity="secondary" [outlined]="true" routerLink="/chat" />
+      <p-button label="Créer une VM" icon="pi pi-plus" routerLink="/vms" />
+    </div>
+  </div>
+
+  <!-- Telemetry strip -->
+  <div class="card telemetry-strip">
+    <div class="tcell tcell-1">
+      <div class="tcell-top">
+        <span class="tcell-label">Flotte totale</span>
+      </div>
+      <p class="tcell-value">{{ loading() ? '—' : pad(vms().length) }}</p>
+      <p class="tcell-sub">{{ running() }} active{{ running() !== 1 ? 's' : '' }}</p>
+    </div>
+
+    <div class="tcell tcell-2">
+      <div class="tcell-top">
+        <span class="tcell-label">En marche</span>
+        @if (running() > 0) {
+          <span class="live-dot"></span>
+        }
+      </div>
+      <p class="tcell-value">{{ loading() ? '—' : pad(running()) }}<small>/{{ pad(vms().length) }}</small></p>
+      <p class="tcell-sub">Instances actives</p>
+    </div>
+
+    <div class="tcell tcell-3">
+      <div class="tcell-top">
+        <span class="tcell-label">vCPUs alloués</span>
+      </div>
+      <p class="tcell-value">{{ loading() ? '—' : totalCpu() }}<small>vCPU</small></p>
+      <p class="tcell-sub">{{ vms().length }} VM{{ vms().length !== 1 ? 's' : '' }}</p>
+    </div>
+
+    <div class="tcell">
+      <div class="tcell-top">
+        <span class="tcell-label">RAM allouée</span>
+      </div>
+      <p class="tcell-value">{{ loading() ? '—' : ramDisplay() }}</p>
+      <p class="tcell-sub">{{ stopped() > 0 ? stopped() + ' arrêtée' + (stopped() > 1 ? 's' : '') : 'Aucune arrêtée' }}</p>
+    </div>
+  </div>
+
+  <!-- Main grid -->
+  <div class="main-grid">
+    <!-- Fleet register -->
+    <div class="fleet-col">
+      <div class="card fleet-card">
+        <div class="card-header">
+          <div class="card-header-left">
+            <i class="pi pi-server card-header-icon"></i>
+            <span class="card-header-title">Registre de flotte</span>
+            @if (!loading()) {
+              <span class="count-badge">{{ vms().length }}</span>
+            }
+          </div>
+          <a routerLink="/vms" class="card-header-link">
+            Voir tout <i class="pi pi-arrow-right"></i>
+          </a>
+        </div>
+
+        @if (loading()) {
+          <div class="empty-state">
+            <i class="pi pi-spin pi-spinner"></i>
+            <p>Chargement...</p>
+          </div>
+        } @else if (recentVms().length === 0) {
+          <div class="empty-state">
+            <div class="empty-icon"><i class="pi pi-server"></i></div>
+            <p class="empty-title">Aucune machine virtuelle</p>
+            <p class="empty-text">Déployez votre première VM en quelques secondes</p>
+            <p-button label="Créer ma première VM" icon="pi pi-plus" routerLink="/vms" />
+          </div>
+        } @else {
+          <app-vm-table [vms]="recentVms()" (deleted)="refresh()" />
+        }
+
+        @if (!loading() && vms().length > 0 && quota()) {
+          <div class="resource-footer">
+            <p class="resource-footer-label">Aperçu des ressources (quota)</p>
+            <div class="gauge-grid">
+              <app-resource-gauge label="VMs" [used]="quota()!.usage.vmCount" [total]="quota()!.quota.maxVms" color="var(--brand-accent)" />
+              <app-resource-gauge label="vCPUs" [used]="quota()!.usage.totalVcpu" [total]="quota()!.quota.maxVcpu" color="var(--brand-warn, #f59e0b)" />
+              <app-resource-gauge
+                label="RAM"
+                [used]="quota()!.usage.totalRamMb"
+                [total]="quota()!.quota.maxRamMb"
+                [displayValue]="ramDisplay() + ' / ' + (quota()!.quota.maxRamMb / 1024) + ' GB'"
+                color="var(--brand-warn, #f59e0b)"
+              />
+              <app-resource-gauge
+                label="Stockage"
+                [used]="quota()!.usage.totalStorageGb"
+                [total]="quota()!.quota.maxStorageGb"
+                [displayValue]="quota()!.usage.totalStorageGb + '/' + quota()!.quota.maxStorageGb + 'GB'"
+                color="var(--brand-good, #22c55e)"
+              />
+              <app-resource-gauge label="Volumes" [used]="quota()!.usage.volumeCount" [total]="quota()!.quota.maxVolumes" color="var(--brand-good, #22c55e)" />
+              <app-resource-gauge label="Réseaux" [used]="quota()!.usage.networkCount" [total]="quota()!.quota.maxNetworks" color="var(--brand-accent)" />
+              <app-resource-gauge
+                label="Groupes de sécurité"
+                [used]="quota()!.usage.securityGroupCount"
+                [total]="quota()!.quota.maxSecurityGroups"
+                color="var(--brand-crit, #ef4444)"
+              />
+            </div>
+          </div>
+          <div class="resource-footer">
+            <p class="resource-footer-label">Utilisation en temps réel (Gnocchi)</p>
+            @if (metrics()?.dataAvailable) {
+              <p class="tcell-sub">CPU moyen: {{ metrics()!.avgCpuUtil?.toFixed(1) }}%</p>
+            } @else {
+              <p class="tcell-sub">Pas encore de données de télémétrie disponibles pour vos VMs.</p>
+            }
+          </div>
+        }
+      </div>
+    </div>
+
+    <!-- Ops rail -->
+    <div class="ops-rail">
+      <div class="card">
+        <div class="card-header">
+          <div class="card-header-left">
+            <i class="pi pi-shield card-header-icon good"></i>
+            <span class="card-header-title">Santé infrastructure</span>
+          </div>
+        </div>
+        <div>
+          <div class="health-row">
+            <div class="health-left">
+              <span class="health-dot" [class.warn]="errored() > 0"></span>
+              <span>Compute (VMs)</span>
+            </div>
+            <span class="health-val" [class.warn]="errored() > 0">{{ running() }}/{{ vms().length }} actives</span>
+          </div>
+          <div class="health-row">
+            <div class="health-left">
+              <span class="health-dot"></span>
+              <span>Réseau</span>
+            </div>
+            <span class="health-val">Opérationnel</span>
+          </div>
+          <div class="health-row">
+            <div class="health-left">
+              <span class="health-dot"></span>
+              <span>Stockage</span>
+            </div>
+            <span class="health-val">Opérationnel</span>
+          </div>
+          <div class="health-row">
+            <div class="health-left">
+              <span class="health-dot"></span>
+              <span>Sécurité</span>
+            </div>
+            <span class="health-val">Protégé</span>
+          </div>
+        </div>
+      </div>
+
+      <div class="card actions-card">
+        <div class="card-header">
+          <div class="card-header-left">
+            <i class="pi pi-bolt card-header-icon"></i>
+            <span class="card-header-title">Actions rapides</span>
+          </div>
+        </div>
+        <div class="actions-list">
+          @for (a of quickActions; track a.title; let first = $first) {
+            <button type="button" class="action-row" [class.no-border]="first" (click)="a.action()">
+              <div class="action-icon"><i [class]="a.icon" [class.good]="a.color === 'good'"></i></div>
+              <div class="action-text">
+                <p class="action-title">{{ a.title }}</p>
+                <p class="action-desc">{{ a.desc }}</p>
+              </div>
+              <i class="pi pi-arrow-right action-arrow"></i>
+            </button>
+          }
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <!-- Error alert -->
+  @if (errored() > 0) {
+    <div class="error-banner">
+      <i class="pi pi-exclamation-circle"></i>
+      <p><strong>{{ errored() }} VM{{ errored() > 1 ? 's' : '' }}</strong> en état d'erreur — vérifiez votre infrastructure</p>
+      <a routerLink="/vms">Voir les VMs →</a>
+    </div>
+  }
+}
+</div>

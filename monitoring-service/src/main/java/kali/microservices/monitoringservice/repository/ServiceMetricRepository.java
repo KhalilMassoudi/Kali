@@ -18,4 +18,7 @@ public interface ServiceMetricRepository extends JpaRepository<ServiceMetric, Lo
     List<ServiceMetric> findLatestMetricPerService();
 
     Optional<ServiceMetric> findTopByServiceNameOrderByTimestampDesc(String serviceName);
+
+    @Query("SELECT DISTINCT m.serviceName FROM ServiceMetric m ORDER BY m.serviceName")
+    List<String> findDistinctServiceNames();
 }

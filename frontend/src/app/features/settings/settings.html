@@ -1,0 +1,423 @@
+<div class="page">
+  <div class="page-head">
+    <div>
+      <h2>Paramètres</h2>
+      <p class="subtitle">Gérez votre compte et vos préférences</p>
+    </div>
+  </div>
+
+  <p-tabs value="0" styleClass="settings-tabs">
+    <p-tablist>
+      <p-tab value="0"><i class="pi pi-user"></i> Profil</p-tab>
+      <p-tab value="1"><i class="pi pi-shield"></i> Sécurité</p-tab>
+      <p-tab value="2"><i class="pi pi-sliders-h"></i> Préférences</p-tab>
+    </p-tablist>
+
+    <p-tabpanels>
+      <!-- Profile -->
+      <p-tabpanel value="0">
+        <div class="card">
+          <div class="avatar-section">
+            <div class="avatar">{{ initials() || '?' }}</div>
+            <div>
+              <h3>{{ displayName() || 'Utilisateur' }}</h3>
+              <p class="email">{{ user()?.email }}</p>
+              <div class="badges">
+                <p-tag [value]="user()?.role || 'USER'" severity="info" [rounded]="true" />
+                <p-tag
+                  [value]="user()?.enabled === false ? 'Désactivé' : 'Actif'"
+                  [severity]="user()?.enabled === false ? 'danger' : 'success'"
+                  [rounded]="true"
+                  icon="pi pi-circle-fill"
+                />
+              </div>
+            </div>
+          </div>
+
+          @if (profileError()) {
+            <p class="banner-error">{{ profileError() }}</p>
+          }
+
+          <form [formGroup]="profileForm" (ngSubmit)="saveProfile()" class="profile-form">
+            <div class="name-row">
+              <div class="field">
+                <label for="firstName">Prénom</label>
+                <input id="firstName" pInputText formControlName="firstName" placeholder="Jean" fluid />
+              </div>
+              <div class="field">
+                <label for="lastName">Nom</label>
+                <input id="lastName" pInputText formControlName="lastName" placeholder="Dupont" fluid />
+              </div>
+            </div>
+
+            <div class="field">
+              <label for="email">Adresse email</label>
+              <input id="email" pInputText type="email" [value]="user()?.email || ''" disabled fluid />
+              <p class="field-hint">L'adresse email ne peut pas être modifiée</p>
+            </div>
+
+            <div class="form-footer">
+              <p class="user-id">
+                ID: {{ user()?.id || '—' }}
+                @if (user()?.createdAt) {
+                  · Membre depuis {{ user()!.createdAt | date: 'mediumDate' }}
+                }
+              </p>
+              <p-button
+                type="submit"
+                [label]="savingProfile() ? 'Enregistrement...' : savedProfile() ? 'Enregistré !' : 'Enregistrer'"
+                [icon]="savingProfile() ? 'pi pi-spin pi-spinner' : savedProfile() ? 'pi pi-check' : 'pi pi-save'"
+                [loading]="savingProfile()"
+                [disabled]="savingProfile()"
+              />
+            </div>
+          </form>
+        </div>
+      </p-tabpanel>
+
+      <!-- Security -->
+      <p-tabpanel value="1">
+        <div class="security-stack">
+          <div class="card">
+            <div class="security-header">
+              <div class="security-icon warn"><i class="pi pi-key"></i></div>
+              <div>
+                <h3>Changer le mot de passe</h3>
+                <p>Mettez à jour votre mot de passe régulièrement</p>
+              </div>
+            </div>
+
+            @if (passwordError()) {
+              <p class="banner-error">{{ passwordError() }}</p>
+            }
+            @if (passwordChanged()) {
+              <p class="banner-success">Mot de passe mis à jour avec succès</p>
+            }
+
+            <form [formGroup]="securityForm" (ngSubmit)="changePassword()" class="security-form">
+              <div class="field">
+                <label for="current">Mot de passe actuel</label>
+                <input id="current" pInputText type="password" formControlName="current" placeholder="••••••••" fluid />
+              </div>
+              <div class="field">
+                <label for="next">Nouveau mot de passe</label>
+                <input id="next" pInputText type="password" formControlName="next" placeholder="Min. 6 caractères" fluid />
+                @if (newPasswordError) {
+                  <p class="field-error">{{ newPasswordError }}</p>
+                }
+              </div>
+              <div class="field">
+                <label for="confirm">Confirmer le mot de passe</label>
+                <input id="confirm" pInputText type="password" formControlName="confirm" placeholder="••••••••" fluid />
+                @if (confirmPasswordError) {
+                  <p class="field-error">{{ confirmPasswordError }}</p>
+                }
+              </div>
+              <p-button
+                label="Changer le mot de passe"
+                icon="pi pi-lock"
+                type="submit"
+                styleClass="warn-btn"
+                [loading]="changingPassword()"
+                [disabled]="changingPassword()"
+              />
+            </form>
+          </div>
+
+          <!-- API key -->
+          <div class="card">
+            <div class="security-header">
+              <div class="security-icon accent"><i class="pi pi-code"></i></div>
+              <div>
+                <h3>Clé API</h3>
+                <p>Utilisez cette clé pour authentifier vos appels à l'API Safozi</p>
+              </div>
+            </div>
+
+            <div class="api-key-row">
+              <code class="api-key-value">{{ maskedApiKey() }}</code>
+              <div class="api-key-actions">
+                <p-button
+                  [icon]="showApiKey() ? 'pi pi-eye-slash' : 'pi pi-eye'"
+                  severity="secondary"
+                  [outlined]="true"
+                  size="small"
+                  pTooltip="Afficher / masquer"
+                  tooltipPosition="top"
+                  (onClick)="toggleApiKeyVisibility()"
+                />
+                <p-button
+                  [icon]="keyCopied() ? 'pi pi-check' : 'pi pi-copy'"
+                  severity="secondary"
+                  [outlined]="true"
+                  size="small"
+                  pTooltip="Copier"
+                  tooltipPosition="top"
+                  (onClick)="copyApiKey()"
+                />
+              </div>
+            </div>
+
+            @if (confirmRegenerate()) {
+              <div class="confirm-row">
+                <p>Régénérer invalidera immédiatement l'ancienne clé. Continuer ?</p>
+                <div class="confirm-actions">
+                  <p-button
+                    label="Confirmer"
+                    severity="danger"
+                    size="small"
+                    [icon]="regeneratingKey() ? 'pi pi-spin pi-spinner' : 'pi pi-check'"
+                    [disabled]="regeneratingKey()"
+                    (onClick)="regenerateApiKey()"
+                  />
+                  <p-button label="Annuler" severity="secondary" [outlined]="true" size="small" (onClick)="cancelRegenerate()" />
+                </div>
+              </div>
+            } @else {
+              <p-button
+                label="Régénérer la clé"
+                icon="pi pi-refresh"
+                severity="secondary"
+                [outlined]="true"
+                size="small"
+                styleClass="regen-btn"
+                (onClick)="askRegenerate()"
+              />
+            }
+          </div>
+
+          <div class="card security-row" [class.expanded]="show2faSetup() || confirmDisable2fa()">
+            <div class="security-header no-margin">
+              <div class="security-icon accent"><i class="pi pi-bell"></i></div>
+              <div>
+                <h3>Authentification à deux facteurs</h3>
+                <p>Protégez votre compte avec un code à usage unique (TOTP)</p>
+              </div>
+            </div>
+
+            @if (setup2faError()) {
+              <p class="banner-error inline-banner">{{ setup2faError() }}</p>
+            }
+
+            @if (show2faSetup() && setupData()) {
+              <div class="twofa-setup">
+                <img [src]="setupData()!.qrCodeImage" alt="QR code 2FA" class="twofa-qr" />
+                <div class="twofa-setup-details">
+                  <p class="field-hint">
+                    Scannez ce QR code avec Google Authenticator, Authy ou équivalent — ou saisissez la clé
+                    manuellement :
+                  </p>
+                  <code class="twofa-secret">{{ setupData()!.secret }}</code>
+                  <div class="field">
+                    <label for="twofaCode">Code de vérification</label>
+                    <input
+                      id="twofaCode"
+                      pInputText
+                      [formControl]="verify2faForm.controls.code"
+                      placeholder="123456"
+                      maxlength="6"
+                      fluid
+                    />
+                  </div>
+                  <div class="confirm-actions">
+                    <p-button
+                      label="Confirmer et activer"
+                      severity="success"
+                      size="small"
+                      [icon]="verifying2fa() ? 'pi pi-spin pi-spinner' : 'pi pi-check'"
+                      [disabled]="verifying2fa()"
+                      (onClick)="confirmSetup2fa()"
+                    />
+                    <p-button
+                      label="Annuler"
+                      severity="secondary"
+                      [outlined]="true"
+                      size="small"
+                      [disabled]="verifying2fa()"
+                      (onClick)="cancelSetup2fa()"
+                    />
+                  </div>
+                </div>
+              </div>
+            } @else if (twoFactorEnabled()) {
+              @if (disable2faError()) {
+                <p class="banner-error inline-banner">{{ disable2faError() }}</p>
+              }
+              @if (confirmDisable2fa()) {
+                <div class="twofa-disable-form">
+                  <div class="field">
+                    <label for="disablePassword">Mot de passe</label>
+                    <input
+                      id="disablePassword"
+                      pInputText
+                      type="password"
+                      [formControl]="disable2faForm.controls.password"
+                      fluid
+                    />
+                  </div>
+                  <div class="field">
+                    <label for="disableCode">Code 2FA actuel</label>
+                    <input
+                      id="disableCode"
+                      pInputText
+                      [formControl]="disable2faForm.controls.code"
+                      placeholder="123456"
+                      maxlength="6"
+                      fluid
+                    />
+                  </div>
+                  <div class="confirm-actions">
+                    <p-button
+                      label="Désactiver la 2FA"
+                      severity="danger"
+                      size="small"
+                      [icon]="disabling2fa() ? 'pi pi-spin pi-spinner' : 'pi pi-check'"
+                      [disabled]="disabling2fa()"
+                      (onClick)="disable2fa()"
+                    />
+                    <p-button
+                      label="Annuler"
+                      severity="secondary"
+                      [outlined]="true"
+                      size="small"
+                      [disabled]="disabling2fa()"
+                      (onClick)="cancelDisable2fa()"
+                    />
+                  </div>
+                </div>
+              } @else {
+                <div class="twofa-status-row">
+                  <p-tag value="Activée" severity="success" [rounded]="true" icon="pi pi-check-circle" />
+                  <p-button label="Désactiver" severity="danger" [outlined]="true" size="small" (onClick)="askDisable2fa()" />
+                </div>
+              }
+            } @else {
+              <p-button
+                label="Activer la 2FA"
+                icon="pi pi-shield"
+                severity="secondary"
+                [outlined]="true"
+                size="small"
+                [loading]="settingUp2fa()"
+                (onClick)="startSetup2fa()"
+              />
+            }
+          </div>
+
+          <div class="card session-card">
+            <p class="session-title">Session active</p>
+            <div class="session-row">
+              <span>Statut</span>
+              <span class="session-val good">Connecté</span>
+            </div>
+            <div class="session-row">
+              <span>Rôle</span>
+              <span class="session-val info">{{ session()?.role || user()?.role || 'USER' }}</span>
+            </div>
+            <div class="session-row">
+              <span>Connecté depuis</span>
+              <span class="session-val">{{ formatDate(session()?.issuedAt ?? null) }}</span>
+            </div>
+            <div class="session-row">
+              <span>Expire le</span>
+              <span class="session-val">{{ formatDate(session()?.expiresAt ?? null) }}</span>
+            </div>
+            <div class="session-row">
+              <span>ID utilisateur</span>
+              <span class="session-val">{{ user()?.id || '—' }}</span>
+            </div>
+          </div>
+
+          <!-- Danger zone -->
+          <div class="card danger-card">
+            <div class="security-header">
+              <div class="security-icon danger"><i class="pi pi-exclamation-triangle"></i></div>
+              <div>
+                <h3>Zone dangereuse</h3>
+                <p>Désactiver votre compte vous déconnecte et bloque toute future connexion</p>
+              </div>
+            </div>
+
+            @if (deactivateError()) {
+              <p class="banner-error">{{ deactivateError() }}</p>
+            }
+
+            @if (confirmDeactivate()) {
+              <div class="confirm-row">
+                <p>Êtes-vous sûr ? Cette action désactive votre compte immédiatement.</p>
+                <div class="confirm-actions">
+                  <p-button
+                    label="Désactiver mon compte"
+                    severity="danger"
+                    size="small"
+                    [icon]="deactivating() ? 'pi pi-spin pi-spinner' : 'pi pi-check'"
+                    [disabled]="deactivating()"
+                    (onClick)="deactivateAccount()"
+                  />
+                  <p-button
+                    label="Annuler"
+                    severity="secondary"
+                    [outlined]="true"
+                    size="small"
+                    [disabled]="deactivating()"
+                    (onClick)="cancelDeactivate()"
+                  />
+                </div>
+              </div>
+            } @else {
+              <p-button
+                label="Désactiver mon compte"
+                icon="pi pi-user-minus"
+                severity="danger"
+                [outlined]="true"
+                size="small"
+                (onClick)="askDeactivate()"
+              />
+            }
+          </div>
+        </div>
+      </p-tabpanel>
+
+      <!-- Preferences -->
+      <p-tabpanel value="2">
+        <div class="card">
+          <div class="security-header">
+            <div class="security-icon accent"><i class="pi pi-sliders-h"></i></div>
+            <div>
+              <h3>Préférences d'affichage</h3>
+              <p>Stockées localement dans ce navigateur, propres à cet appareil</p>
+            </div>
+          </div>
+
+          <form [formGroup]="preferencesForm" class="preferences-form">
+            <div class="field">
+              <label for="landingPage">Page d'accueil après connexion</label>
+              <p-select
+                inputId="landingPage"
+                formControlName="landingPage"
+                [options]="landingPageOptions"
+                optionLabel="label"
+                optionValue="value"
+                [fluid]="true"
+              />
+              <p class="field-hint">La page affichée juste après votre connexion</p>
+            </div>
+
+            <div class="field">
+              <label for="tableDensity">Densité des tableaux</label>
+              <p-select
+                inputId="tableDensity"
+                formControlName="tableDensity"
+                [options]="densityOptions"
+                optionLabel="label"
+                optionValue="value"
+                [fluid]="true"
+              />
+              <p class="field-hint">S'applique aux listes de VMs et de volumes</p>
+            </div>
+          </form>
+        </div>
+      </p-tabpanel>
+    </p-tabpanels>
+  </p-tabs>
+</div>

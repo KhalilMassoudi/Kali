@@ -1,0 +1,79 @@
+:host {
+  display: block;
+}
+
+.dialog-subtitle {
+  margin-top: -0.5rem;
+  margin-bottom: 1.25rem;
+  font-size: 0.75rem;
+  color: var(--text-dim);
+}
+
+::ng-deep .dialog-error {
+  display: block;
+  margin-bottom: 1.25rem;
+  width: 100%;
+}
+
+.mode-tabs {
+  display: flex;
+  gap: 0.5rem;
+  margin-bottom: 1.25rem;
+}
+
+.mode-btn {
+  flex: 1;
+  padding: 0.5rem 0.75rem;
+  border-radius: 0.5rem;
+  border: 1px solid var(--border-subtle, #2a2f3a);
+  background: transparent;
+  color: var(--text-dim);
+  font-size: 0.75rem;
+  cursor: pointer;
+
+  &.active {
+    background: var(--brand-primary, #2563eb);
+    color: #fff;
+    border-color: transparent;
+  }
+}
+
+.dialog-form {
+  display: flex;
+  flex-direction: column;
+  gap: 1.25rem;
+}
+
+.field {
+  label {
+    display: block;
+    margin-bottom: 0.5rem;
+    font-size: 0.8125rem;
+    font-weight: 600;
+    color: #cbd5e1;
+  }
+}
+
+.private-key-box {
+  width: 100%;
+  font-family: var(--font-mono, monospace);
+  font-size: 0.6875rem;
+  padding: 0.75rem;
+  border-radius: 0.5rem;
+  border: 1px solid var(--border-subtle, #2a2f3a);
+  background: rgba(0, 0, 0, 0.3);
+  color: #e2e8f0;
+  resize: vertical;
+  margin-bottom: 1.25rem;
+}
+
+.dialog-footer {
+  display: flex;
+  gap: 0.75rem;
+  padding-top: 0.5rem;
+
+  ::ng-deep .footer-btn {
+    flex: 1;
+    width: 100%;
+  }
+}

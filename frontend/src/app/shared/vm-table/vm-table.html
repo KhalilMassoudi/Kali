@@ -1,0 +1,162 @@
+<!-- Desktop / tablet -->
+<div class="table-wrap">
+  <p-table [value]="vms()" styleClass="vm-table" [rowHover]="true" [size]="preferences.tableDensity() === 'compact' ? 'small' : undefined">
+    <ng-template #header>
+      <tr>
+        <th>Machine</th>
+        <th>Statut</th>
+        <th>CPU</th>
+        <th>RAM</th>
+        @if (showStorage()) {
+          <th>Stockage</th>
+        }
+        <th>Adresse IP</th>
+        <th></th>
+      </tr>
+    </ng-template>
+
+    <ng-template #body let-vm>
+      <tr>
+        <td>
+          <a class="vm-name" [routerLink]="['/vms', vm.id]">{{ vm.name }}</a>
+          <p class="vm-os">{{ vm.os || 'N/A' }}</p>
+        </td>
+        <td>
+          <p-tag [value]="statusLabel(vm.status)" [severity]="statusSeverity(vm.status)" [rounded]="true" />
+        </td>
+        <td [class.cell-dim]="isDim(vm)" class="mono">{{ vm.cpu }} vCPU</td>
+        <td [class.cell-dim]="isDim(vm)" class="mono">{{ formatRam(vm.ram) }}</td>
+        @if (showStorage()) {
+          <td [class.cell-dim]="isDim(vm)" class="mono">{{ vm.storage }} GB</td>
+        }
+        <td class="mono" [class.ip-set]="vm.ipAddress">{{ vm.ipAddress || '—' }}</td>
+        <td>
+          <ng-container *ngTemplateOutlet="actions; context: { vm }"></ng-container>
+        </td>
+      </tr>
+    </ng-template>
+
+    <ng-template #emptymessage>
+      <tr>
+        <td colspan="7" class="empty-row">Aucune machine virtuelle</td>
+      </tr>
+    </ng-template>
+  </p-table>
+</div>
+
+<!-- Mobile -->
+<div class="card-list">
+  @for (vm of vms(); track vm.id) {
+    <div class="vm-card">
+      <div class="vm-card-top">
+        <div class="vm-card-name">
+          <a class="vm-name" [routerLink]="['/vms', vm.id]">{{ vm.name }}</a>
+          <p class="vm-os">{{ vm.os || 'N/A' }}</p>
+        </div>
+        <p-tag [value]="statusLabel(vm.status)" [severity]="statusSeverity(vm.status)" [rounded]="true" />
+      </div>
+
+      <div class="vm-card-meta mono">
+        <span [class.cell-dim]="isDim(vm)">{{ vm.cpu }} vCPU</span>
+        <span [class.cell-dim]="isDim(vm)">{{ formatRam(vm.ram) }}</span>
+        @if (showStorage()) {
+          <span [class.cell-dim]="isDim(vm)">{{ vm.storage }} GB</span>
+        }
+        <span [class.ip-set]="vm.ipAddress">{{ vm.ipAddress || '—' }}</span>
+      </div>
+
+      <div class="vm-card-actions">
+        <ng-container *ngTemplateOutlet="actions; context: { vm }"></ng-container>
+      </div>
+    </div>
+  } @empty {
+    <p class="empty-row">Aucune machine virtuelle</p>
+  }
+</div>
+
+<ng-template #actions let-vm="vm">
+  @if (rowState(vm).confirmDelete) {
+    <div class="action-group">
+      <p-button
+        severity="danger"
+        size="small"
+        [label]="'Confirmer'"
+        [icon]="rowState(vm).actionLoading === 'delete' ? 'pi pi-spin pi-spinner' : 'pi pi-check'"
+        [disabled]="rowState(vm).actionLoading === 'delete'"
+        (onClick)="confirmDelete(vm)"
+      />
+      <p-button severity="secondary" [outlined]="true" size="small" icon="pi pi-times" (onClick)="cancelDelete(vm)" />
+    </div>
+  } @else {
+    <div class="action-group">
+      @if (vm.status === 'STOPPED') {
+        <p-button
+          [outlined]="true"
+          size="small"
+          severity="secondary"
+          [icon]="rowState(vm).actionLoading === 'start' ? 'pi pi-spin pi-spinner' : 'pi pi-play'"
+          [disabled]="!!rowState(vm).actionLoading"
+          pTooltip="Démarrer"
+          tooltipPosition="top"
+          (onClick)="start(vm)"
+        />
+      }
+      @if (vm.status === 'RUNNING') {
+        <p-button
+          [outlined]="true"
+          size="small"
+          severity="secondary"
+          [icon]="rowState(vm).actionLoading === 'stop' ? 'pi pi-spin pi-spinner' : 'pi pi-stop-circle'"
+          [disabled]="!!rowState(vm).actionLoading"
+          pTooltip="Arrêter"
+          tooltipPosition="top"
+          (onClick)="stop(vm)"
+        />
+        <p-button
+          [outlined]="true"
+          size="small"
+          severity="secondary"
+          [icon]="rowState(vm).actionLoading === 'restart' ? 'pi pi-spin pi-spinner' : 'pi pi-replay'"
+          [disabled]="!!rowState(vm).actionLoading"
+          pTooltip="Redémarrer"
+          tooltipPosition="top"
+          (onClick)="restart(vm)"
+        />
+      }
+      @if (vm.status !== 'DELETED') {
+        <p-button
+          [outlined]="true"
+          size="small"
+          severity="secondary"
+          [icon]="rowState(vm).actionLoading === 'refresh' ? 'pi pi-spin pi-spinner' : 'pi pi-sync'"
+          [disabled]="!!rowState(vm).actionLoading"
+          pTooltip="Actualiser le statut OpenStack"
+          tooltipPosition="top"
+          (onClick)="refreshStatus(vm)"
+        />
+        <p-button
+          [outlined]="true"
+          size="small"
+          severity="secondary"
+          icon="pi pi-heart-fill"
+          [disabled]="!!rowState(vm).actionLoading"
+          pTooltip="Santé & diagnostics"
+          tooltipPosition="top"
+          (onClick)="openHealth(vm)"
+        />
+      }
+      <p-button
+        [outlined]="true"
+        size="small"
+        severity="danger"
+        icon="pi pi-trash"
+        [disabled]="!!rowState(vm).actionLoading"
+        pTooltip="Supprimer"
+        tooltipPosition="top"
+        (onClick)="askDelete(vm)"
+      />
+    </div>
+  }
+</ng-template>
+
+<app-vm-health-dialog [vm]="healthVm()" [(visible)]="healthVisible" />

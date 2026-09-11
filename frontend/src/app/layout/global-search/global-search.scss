@@ -1,0 +1,134 @@
+:host {
+  position: relative;
+  display: block;
+  width: 100%;
+  max-width: 26rem;
+  min-width: 0;
+}
+
+.search-box {
+  display: flex;
+  align-items: center;
+  gap: 0.5rem;
+  padding: 0.5rem 0.75rem;
+  border-radius: 0.5rem;
+  border: 1px solid var(--brand-border, rgba(255, 255, 255, 0.1));
+  background: var(--brand-surface2, rgba(255, 255, 255, 0.03));
+
+  i.pi-search {
+    color: var(--text-faint);
+    font-size: 0.8125rem;
+  }
+
+  input {
+    flex: 1;
+    min-width: 0;
+    border: none;
+    outline: none;
+    background: transparent;
+    color: #fff;
+    font-size: 0.8125rem;
+
+    &::placeholder {
+      color: var(--text-faint);
+    }
+  }
+}
+
+.clear-btn {
+  border: none;
+  background: transparent;
+  color: var(--text-faint);
+  cursor: pointer;
+  display: flex;
+  align-items: center;
+
+  &:hover { color: #fff; }
+}
+
+.search-results {
+  position: absolute;
+  top: calc(100% + 0.5rem);
+  left: 0;
+  right: 0;
+  max-height: 24rem;
+  overflow-y: auto;
+  background: var(--brand-surface, #12151c);
+  border: 1px solid var(--brand-border);
+  border-radius: 0.5rem;
+  box-shadow: 0 12px 32px rgba(0, 0, 0, 0.4);
+  padding: 0.5rem;
+  z-index: 200;
+}
+
+.no-results {
+  padding: 1rem;
+  text-align: center;
+  font-size: 0.8125rem;
+  color: var(--text-dim);
+}
+
+.result-group {
+  margin-bottom: 0.5rem;
+
+  &:last-child { margin-bottom: 0; }
+}
+
+.result-group-label {
+  padding: 0.375rem 0.5rem;
+  font-size: 0.625rem;
+  font-weight: 700;
+  text-transform: uppercase;
+  letter-spacing: 0.06em;
+  color: var(--text-faint);
+}
+
+.result-row {
+  display: flex;
+  align-items: center;
+  gap: 0.625rem;
+  width: 100%;
+  padding: 0.5rem;
+  border: none;
+  background: transparent;
+  border-radius: 0.375rem;
+  cursor: pointer;
+  text-align: left;
+
+  &:hover {
+    background: var(--brand-surface2);
+  }
+
+  i {
+    color: var(--brand-accent);
+    font-size: 0.875rem;
+    flex-shrink: 0;
+  }
+}
+
+.result-text {
+  display: flex;
+  flex-direction: column;
+  min-width: 0;
+}
+
+.result-label {
+  font-size: 0.8125rem;
+  font-weight: 600;
+  color: #fff;
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+}
+
+.result-sub {
+  font-size: 0.6875rem;
+  color: var(--text-dim);
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+}
+
+.mono {
+  font-family: var(--font-mono, monospace);
+}

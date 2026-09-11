@@ -38,6 +38,12 @@ public class User {
 
     private boolean enabled = true;
 
+    /** Encrypted at rest via CryptoUtil (same AES/GCM helper used for the SMTP password). */
+    @Column(length = 512)
+    private String twoFactorSecret;
+
+    private boolean twoFactorEnabled = false;
+
     public enum Role {
         USER, ADMIN
     }

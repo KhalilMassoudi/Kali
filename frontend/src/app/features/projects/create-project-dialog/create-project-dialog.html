@@ -1,0 +1,39 @@
+<p-dialog
+  [(visible)]="visible"
+  [modal]="true"
+  header="Créer un projet"
+  [style]="{ width: '28rem' }"
+  [dismissableMask]="true"
+  styleClass="create-project-dialog"
+>
+  <p class="dialog-subtitle">Un projet est une étiquette pour regrouper vos ressources — aucune ressource n'est déplacée ou recréée sur OpenStack</p>
+
+  @if (error()) {
+    <p-message severity="error" styleClass="dialog-error">{{ error() }}</p-message>
+  }
+
+  <form [formGroup]="form" (ngSubmit)="submit()" class="dialog-form">
+    <div class="field">
+      <label for="name">Nom du projet</label>
+      <input id="name" pInputText formControlName="name" placeholder="prod" fluid [invalid]="!!nameError" />
+      @if (nameError) {
+        <p class="field-error">{{ nameError }}</p>
+      }
+    </div>
+
+    <div class="field">
+      <label for="description">Description (optionnel)</label>
+      <input id="description" pInputText formControlName="description" placeholder="Environnement de production" fluid />
+    </div>
+
+    <div class="dialog-footer">
+      <p-button label="Annuler" severity="secondary" [outlined]="true" type="button" styleClass="footer-btn" (onClick)="close()" />
+      <p-button
+        [label]="loading() ? 'Création...' : 'Créer le projet'"
+        type="submit"
+        [loading]="loading()"
+        styleClass="footer-btn"
+      />
+    </div>
+  </form>
+</p-dialog>

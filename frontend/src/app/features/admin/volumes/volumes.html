@@ -1,0 +1,126 @@
+<div class="page">
+  <div class="page-head">
+    <div>
+      <h2>Volumes</h2>
+      <p class="subtitle">Stockage bloc et snapshots — tous clients confondus</p>
+    </div>
+    <div class="head-actions">
+      <p-select
+        [options]="clientOptions()"
+        [ngModel]="targetUserId()"
+        (ngModelChange)="targetUserId.set($event)"
+        optionLabel="label"
+        optionValue="value"
+        placeholder="Créer pour un client..."
+      />
+      <p-button [outlined]="true" size="small" icon="pi pi-refresh" label="Actualiser" (onClick)="refresh()" />
+      <p-button size="small" icon="pi pi-plus" label="Créer un volume" [disabled]="!targetUserId()" (onClick)="showCreateVolumeDialog.set(true)" />
+    </div>
+  </div>
+
+  @if (error()) {
+    <div class="error-banner">
+      <span class="dot"></span>
+      <p>{{ error() }}</p>
+    </div>
+  }
+
+  <div class="tab-bar">
+    <button type="button" class="tab-btn" [class.active]="tab() === 'volumes'" (click)="selectTab('volumes')">
+      <i class="pi pi-database"></i> Volumes ({{ volumes().length }})
+    </button>
+    <button type="button" class="tab-btn" [class.active]="tab() === 'snapshots'" (click)="selectTab('snapshots')">
+      <i class="pi pi-camera"></i> Snapshots ({{ snapshots().length }})
+    </button>
+    <button type="button" class="tab-btn" [class.active]="tab() === 'groups'" (click)="selectTab('groups')">
+      <i class="pi pi-th-large"></i> Groupes de volumes
+    </button>
+  </div>
+
+  @if (loading()) {
+    <div class="loading-state">
+      <i class="pi pi-spin pi-spinner"></i>
+      <p>Chargement...</p>
+    </div>
+  } @else {
+    @switch (tab()) {
+      @case ('volumes') {
+        <div class="card">
+          <div class="table-wrap">
+            <p-table [value]="volumes()" [rowHover]="true">
+              <ng-template #header>
+                <tr>
+                  <th>Nom</th>
+                  <th>Propriétaire (userId)</th>
+                  <th>Taille</th>
+                  <th>Attaché à</th>
+                  <th>Région</th>
+                  <th>Statut</th>
+                </tr>
+              </ng-template>
+              <ng-template #body let-volume>
+                <tr>
+                  <td>{{ volume.name }}</td>
+                  <td class="mono">#{{ volume.userId }}</td>
+                  <td>{{ volume.sizeGb }} GB</td>
+                  <td>{{ volume.attachedVpsId ? '#' + volume.attachedVpsId : '—' }}</td>
+                  <td>{{ volume.region || '—' }}</td>
+                  <td><p-tag [value]="volume.status" [rounded]="true" /></td>
+                </tr>
+              </ng-template>
+              <ng-template #emptymessage>
+                <tr>
+                  <td colspan="6" class="empty-row">Aucun volume sur la plateforme</td>
+                </tr>
+              </ng-template>
+            </p-table>
+          </div>
+        </div>
+      }
+      @case ('snapshots') {
+        <div class="card">
+          <div class="table-wrap">
+            <p-table [value]="snapshots()" [rowHover]="true">
+              <ng-template #header>
+                <tr>
+                  <th>Nom</th>
+                  <th>Propriétaire (userId)</th>
+                  <th>Volume source</th>
+                  <th>Taille</th>
+                  <th>Statut</th>
+                </tr>
+              </ng-template>
+              <ng-template #body let-snapshot>
+                <tr>
+                  <td>{{ snapshot.name }}</td>
+                  <td class="mono">#{{ snapshot.userId }}</td>
+                  <td class="mono">#{{ snapshot.sourceVolumeId }}</td>
+                  <td>{{ snapshot.sizeGb ? snapshot.sizeGb + ' GB' : '—' }}</td>
+                  <td><p-tag [value]="snapshot.status" [rounded]="true" /></td>
+                </tr>
+              </ng-template>
+              <ng-template #emptymessage>
+                <tr>
+                  <td colspan="5" class="empty-row">Aucun snapshot sur la plateforme</td>
+                </tr>
+              </ng-template>
+            </p-table>
+          </div>
+        </div>
+      }
+      @case ('groups') {
+        @if (groupsSupported() === false) {
+          <div class="card empty-tab">
+            <p>Les groupes de volumes (Cinder Generic Volume Groups) ne sont pas supportés par ce déploiement OpenStack.</p>
+          </div>
+        } @else {
+          <div class="card empty-tab">
+            <p>Gestion des groupes de volumes à venir.</p>
+          </div>
+        }
+      }
+    }
+  }
+
+  <app-create-volume-dialog [(visible)]="showCreateVolumeDialog" [targetUserId]="targetUserId()" (created)="refresh()" />
+</div>

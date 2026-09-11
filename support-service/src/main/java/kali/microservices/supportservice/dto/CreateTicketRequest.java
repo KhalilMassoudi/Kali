@@ -1,15 +1,11 @@
 package kali.microservices.supportservice.dto;
 
 import jakarta.validation.constraints.NotBlank;
-import jakarta.validation.constraints.NotNull;
 import kali.microservices.supportservice.entities.Ticket;
 import lombok.Data;
 
 @Data
 public class CreateTicketRequest {
-
-    @NotNull
-    private Long userId;
 
     @NotBlank
     private String title;

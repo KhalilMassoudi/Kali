@@ -1,0 +1,37 @@
+<p-dialog
+  [visible]="visible()"
+  (visibleChange)="onHide()"
+  [modal]="true"
+  [header]="'Associer ' + (floatingIp()?.floatingIpAddress ?? '')"
+  [style]="{ width: '26rem' }"
+  [dismissableMask]="true"
+>
+  @if (error()) {
+    <p-message severity="error" styleClass="dialog-error">{{ error() }}</p-message>
+  }
+
+  <div class="field">
+    <label for="vm">Machine virtuelle</label>
+    <p-select
+      id="vm"
+      [options]="vmOptions()"
+      optionLabel="label"
+      optionValue="value"
+      [ngModel]="selectedVmId()"
+      (ngModelChange)="selectedVmId.set($event)"
+      placeholder="Choisir une VM"
+      [fluid]="true"
+    />
+  </div>
+
+  <div class="dialog-footer">
+    <p-button label="Annuler" severity="secondary" [outlined]="true" type="button" styleClass="footer-btn" (onClick)="onHide()" />
+    <p-button
+      [label]="loading() ? 'Association...' : 'Associer'"
+      [loading]="loading()"
+      [disabled]="!selectedVmId()"
+      styleClass="footer-btn"
+      (onClick)="submit()"
+    />
+  </div>
+</p-dialog>

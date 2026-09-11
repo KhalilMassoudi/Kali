@@ -1,0 +1,100 @@
+<div class="admin-overview">
+  <div class="page-head">
+    <div>
+      <h2>Vue d'ensemble infrastructure</h2>
+      <p class="subtitle">Toutes les ressources, tous clients confondus</p>
+    </div>
+    <p-button [outlined]="true" size="small" icon="pi pi-refresh" label="Actualiser" (onClick)="refresh()" />
+  </div>
+
+  <div class="card telemetry-strip">
+    <div class="tcell">
+      <span class="tcell-label">VMs actives</span>
+      <p class="tcell-value">{{ fleetMetrics()?.runningCount ?? '—' }}<small>/{{ fleetMetrics()?.vmCount ?? 0 }}</small></p>
+    </div>
+    <div class="tcell">
+      <span class="tcell-label">vCPUs alloués</span>
+      <p class="tcell-value">{{ fleetMetrics()?.totalVcpu ?? '—' }}</p>
+    </div>
+    <div class="tcell">
+      <span class="tcell-label">RAM allouée</span>
+      <p class="tcell-value">{{ formatRam(fleetMetrics()?.totalRamMb ?? 0) }}</p>
+    </div>
+    <div class="tcell">
+      <span class="tcell-label">CPU moyen (Gnocchi)</span>
+      <p class="tcell-value">
+        @if (fleetMetrics()?.dataAvailable) {
+          {{ fleetMetrics()!.avgCpuUtil?.toFixed(1) }}%
+        } @else {
+          <small>Pas de données</small>
+        }
+      </p>
+    </div>
+  </div>
+
+  <div class="card gauge-card">
+    <h3>Ressources de la plateforme</h3>
+    <div class="gauge-grid">
+      <app-resource-gauge label="VMs" [used]="admin.allVps().length" [total]="null" color="var(--brand-accent)" />
+      <app-resource-gauge label="vCPUs" [used]="fleetMetrics()?.totalVcpu ?? 0" [total]="null" color="var(--brand-warn, #f59e0b)" />
+      <app-resource-gauge
+        label="RAM"
+        [used]="fleetMetrics()?.totalRamMb ?? 0"
+        [total]="null"
+        [displayValue]="formatRam(fleetMetrics()?.totalRamMb ?? 0)"
+        color="var(--brand-warn, #f59e0b)"
+      />
+      <app-resource-gauge
+        label="Stockage"
+        [used]="fleetMetrics()?.totalStorageGb ?? 0"
+        [total]="null"
+        [displayValue]="(fleetMetrics()?.totalStorageGb ?? 0) + 'GB'"
+        color="var(--brand-good, #22c55e)"
+      />
+      <app-resource-gauge label="Volumes" [used]="admin.allVolumes().length" [total]="null" color="var(--brand-good, #22c55e)" />
+      <app-resource-gauge label="Réseaux" [used]="admin.allNetworks().length" [total]="null" color="var(--brand-accent)" />
+      <app-resource-gauge label="Groupes de sécurité" [used]="admin.allSecurityGroups().length" [total]="null" color="var(--brand-crit, #ef4444)" />
+    </div>
+  </div>
+
+  <div class="card chart-card">
+    <div class="chart-head">
+      <h3>Utilisation CPU (Gnocchi)</h3>
+      @if (chartVmOptions().length > 0) {
+        <p-select
+          [options]="chartVmOptions()"
+          optionLabel="label"
+          optionValue="value"
+          [ngModel]="chartVmId()"
+          (ngModelChange)="onChartVmChange($event)"
+          placeholder="Choisir une VM"
+        />
+      }
+    </div>
+    @if (chartVmOptions().length === 0) {
+      <p class="chart-empty">Aucune VM sur la plateforme</p>
+    } @else if (chartLoading()) {
+      <p class="chart-empty"><i class="pi pi-spin pi-spinner"></i> Chargement...</p>
+    } @else if (chartUnavailable()) {
+      <p class="chart-empty">Pas de données Gnocchi pour cette VM</p>
+    } @else {
+      <app-timeseries-chart [points]="cpuMeasures()" unit="%" />
+    }
+  </div>
+
+  <a class="telemetry-link" [routerLink]="telemetryLink.to">
+    <i [class]="telemetryLink.icon"></i> {{ telemetryLink.label }} — explorer les ressources et métriques brutes →
+  </a>
+
+  <div class="shortcut-grid">
+    @for (shortcut of shortcuts; track shortcut.to) {
+      <a class="shortcut-card" [routerLink]="shortcut.to">
+        <i [class]="shortcut.icon"></i>
+        <div>
+          <p class="shortcut-count">{{ shortcut.count() }}</p>
+          <p class="shortcut-label">{{ shortcut.label }}</p>
+        </div>
+      </a>
+    }
+  </div>
+</div>

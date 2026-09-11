@@ -1,0 +1,204 @@
+<div class="page">
+  <div class="page-head">
+    <div>
+      <h2>Réseau</h2>
+      <p class="subtitle">Réseaux privés et groupes de sécurité — tous clients confondus</p>
+    </div>
+    <div class="head-actions">
+      <p-select
+        [options]="clientOptions()"
+        [ngModel]="targetUserId()"
+        (ngModelChange)="targetUserId.set($event)"
+        optionLabel="label"
+        optionValue="value"
+        placeholder="Créer pour un client..."
+      />
+      <p-button [outlined]="true" size="small" icon="pi pi-refresh" label="Actualiser" (onClick)="refresh()" />
+      @switch (tab()) {
+        @case ('networks') {
+          <p-button size="small" icon="pi pi-plus" label="Créer un réseau" [disabled]="!targetUserId()" (onClick)="openCreateNetwork()" />
+        }
+        @case ('security-groups') {
+          <p-button size="small" icon="pi pi-plus" label="Créer un groupe" [disabled]="!targetUserId()" (onClick)="openCreateGroup()" />
+        }
+        @case ('routers') {
+          <p-button size="small" icon="pi pi-plus" label="Créer un routeur" [disabled]="!targetUserId()" (onClick)="showCreateRouterDialog.set(true)" />
+        }
+        @case ('floating-ips') {
+          <p-button size="small" icon="pi pi-plus" label="Allouer une IP" [disabled]="!targetUserId()" (onClick)="showAllocateFloatingIpDialog.set(true)" />
+        }
+      }
+    </div>
+  </div>
+
+  @if (error()) {
+    <div class="error-banner">
+      <span class="dot"></span>
+      <p>{{ error() }}</p>
+    </div>
+  }
+
+  <div class="tab-bar">
+    <button type="button" class="tab-btn" [class.active]="tab() === 'networks'" (click)="selectTab('networks')">
+      <i class="pi pi-share-alt"></i> Réseaux ({{ networks().length }})
+    </button>
+    <button type="button" class="tab-btn" [class.active]="tab() === 'security-groups'" (click)="selectTab('security-groups')">
+      <i class="pi pi-shield"></i> Groupes de sécurité ({{ securityGroups().length }})
+    </button>
+    <button type="button" class="tab-btn" [class.active]="tab() === 'routers'" (click)="selectTab('routers')">
+      <i class="pi pi-directions"></i> Routeurs ({{ routers().length }})
+    </button>
+    <button type="button" class="tab-btn" [class.active]="tab() === 'floating-ips'" (click)="selectTab('floating-ips')">
+      <i class="pi pi-globe"></i> IP flottantes ({{ floatingIps().length }})
+    </button>
+  </div>
+
+  @if (loading()) {
+    <div class="loading-state">
+      <i class="pi pi-spin pi-spinner"></i>
+      <p>Chargement...</p>
+    </div>
+  } @else {
+    @switch (tab()) {
+      @case ('networks') {
+        <div class="card">
+          <div class="table-wrap">
+            <p-table [value]="networks()" [rowHover]="true">
+              <ng-template #header>
+                <tr>
+                  <th>Nom</th>
+                  <th>Propriétaire (userId)</th>
+                  <th>CIDR</th>
+                  <th>Statut</th>
+                </tr>
+              </ng-template>
+              <ng-template #body let-network>
+                <tr>
+                  <td>{{ network.name }}</td>
+                  <td class="mono">#{{ network.userId }}</td>
+                  <td class="mono">{{ network.cidr }}</td>
+                  <td><p-tag [value]="network.status" [rounded]="true" /></td>
+                </tr>
+              </ng-template>
+              <ng-template #emptymessage>
+                <tr>
+                  <td colspan="4" class="empty-row">Aucun réseau sur la plateforme</td>
+                </tr>
+              </ng-template>
+            </p-table>
+          </div>
+        </div>
+      }
+      @case ('security-groups') {
+        <div class="card">
+          <div class="table-wrap">
+            <p-table [value]="securityGroups()" [rowHover]="true">
+              <ng-template #header>
+                <tr>
+                  <th>Nom</th>
+                  <th>Propriétaire (userId)</th>
+                  <th>Description</th>
+                  <th>Statut</th>
+                </tr>
+              </ng-template>
+              <ng-template #body let-group>
+                <tr>
+                  <td>{{ group.name }}</td>
+                  <td class="mono">#{{ group.userId }}</td>
+                  <td>{{ group.description || '—' }}</td>
+                  <td><p-tag [value]="group.status" [rounded]="true" /></td>
+                </tr>
+              </ng-template>
+              <ng-template #emptymessage>
+                <tr>
+                  <td colspan="4" class="empty-row">Aucun groupe de sécurité sur la plateforme</td>
+                </tr>
+              </ng-template>
+            </p-table>
+          </div>
+        </div>
+      }
+      @case ('routers') {
+        <div class="card">
+          <div class="table-wrap">
+            <p-table [value]="routers()" [rowHover]="true">
+              <ng-template #header>
+                <tr>
+                  <th>Nom</th>
+                  <th>Propriétaire (userId)</th>
+                  <th>Passerelle externe</th>
+                  <th>Créé le</th>
+                </tr>
+              </ng-template>
+              <ng-template #body let-router>
+                <tr>
+                  <td>{{ router.name }}</td>
+                  <td class="mono">#{{ router.userId }}</td>
+                  <td><p-tag [value]="router.externalGatewayNetworkId ? 'Oui' : 'Aucune'" [rounded]="true" /></td>
+                  <td>{{ router.createdAt | date: 'mediumDate' }}</td>
+                </tr>
+              </ng-template>
+              <ng-template #emptymessage>
+                <tr>
+                  <td colspan="4" class="empty-row">Aucun routeur sur la plateforme</td>
+                </tr>
+              </ng-template>
+            </p-table>
+          </div>
+        </div>
+      }
+      @case ('floating-ips') {
+        <div class="card">
+          <div class="table-wrap">
+            <p-table [value]="floatingIps()" [rowHover]="true">
+              <ng-template #header>
+                <tr>
+                  <th>Adresse IP</th>
+                  <th>Propriétaire (userId)</th>
+                  <th>Pool</th>
+                  <th>Statut</th>
+                  <th>VM associée</th>
+                </tr>
+              </ng-template>
+              <ng-template #body let-ip>
+                <tr>
+                  <td class="mono">{{ ip.floatingIpAddress }}</td>
+                  <td class="mono">#{{ ip.userId }}</td>
+                  <td>{{ ip.pool || '—' }}</td>
+                  <td>
+                    <p-tag
+                      [value]="ip.associatedVpsId ? 'Associée' : 'Disponible'"
+                      [severity]="ip.associatedVpsId ? 'success' : 'secondary'"
+                      [rounded]="true"
+                    />
+                  </td>
+                  <td>{{ vmName(ip.associatedVpsId) }}</td>
+                </tr>
+              </ng-template>
+              <ng-template #emptymessage>
+                <tr>
+                  <td colspan="5" class="empty-row">Aucune IP flottante sur la plateforme</td>
+                </tr>
+              </ng-template>
+            </p-table>
+          </div>
+        </div>
+      }
+    }
+  }
+
+  <app-create-network-dialog [(visible)]="showCreateNetworkDialog" [targetUserId]="targetUserId()" (created)="refresh()" />
+  <app-create-security-group-dialog [(visible)]="showCreateGroupDialog" [targetUserId]="targetUserId()" (created)="refresh()" />
+  <app-create-router-dialog
+    [(visible)]="showCreateRouterDialog"
+    [externalNetworks]="externalNetworks()"
+    [targetUserId]="targetUserId()"
+    (created)="refresh()"
+  />
+  <app-allocate-floating-ip-dialog
+    [(visible)]="showAllocateFloatingIpDialog"
+    [pools]="pools()"
+    [targetUserId]="targetUserId()"
+    (created)="refresh()"
+  />
+</div>

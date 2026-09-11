@@ -1,0 +1,52 @@
+<p-dialog
+  [visible]="visible()"
+  (visibleChange)="onHide()"
+  [modal]="true"
+  [header]="'Quota — ' + (user()?.email ?? '')"
+  [style]="{ width: '28rem' }"
+  [dismissableMask]="true"
+>
+  @if (error()) {
+    <p-message severity="error" styleClass="dialog-error">{{ error() }}</p-message>
+  }
+
+  @if (loading()) {
+    <p class="hint">Chargement...</p>
+  } @else {
+    <div class="quota-grid">
+      <div class="field">
+        <label>vCPUs max</label>
+        <p-inputnumber [ngModel]="quota().maxVcpu" (ngModelChange)="set('maxVcpu', $event)" [min]="0" [fluid]="true" />
+      </div>
+      <div class="field">
+        <label>RAM max (MB)</label>
+        <p-inputnumber [ngModel]="quota().maxRamMb" (ngModelChange)="set('maxRamMb', $event)" [min]="0" [step]="512" [fluid]="true" />
+      </div>
+      <div class="field">
+        <label>Stockage max (GB)</label>
+        <p-inputnumber [ngModel]="quota().maxStorageGb" (ngModelChange)="set('maxStorageGb', $event)" [min]="0" [fluid]="true" />
+      </div>
+      <div class="field">
+        <label>VMs max</label>
+        <p-inputnumber [ngModel]="quota().maxVms" (ngModelChange)="set('maxVms', $event)" [min]="0" [fluid]="true" />
+      </div>
+      <div class="field">
+        <label>Volumes max</label>
+        <p-inputnumber [ngModel]="quota().maxVolumes" (ngModelChange)="set('maxVolumes', $event)" [min]="0" [fluid]="true" />
+      </div>
+      <div class="field">
+        <label>Réseaux max</label>
+        <p-inputnumber [ngModel]="quota().maxNetworks" (ngModelChange)="set('maxNetworks', $event)" [min]="0" [fluid]="true" />
+      </div>
+      <div class="field">
+        <label>Groupes de sécurité max</label>
+        <p-inputnumber [ngModel]="quota().maxSecurityGroups" (ngModelChange)="set('maxSecurityGroups', $event)" [min]="0" [fluid]="true" />
+      </div>
+    </div>
+
+    <div class="dialog-footer">
+      <p-button label="Annuler" severity="secondary" [outlined]="true" type="button" styleClass="footer-btn" (onClick)="onHide()" />
+      <p-button [label]="saving() ? 'Enregistrement...' : 'Enregistrer'" [loading]="saving()" styleClass="footer-btn" (onClick)="save()" />
+    </div>
+  }
+</p-dialog>

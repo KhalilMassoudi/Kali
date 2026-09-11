@@ -1,13 +1,13 @@
 package kali.microservices.monitoringservice.controller;
 
-import kali.microservices.monitoringservice.entities.AlertRule;
+import kali.microservices.monitoringservice.entities.AlertEvent;
 import kali.microservices.monitoringservice.entities.ServiceMetric;
+import kali.microservices.monitoringservice.security.AuthContext;
 import kali.microservices.monitoringservice.service.MonitoringService;
 import lombok.RequiredArgsConstructor;
 import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.*;
 
-import java.time.LocalDateTime;
 import java.util.List;
 import java.util.Map;
 
@@ -17,6 +17,7 @@ import java.util.Map;
 public class MonitoringController {
 
     private final MonitoringService monitoringService;
+    private final AuthContext authContext;
 
     @GetMapping("/overview")
     public ResponseEntity<Map<String, Object>> getSystemOverview() {
@@ -46,19 +47,16 @@ public class MonitoringController {
         return ResponseEntity.ok(monitoringService.recordMetric(serviceName, status, responseTime, cpu, memory, requests, errors));
     }
 
-    @PostMapping("/alerts/rules")
-    public ResponseEntity<AlertRule> createAlertRule(@RequestBody Map<String, Object> body) {
-        Long userId = Long.valueOf(body.get("userId").toString());
-        String serviceName = body.containsKey("serviceName") ? body.get("serviceName").toString() : null;
-        AlertRule.AlertType alertType = AlertRule.AlertType.valueOf(body.get("alertType").toString());
-        Double threshold = Double.valueOf(body.get("threshold").toString());
-
-        return ResponseEntity.ok(monitoringService.createAlertRule(userId, serviceName, alertType, threshold));
+    @GetMapping("/alerts/active")
+    public ResponseEntity<List<AlertEvent>> getActiveAlerts(@RequestHeader("Authorization") String authHeader) {
+        authContext.requireAdmin(authHeader);
+        return ResponseEntity.ok(monitoringService.getActiveAlerts());
     }
 
-    @GetMapping("/alerts/rules/user/{userId}")
-    public ResponseEntity<List<AlertRule>> getAlertRules(@PathVariable Long userId) {
-        return ResponseEntity.ok(monitoringService.getAlertRulesByUser(userId));
+    @GetMapping("/services")
+    public ResponseEntity<List<String>> getKnownServices(@RequestHeader("Authorization") String authHeader) {
+        authContext.requireAdmin(authHeader);
+        return ResponseEntity.ok(monitoringService.getKnownServiceNames());
     }
 
     @GetMapping("/health")

@@ -4,7 +4,10 @@ import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.beans.factory.annotation.Value;
 import org.springframework.core.ParameterizedTypeReference;
+import org.springframework.http.HttpEntity;
+import org.springframework.http.HttpHeaders;
 import org.springframework.http.HttpMethod;
+import org.springframework.http.MediaType;
 import org.springframework.http.ResponseEntity;
 import org.springframework.stereotype.Service;
 import org.springframework.web.client.RestTemplate;
@@ -23,7 +26,7 @@ public class InfrastructureClient {
 
     private final RestTemplate restTemplate;
 
-    public Object createVps(Map<String, Object> params, Long userId) {
+    public Object createVps(Map<String, Object> params, Long userId, String authHeader) {
         Map<String, Object> body = new HashMap<>();
         body.put("userId", userId);
         body.put("name", params.getOrDefault("name", "vps-" + System.currentTimeMillis()));
@@ -34,50 +37,72 @@ public class InfrastructureClient {
         body.put("region", params.getOrDefault("region", "eu-west-1"));
 
         log.info("Création VPS: {}", body);
-        return restTemplate.postForObject(infrastructureUrl + "/api/infrastructure/vps", body, Object.class);
+        ResponseEntity<Object> response = restTemplate.exchange(
+                infrastructureUrl + "/api/infrastructure/vps",
+                HttpMethod.POST,
+                new HttpEntity<>(body, headers(authHeader)),
+                Object.class
+        );
+        return response.getBody();
     }
 
-    public List<?> listVps(Long userId) {
+    public List<?> listVps(Long userId, String authHeader) {
         log.info("Liste VPS pour userId={}", userId);
         ResponseEntity<List<Map<String, Object>>> response = restTemplate.exchange(
                 infrastructureUrl + "/api/infrastructure/vps/user/" + userId,
                 HttpMethod.GET,
-                null,
+                new HttpEntity<>(headers(authHeader)),
                 new ParameterizedTypeReference<>() {}
         );
         return response.getBody();
     }
 
-    public void deleteVps(Long vpsId) {
+    public void deleteVps(Long vpsId, String authHeader) {
         log.info("Suppression VPS id={}", vpsId);
-        restTemplate.delete(infrastructureUrl + "/api/infrastructure/vps/" + vpsId);
+        restTemplate.exchange(
+                infrastructureUrl + "/api/infrastructure/vps/" + vpsId,
+                HttpMethod.DELETE,
+                new HttpEntity<>(headers(authHeader)),
+                Void.class
+        );
     }
 
-    public Object createDomain(Map<String, Object> params, Long userId) {
+    public Object createDomain(Map<String, Object> params, Long userId, String authHeader) {
         Map<String, Object> body = new HashMap<>();
         body.put("userId", userId);
         body.put("name", params.get("name"));
 
         log.info("Enregistrement domaine: {}", body);
-        return restTemplate.postForObject(infrastructureUrl + "/api/infrastructure/domains", body, Object.class);
+        ResponseEntity<Object> response = restTemplate.exchange(
+                infrastructureUrl + "/api/infrastructure/domains",
+                HttpMethod.POST,
+                new HttpEntity<>(body, headers(authHeader)),
+                Object.class
+        );
+        return response.getBody();
     }
 
-    public List<?> listDomains(Long userId) {
+    public List<?> listDomains(Long userId, String authHeader) {
         log.info("Liste domaines pour userId={}", userId);
         ResponseEntity<List<Map<String, Object>>> response = restTemplate.exchange(
                 infrastructureUrl + "/api/infrastructure/domains/user/" + userId,
                 HttpMethod.GET,
-                null,
+                new HttpEntity<>(headers(authHeader)),
                 new ParameterizedTypeReference<>() {}
         );
         return response.getBody();
     }
 
-    public void deleteDomain(Long domainId) {
-        restTemplate.delete(infrastructureUrl + "/api/infrastructure/domains/" + domainId);
+    public void deleteDomain(Long domainId, String authHeader) {
+        restTemplate.exchange(
+                infrastructureUrl + "/api/infrastructure/domains/" + domainId,
+                HttpMethod.DELETE,
+                new HttpEntity<>(headers(authHeader)),
+                Void.class
+        );
     }
 
-    public Object createCluster(Map<String, Object> params, Long userId) {
+    public Object createCluster(Map<String, Object> params, Long userId, String authHeader) {
         Map<String, Object> body = new HashMap<>();
         body.put("userId", userId);
         body.put("name", params.getOrDefault("name", "cluster-" + System.currentTimeMillis()));
@@ -86,18 +111,31 @@ public class InfrastructureClient {
         body.put("region", params.getOrDefault("region", "eu-west-1"));
 
         log.info("Création cluster K8s: {}", body);
-        return restTemplate.postForObject(infrastructureUrl + "/api/infrastructure/clusters", body, Object.class);
+        ResponseEntity<Object> response = restTemplate.exchange(
+                infrastructureUrl + "/api/infrastructure/clusters",
+                HttpMethod.POST,
+                new HttpEntity<>(body, headers(authHeader)),
+                Object.class
+        );
+        return response.getBody();
     }
 
-    public List<?> listClusters(Long userId) {
+    public List<?> listClusters(Long userId, String authHeader) {
         log.info("Liste clusters pour userId={}", userId);
         ResponseEntity<List<Map<String, Object>>> response = restTemplate.exchange(
                 infrastructureUrl + "/api/infrastructure/clusters/user/" + userId,
                 HttpMethod.GET,
-                null,
+                new HttpEntity<>(headers(authHeader)),
                 new ParameterizedTypeReference<>() {}
         );
         return response.getBody();
+    }
+
+    private HttpHeaders headers(String authHeader) {
+        HttpHeaders headers = new HttpHeaders();
+        headers.set("Authorization", authHeader);
+        headers.setContentType(MediaType.APPLICATION_JSON);
+        return headers;
     }
 
     private int toInt(Object value) {

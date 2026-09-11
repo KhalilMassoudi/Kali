@@ -1,0 +1,109 @@
+<div class="page">
+  <div class="page-head">
+    <div>
+      <h2>Catalogue d'images</h2>
+      <p class="subtitle">Images OS que les clients peuvent choisir à la création d'une VM</p>
+    </div>
+    <p-button [outlined]="true" size="small" icon="pi pi-refresh" label="Actualiser" (onClick)="refresh()" />
+  </div>
+
+  @if (error()) {
+    <div class="error-banner">
+      <span class="dot"></span>
+      <p>{{ error() }}</p>
+    </div>
+  }
+
+  <div class="card add-image-card">
+    <div class="mode-tabs">
+      <button type="button" class="mode-btn" [class.active]="mode() === 'adopt'" (click)="mode.set('adopt')">
+        Adopter une image existante
+      </button>
+      <button type="button" class="mode-btn" [class.active]="mode() === 'import'" (click)="mode.set('import')">
+        Importer depuis une URL
+      </button>
+    </div>
+
+    @if (mode() === 'adopt') {
+      <p class="mode-hint">Les images déjà présentes dans Glance (dont les 4 images de base utilisées à la création de VM) peuvent être ajoutées au catalogue sans re-upload.</p>
+      <div class="form-grid">
+        <p-select
+          [options]="available()"
+          [ngModel]="adoptTarget()"
+          (ngModelChange)="adoptTarget.set($event)"
+          optionLabel="name"
+          placeholder="Choisir une image OpenStack"
+          [fluid]="true"
+        />
+        <input pInputText placeholder="Nom affiché (ex: Ubuntu 22.04 LTS)" [ngModel]="displayName()" (ngModelChange)="displayName.set($event)" fluid />
+        <input pInputText placeholder="Distribution (ex: ubuntu)" [ngModel]="osDistro()" (ngModelChange)="osDistro.set($event)" fluid />
+        <input pInputText placeholder="Version (ex: 22.04)" [ngModel]="osVersion()" (ngModelChange)="osVersion.set($event)" fluid />
+      </div>
+      <p-button label="Adopter" icon="pi pi-plus" [loading]="saving()" [disabled]="!adoptTarget() || !displayName()" (onClick)="adopt()" />
+    } @else {
+      <p class="mode-hint">L'URL doit pointer vers une image disque (.qcow2, .raw, ...) — OpenStack la télécharge directement, sans passer par notre plateforme.</p>
+      <div class="form-grid">
+        <input pInputText placeholder="Nom affiché" [ngModel]="displayName()" (ngModelChange)="displayName.set($event)" fluid />
+        <input pInputText placeholder="URL de l'image (.qcow2)" [ngModel]="imageUrl()" (ngModelChange)="imageUrl.set($event)" fluid />
+        <input pInputText placeholder="Distribution (ex: debian)" [ngModel]="osDistro()" (ngModelChange)="osDistro.set($event)" fluid />
+        <input pInputText placeholder="Version (ex: 12)" [ngModel]="osVersion()" (ngModelChange)="osVersion.set($event)" fluid />
+        <p-inputnumber placeholder="Disque min (GB)" [ngModel]="minDiskGb()" (ngModelChange)="minDiskGb.set($event)" [min]="1" [fluid]="true" />
+        <p-inputnumber placeholder="RAM min (MB)" [ngModel]="minRamMb()" (ngModelChange)="minRamMb.set($event)" [min]="1" [fluid]="true" />
+      </div>
+      <p-button label="Importer" icon="pi pi-cloud-download" [loading]="saving()" [disabled]="!displayName() || !imageUrl()" (onClick)="importFromUrl()" />
+    }
+  </div>
+
+  @if (loading()) {
+    <div class="loading-state">
+      <i class="pi pi-spin pi-spinner"></i>
+      <p>Chargement du catalogue...</p>
+    </div>
+  } @else {
+    <div class="card">
+      <div class="table-wrap">
+        <p-table [value]="images()" [rowHover]="true">
+          <ng-template #header>
+            <tr>
+              <th>Nom</th>
+              <th>OS</th>
+              <th>Source</th>
+              <th>Visibilité</th>
+              <th></th>
+            </tr>
+          </ng-template>
+          <ng-template #body let-image>
+            <tr>
+              <td>{{ image.displayName }}</td>
+              <td>{{ image.osDistro }} {{ image.osVersion }}</td>
+              <td><p-tag [value]="image.source" severity="secondary" [rounded]="true" /></td>
+              <td>
+                <p-tag
+                  [value]="image.visibility === 'PUBLISHED' ? 'Publiée' : 'Masquée'"
+                  [severity]="image.visibility === 'PUBLISHED' ? 'success' : 'secondary'"
+                  [rounded]="true"
+                />
+              </td>
+              <td>
+                <div class="action-group">
+                  <p-button
+                    [outlined]="true"
+                    size="small"
+                    [label]="image.visibility === 'PUBLISHED' ? 'Masquer' : 'Publier'"
+                    (onClick)="togglePublish(image)"
+                  />
+                  <p-button [outlined]="true" size="small" severity="danger" icon="pi pi-trash" (onClick)="remove(image)" />
+                </div>
+              </td>
+            </tr>
+          </ng-template>
+          <ng-template #emptymessage>
+            <tr>
+              <td colspan="5" class="empty-row">Aucune image dans le catalogue</td>
+            </tr>
+          </ng-template>
+        </p-table>
+      </div>
+    </div>
+  }
+</div>

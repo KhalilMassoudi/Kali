@@ -1,0 +1,65 @@
+<div class="page">
+  <div class="page-head">
+    <div>
+      <h2>Nouveau ticket</h2>
+      <p class="subtitle">Décrivez votre problème, notre équipe vous répondra rapidement</p>
+    </div>
+  </div>
+
+  @if (formError()) {
+    <div class="error-banner">
+      <span class="dot"></span>
+      <p>{{ formError() }}</p>
+    </div>
+  }
+
+  <div class="card">
+    <form [formGroup]="form" (ngSubmit)="submit()" class="ticket-form">
+      <div class="field">
+        <label for="title">Titre</label>
+        <input id="title" type="text" pInputText formControlName="title" placeholder="Résumé du problème" fluid />
+      </div>
+
+      <div class="field-row">
+        <div class="field">
+          <label for="priority">Priorité</label>
+          <p-select
+            inputId="priority"
+            [options]="priorityOptions"
+            formControlName="priority"
+            optionLabel="label"
+            optionValue="value"
+            fluid
+          />
+        </div>
+        <div class="field">
+          <label for="category">Catégorie</label>
+          <p-select
+            inputId="category"
+            [options]="categoryOptions"
+            formControlName="category"
+            optionLabel="label"
+            optionValue="value"
+            fluid
+          />
+        </div>
+      </div>
+
+      <div class="field">
+        <label for="description">Description</label>
+        <textarea id="description" pTextarea formControlName="description" rows="6" placeholder="Détaillez votre demande..." fluid></textarea>
+      </div>
+
+      <div class="field">
+        <label for="attachment">Pièce jointe (optionnel)</label>
+        <input id="attachment" type="file" accept="image/png,image/jpeg,image/gif,image/webp,application/pdf,text/plain" (change)="onFileSelected($event)" />
+        <p class="field-hint">Images, PDF ou texte, 5 Mo max.</p>
+      </div>
+
+      <div class="form-footer">
+        <p-button label="Annuler" [outlined]="true" size="small" routerLink="/support" type="button" />
+        <p-button type="submit" label="Créer le ticket" icon="pi pi-send" size="small" [loading]="submitting()" />
+      </div>
+    </form>
+  </div>
+</div>

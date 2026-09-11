@@ -57,15 +57,20 @@ public class OpenStackAuthService {
     public synchronized OSClient.OSClientV3 getClient() {
         if (client == null) {
             authenticate();
-            return client;
+        } else {
+            // Re-authenticate if token is expired or about to expire (within 60s)
+            Date expires = client.getToken().getExpires();
+            if (expires != null && expires.before(new Date(System.currentTimeMillis() + 60_000))) {
+                log.info("OpenStack token expired or expiring soon, re-authenticating...");
+                authenticate();
+            }
         }
-        // Re-authenticate if token is expired or about to expire (within 60s)
-        Date expires = client.getToken().getExpires();
-        if (expires != null && expires.before(new Date(System.currentTimeMillis() + 60_000))) {
-            log.info("OpenStack token expired or expiring soon, re-authenticating...");
-            authenticate();
-        }
-        return client;
+        // openstack4j binds a client to a ThreadLocal session set on whichever thread called
+        // authenticate() (here, the @PostConstruct/init thread) — every other thread (every
+        // Tomcat request worker) has no session and throws "Unable to retrieve current
+        // session" the moment it calls any service method. clientFromToken() cheaply re-binds
+        // the already-obtained token to the CURRENT (calling) thread — no network round-trip.
+        return OSFactory.clientFromToken(client.getToken());
     }
 
     public boolean ping() {
@@ -80,5 +85,31 @@ public class OpenStackAuthService {
 
     public String getRegion() {
         return region;
+    }
+
+    /**
+     * Raw token id, for OpenStack APIs openstack4j has no client for (e.g. Cinder's Generic
+     * Volume Groups extension — see CinderGroupClient). Rides the same safozi-app project
+     * token as everything else; no new credentials.
+     */
+    public String getRawToken() {
+        return getClient().getToken().getId();
+    }
+
+    /**
+     * The volumev3 (Cinder) service's public endpoint URL for this token's project, region-
+     * filtered. Read from the token's own service catalog — no extra network round-trip.
+     */
+    public String getCinderEndpoint() {
+        return getClient().getToken().getCatalog().stream()
+                .filter(service -> "volumev3".equals(service.getType()))
+                .findFirst()
+                .orElseThrow(() -> new IllegalStateException("Aucun service volumev3 (Cinder) dans le catalogue OpenStack"))
+                .getEndpoints().stream()
+                .filter(endpoint -> endpoint.getIface() == org.openstack4j.api.types.Facing.PUBLIC)
+                .filter(endpoint -> region == null || region.equals(endpoint.getRegion()))
+                .findFirst()
+                .map(endpoint -> endpoint.getUrl().toString())
+                .orElseThrow(() -> new IllegalStateException("Aucun endpoint public volumev3 pour la région " + region));
     }
 }

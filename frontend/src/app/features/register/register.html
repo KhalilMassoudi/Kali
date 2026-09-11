@@ -1,0 +1,178 @@
+<div class="auth-page">
+  <!-- Left branding panel -->
+  <div class="branding-panel">
+    <div class="dot-grid"></div>
+    <div class="glow"></div>
+
+    <div class="branding-content">
+      <div class="logo-badge">
+        <img src="/assets/safozi-logo.png" alt="SAFOZi" />
+      </div>
+
+      <div class="tagline-block">
+        <div class="pill">
+          <span class="pill-dot"></span>
+          <span>Inscription gratuite</span>
+        </div>
+
+        <h2 class="headline">
+          Votre cloud<br />opérationnel en<br />
+          <span class="accent">5 minutes</span>
+        </h2>
+
+        <p class="lede">
+          Créez votre compte et déployez votre première VM immédiatement. Aucune carte bancaire requise.
+        </p>
+      </div>
+
+      <div class="features">
+        <div class="feature">
+          <div class="feature-icon"><i class="pi pi-server"></i></div>
+          <div>
+            <p class="feature-title">Compute</p>
+            <p class="feature-text">VMs déployées en secondes</p>
+          </div>
+        </div>
+        <div class="feature">
+          <div class="feature-icon"><i class="pi pi-shield"></i></div>
+          <div>
+            <p class="feature-title">Sécurité</p>
+            <p class="feature-text">Isolation complète de votre infra</p>
+          </div>
+        </div>
+        <div class="feature">
+          <div class="feature-icon"><i class="pi pi-comments"></i></div>
+          <div>
+            <p class="feature-title">IA incluse</p>
+            <p class="feature-text">Assistant cloud sans surcoût</p>
+          </div>
+        </div>
+      </div>
+
+      <div class="status-badge">
+        <span class="status-dot"></span>
+        <span>Inscription ouverte · Aucune CB requise</span>
+      </div>
+    </div>
+  </div>
+
+  <!-- Right form panel -->
+  <div class="form-panel">
+    <div class="mobile-logo">
+      <img src="/assets/safozi-logo.png" alt="SAFOZi" />
+    </div>
+
+    <div class="form-shell">
+      <div class="form-heading">
+        <div class="eyebrow">Nouveau compte</div>
+        <h1>Créer un compte</h1>
+        <p class="subtitle">Rejoignez Safozi Cloud — c'est gratuit</p>
+      </div>
+
+      @if (apiError()) {
+        <p-message severity="error" styleClass="api-error">{{ apiError() }}</p-message>
+      }
+
+      <form [formGroup]="form" (ngSubmit)="submit()" class="auth-form">
+        <div class="name-row">
+          <div class="field">
+            <label for="firstName">Prénom</label>
+            <input id="firstName" pInputText formControlName="firstName" placeholder="Jean" fluid [invalid]="!!firstNameError" />
+            @if (firstNameError) {
+              <p class="field-error">{{ firstNameError }}</p>
+            }
+          </div>
+          <div class="field">
+            <label for="lastName">Nom</label>
+            <input id="lastName" pInputText formControlName="lastName" placeholder="Dupont" fluid />
+          </div>
+        </div>
+
+        <div class="field">
+          <label for="email">Adresse email</label>
+          <input
+            id="email"
+            type="email"
+            pInputText
+            formControlName="email"
+            placeholder="vous@exemple.com"
+            autocomplete="email"
+            fluid
+            [invalid]="!!emailError"
+          />
+          @if (emailError) {
+            <p class="field-error">{{ emailError }}</p>
+          }
+        </div>
+
+        <div class="field">
+          <label for="password">Mot de passe</label>
+          <p-password
+            inputId="password"
+            formControlName="password"
+            placeholder="Min. 6 caractères"
+            [toggleMask]="true"
+            [feedback]="false"
+            autocomplete="new-password"
+          />
+          @if (passwordError) {
+            <p class="field-error">{{ passwordError }}</p>
+          } @else if (passwordValue()) {
+            <div class="strength-row">
+              <div class="strength-bars">
+                @for (lvl of [1, 2, 3]; track lvl) {
+                  <div
+                    class="strength-bar"
+                    [class.filled-weak]="strength() >= lvl && strength() === 1"
+                    [class.filled-medium]="strength() >= lvl && strength() === 2"
+                    [class.filled-strong]="strength() >= lvl && strength() === 3"
+                  ></div>
+                }
+              </div>
+              <span
+                class="strength-label"
+                [class.weak]="strength() === 1"
+                [class.medium]="strength() === 2"
+                [class.strong]="strength() === 3"
+              >{{ strengthLabel() }}</span>
+            </div>
+          }
+        </div>
+
+        <div class="field">
+          <label for="confirm">Confirmer le mot de passe</label>
+          <div class="confirm-wrap">
+            <p-password
+              inputId="confirm"
+              formControlName="confirm"
+              placeholder="••••••••"
+              [toggleMask]="false"
+              [feedback]="false"
+              autocomplete="new-password"
+            />
+            @if (form.controls.confirm.value && !confirmError) {
+              <div class="confirm-ok"><i class="pi pi-check"></i></div>
+            }
+          </div>
+          @if (confirmError) {
+            <p class="field-error">{{ confirmError }}</p>
+          }
+        </div>
+
+        <p-button
+          type="submit"
+          [label]="loading() ? 'Création du compte...' : 'Créer mon compte'"
+          icon="pi pi-arrow-right"
+          iconPos="right"
+          [loading]="loading()"
+          [fluid]="true"
+          styleClass="submit-btn"
+        />
+      </form>
+
+      <p class="footer-link">
+        Déjà un compte ? <a routerLink="/">Se connecter</a>
+      </p>
+    </div>
+  </div>
+</div>

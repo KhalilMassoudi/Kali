@@ -1,0 +1,68 @@
+<div class="global-search">
+  <div class="search-box">
+    <i class="pi pi-search"></i>
+    <input
+      type="text"
+      placeholder="Rechercher un client, une instance, une page..."
+      [ngModel]="query()"
+      (ngModelChange)="query.set($event)"
+      (focus)="onFocus()"
+    />
+    @if (query()) {
+      <button type="button" class="clear-btn" (click)="clear()" aria-label="Effacer">
+        <i class="pi pi-times"></i>
+      </button>
+    }
+  </div>
+
+  @if (open() && query()) {
+    <div class="search-results">
+      @if (!hasResults()) {
+        <p class="no-results">Aucun résultat pour "{{ query() }}"</p>
+      } @else {
+        @if (results().clients.length > 0) {
+          <div class="result-group">
+            <p class="result-group-label">Clients</p>
+            @for (item of results().clients; track item.id) {
+              <button type="button" class="result-row" (click)="select(item)">
+                <i [class]="item.icon"></i>
+                <span class="result-text">
+                  <span class="result-label">{{ item.label }}</span>
+                  <span class="result-sub">{{ item.sublabel }}</span>
+                </span>
+              </button>
+            }
+          </div>
+        }
+        @if (results().instances.length > 0) {
+          <div class="result-group">
+            <p class="result-group-label">Instances</p>
+            @for (item of results().instances; track item.id) {
+              <button type="button" class="result-row" (click)="select(item)">
+                <i [class]="item.icon"></i>
+                <span class="result-text">
+                  <span class="result-label">{{ item.label }}</span>
+                  <span class="result-sub mono">{{ item.sublabel }}</span>
+                </span>
+              </button>
+            }
+          </div>
+        }
+        @if (results().pages.length > 0) {
+          <div class="result-group">
+            <p class="result-group-label">Pages</p>
+            @for (item of results().pages; track item.id) {
+              <button type="button" class="result-row" (click)="select(item)">
+                <i [class]="item.icon"></i>
+                <span class="result-text">
+                  <span class="result-label">{{ item.label }}</span>
+                  <span class="result-sub">{{ item.sublabel }}</span>
+                </span>
+              </button>
+            }
+          </div>
+        }
+      }
+    </div>
+  }
+</div>

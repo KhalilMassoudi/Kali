@@ -1,0 +1,170 @@
+<div class="auth-page">
+  <!-- Left branding panel -->
+  <div class="branding-panel">
+    <div class="dot-grid"></div>
+    <div class="glow"></div>
+
+    <div class="branding-content">
+      <div class="logo-badge">
+        <img src="/assets/safozi-logo.png" alt="SAFOZi" />
+      </div>
+
+      <div class="tagline-block">
+        <div class="pill">
+          <span class="pill-dot"></span>
+          <span>Plateforme Cloud</span>
+        </div>
+
+        <h2 class="headline">
+          Gérez votre<br />infrastructure<br />
+          <span class="accent">avec l'IA</span>
+        </h2>
+
+        <p class="lede">Déployez, surveillez et optimisez vos serveurs cloud en langage naturel.</p>
+      </div>
+
+      <div class="features">
+        <div class="feature">
+          <div class="feature-icon"><i class="pi pi-server"></i></div>
+          <div>
+            <p class="feature-title">Compute</p>
+            <p class="feature-text">Déployez des VMs en quelques secondes</p>
+          </div>
+        </div>
+        <div class="feature">
+          <div class="feature-icon"><i class="pi pi-shield"></i></div>
+          <div>
+            <p class="feature-title">Sécurité</p>
+            <p class="feature-text">Infrastructure isolée et protégée</p>
+          </div>
+        </div>
+        <div class="feature">
+          <div class="feature-icon"><i class="pi pi-comments"></i></div>
+          <div>
+            <p class="feature-title">IA intégrée</p>
+            <p class="feature-text">Gérez votre cloud en langage naturel</p>
+          </div>
+        </div>
+      </div>
+
+      <div class="status-badge">
+        <span class="status-dot"></span>
+        <span>Tous les systèmes opérationnels</span>
+      </div>
+    </div>
+  </div>
+
+  <!-- Right form panel -->
+  <div class="form-panel">
+    <div class="mobile-logo">
+      <img src="/assets/safozi-logo.png" alt="SAFOZi" />
+    </div>
+
+    <div class="form-shell">
+      @if (!requiresTwoFactor()) {
+        <div class="form-heading">
+          <div class="eyebrow">Authentification</div>
+          <h1>Connexion</h1>
+          <p class="subtitle">Accédez à votre espace cloud Safozi</p>
+        </div>
+
+        @if (apiError()) {
+          <p-message severity="error" styleClass="api-error">{{ apiError() }}</p-message>
+        }
+
+        <form [formGroup]="form" (ngSubmit)="submit()" class="auth-form">
+          <div class="field">
+            <label for="email">Adresse email</label>
+            <input
+              id="email"
+              type="email"
+              pInputText
+              formControlName="email"
+              placeholder="vous@exemple.com"
+              autocomplete="email"
+              fluid
+              [invalid]="!!emailError"
+            />
+            @if (emailError) {
+              <p class="field-error">{{ emailError }}</p>
+            }
+          </div>
+
+          <div class="field">
+            <div class="field-label-row">
+              <label for="password">Mot de passe</label>
+              <a routerLink="/forgot-password" class="forgot-link">Mot de passe oublié ?</a>
+            </div>
+            <p-password
+              inputId="password"
+              formControlName="password"
+              placeholder="••••••••"
+              [toggleMask]="true"
+              [feedback]="false"
+              styleClass="full-width"
+              autocomplete="current-password"
+            />
+            @if (passwordError) {
+              <p class="field-error">{{ passwordError }}</p>
+            }
+          </div>
+
+          <p-button
+            type="submit"
+            label="Se connecter"
+            icon="pi pi-arrow-right"
+            iconPos="right"
+            [loading]="loading()"
+            [fluid]="true"
+            styleClass="submit-btn"
+          />
+        </form>
+
+        <p class="footer-link">
+          Pas encore de compte ? <a routerLink="/register">Créer un compte gratuitement</a>
+        </p>
+      } @else {
+        <div class="form-heading">
+          <div class="eyebrow">Vérification</div>
+          <h1>Double authentification</h1>
+          <p class="subtitle">Entrez le code à 6 chiffres généré par votre application d'authentification</p>
+        </div>
+
+        @if (apiError()) {
+          <p-message severity="error" styleClass="api-error">{{ apiError() }}</p-message>
+        }
+
+        <form [formGroup]="codeForm" (ngSubmit)="submitCode()" class="auth-form">
+          <div class="field">
+            <label for="code">Code de vérification</label>
+            <input
+              id="code"
+              type="text"
+              inputmode="numeric"
+              pInputText
+              formControlName="code"
+              placeholder="123456"
+              maxlength="6"
+              autocomplete="one-time-code"
+              fluid
+            />
+          </div>
+
+          <p-button
+            type="submit"
+            label="Vérifier"
+            icon="pi pi-arrow-right"
+            iconPos="right"
+            [loading]="loading()"
+            [fluid]="true"
+            styleClass="submit-btn"
+          />
+        </form>
+
+        <p class="footer-link">
+          <a (click)="backToCredentials()">Retour à la connexion</a>
+        </p>
+      }
+    </div>
+  </div>
+</div>

@@ -1,0 +1,86 @@
+<header class="topbar">
+  <p-toolbar styleClass="topbar-toolbar">
+    <ng-template #start>
+      <button
+        type="button"
+        class="hamburger"
+        (click)="toggleMobile()"
+        aria-label="Menu"
+      >
+        <i class="pi pi-bars"></i>
+      </button>
+
+      <div class="logo">
+        <img src="/assets/safozi-logo.png" alt="SAFOZi" />
+      </div>
+
+      <div class="separator"></div>
+
+      <nav class="breadcrumb" aria-label="Fil d'ariane">
+        <span class="crumb-dim">Pages</span>
+        <span class="crumb-sep">/</span>
+        <span class="crumb-current">{{ pageTitle() }}</span>
+      </nav>
+    </ng-template>
+
+    <ng-template #center>
+      <app-global-search />
+    </ng-template>
+
+    <ng-template #end>
+      <div class="status-pill">
+        <span class="dot"></span>
+        Tous les systèmes opérationnels
+      </div>
+
+      <button type="button" class="user-trigger" (click)="userMenu.toggle($event)">
+        <p-avatar [label]="initials()" shape="circle" size="normal" styleClass="user-avatar" />
+        <span class="user-name">{{ displayName() }}</span>
+        <i class="pi pi-angle-down"></i>
+      </button>
+      <p-menu #userMenu [model]="userMenuItems" [popup]="true" appendTo="body" />
+    </ng-template>
+  </p-toolbar>
+</header>
+
+<div class="body">
+  <aside class="sidebar" [class.open]="mobileOpen()">
+    <nav class="nav">
+      <p class="nav-label">Menu</p>
+      @for (item of navItems(); track item.to) {
+        @if (item.divider) {
+          <div class="nav-divider"></div>
+        }
+        <a [routerLink]="item.to" routerLinkActive="active" (click)="closeMobile()" class="nav-item">
+          <span class="nav-icon"><i [class]="item.icon"></i></span>
+          <span class="nav-text">
+            <span class="nav-title">{{ item.label }}</span>
+            <span class="nav-desc">{{ item.desc }}</span>
+          </span>
+          @if (isTicketBadgeRoute(item.to) && ticketBadgeCount() > 0) {
+            <span class="nav-badge">{{ ticketBadgeCount() }}</span>
+          }
+        </a>
+      }
+    </nav>
+
+    <div class="sidebar-footer">
+      <div class="mini-user">
+        <p-avatar [label]="initials()" shape="circle" size="normal" />
+        <div class="mini-user-info">
+          <p class="mini-user-name">{{ displayName() }}</p>
+          <p class="mini-user-email">{{ user()?.email }}</p>
+        </div>
+        <button type="button" class="logout-btn" (click)="logout()" aria-label="Déconnexion">
+          <i class="pi pi-sign-out"></i>
+        </button>
+      </div>
+    </div>
+  </aside>
+
+  <div class="mobile-backdrop" *ngIf="mobileOpen()" (click)="closeMobile()"></div>
+
+  <main class="content">
+    <router-outlet></router-outlet>
+  </main>
+</div>
