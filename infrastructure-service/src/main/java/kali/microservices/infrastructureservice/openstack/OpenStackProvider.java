@@ -38,7 +38,7 @@ public class OpenStackProvider implements CloudProvider {
     public VpsProvisionResponse createVPS(String os, String ram, String region, String networkId, List<String> securityGroups,
                                            String keypairName, String serverGroupId) {
         OSClient.OSClientV3 client = authService.getClient();
-        org.openstack4j.model.compute.Image image = getImageByName(client, os);
+        org.openstack4j.model.image.v2.Image image = getImageByName(client, os);
         return provisionServer(client, image, ram, networkId, securityGroups, keypairName, serverGroupId);
     }
 
@@ -53,14 +53,14 @@ public class OpenStackProvider implements CloudProvider {
     public VpsProvisionResponse createVPSFromImage(String imageId, String ram, String region, String networkId, List<String> securityGroups,
                                                     String keypairName, String serverGroupId) {
         OSClient.OSClientV3 client = authService.getClient();
-        org.openstack4j.model.compute.Image image = client.compute().images().get(imageId);
+        org.openstack4j.model.image.v2.Image image = client.imagesV2().get(imageId);
         if (image == null) {
             throw new RuntimeException("Image OpenStack introuvable: " + imageId);
         }
         return provisionServer(client, image, ram, networkId, securityGroups, keypairName, serverGroupId);
     }
 
-    private VpsProvisionResponse provisionServer(OSClient.OSClientV3 client, org.openstack4j.model.compute.Image image,
+    private VpsProvisionResponse provisionServer(OSClient.OSClientV3 client, org.openstack4j.model.image.v2.Image image,
                                                    String ram, String networkId, List<String> securityGroups,
                                                    String keypairName, String serverGroupId) {
         String imageId   = image.getId();
@@ -547,19 +547,23 @@ public class OpenStackProvider implements CloudProvider {
     @Override
     @Retryable(maxAttempts = 3, backoff = @Backoff(delay = 2000, multiplier = 2))
     public List<ImageOption> listImagesByPrefix(String prefix) {
-        List<? extends org.openstack4j.model.compute.Image> images = authService.getClient().compute().images().list();
+        List<? extends org.openstack4j.model.image.v2.Image> images = authService.getClient().imagesV2().list();
         return images.stream()
                 .filter(i -> i.getName() != null && i.getName().startsWith(prefix))
-                .sorted(java.util.Comparator.comparing(org.openstack4j.model.compute.Image::getName).reversed())
-                .map(i -> new ImageOption(i.getId(), i.getName(), null, null))
+                .sorted(java.util.Comparator.comparing(org.openstack4j.model.image.v2.Image::getName).reversed())
+                .map(i -> new ImageOption(
+                        i.getId(),
+                        i.getName(),
+                        i.getMinDisk() != null ? i.getMinDisk().intValue() : null,
+                        i.getMinRam() != null ? i.getMinRam().intValue() : null))
                 .collect(Collectors.toList());
     }
 
     // ──────────────────────────── Helpers ─────────────────────────────────
 
-    private org.openstack4j.model.compute.Image getImageByName(OSClient.OSClientV3 client, String osName) {
+    private org.openstack4j.model.image.v2.Image getImageByName(OSClient.OSClientV3 client, String osName) {
         String target = resolveImageName(osName);
-        List<? extends org.openstack4j.model.compute.Image> images = client.compute().images().list();
+        List<? extends org.openstack4j.model.image.v2.Image> images = client.imagesV2().list();
         return images.stream()
                 .filter(img -> img.getName() != null && img.getName().toLowerCase().contains(target.toLowerCase()))
                 .findFirst()
@@ -575,7 +579,7 @@ public class OpenStackProvider implements CloudProvider {
         return os; // use as-is
     }
 
-    private String getFlavorIdByRam(OSClient.OSClientV3 client, String ramStr, org.openstack4j.model.compute.Image image) {
+    private String getFlavorIdByRam(OSClient.OSClientV3 client, String ramStr, org.openstack4j.model.image.v2.Image image) {
         int requestedMb = parseRamToMb(ramStr);
         List<? extends Flavor> flavors = client.compute().flavors().list();
         if (flavors.isEmpty()) {
@@ -583,9 +587,18 @@ public class OpenStackProvider implements CloudProvider {
         }
 
         // Nova rejects a boot when the flavor's disk can't hold the image — must be at least
-        // the image's declared min_disk (GB) AND its actual size (bytes), whichever is larger.
-        long minDiskBytes = Math.max(image.getMinDisk(), 0) * 1024L * 1024 * 1024;
-        long requiredBytes = Math.max(minDiskBytes, image.getSize());
+        // the image's declared min_disk (GB) AND its actual on-disk footprint, whichever is
+        // larger. For a compressed format (qcow2...), that footprint is virtual_size (the
+        // uncompressed size Nova writes to the flavor's disk), NOT size (the compressed file
+        // size in Glance's store) — confirmed live: this deployment's ubuntu-22.04 image has
+        // size=694923776 but virtual_size=2361393152, and Nova's boot failure reported the
+        // virtual_size figure. Fall back to size only if virtual_size isn't reported at all.
+        long minDiskGb = image.getMinDisk() != null ? image.getMinDisk() : 0L;
+        long virtualSizeBytes = image.getVirtualSize() != null ? image.getVirtualSize() : 0L;
+        long fileSizeBytes = image.getSize() != null ? image.getSize() : 0L;
+        long minDiskBytes = minDiskGb * 1024L * 1024 * 1024;
+        long imageDiskBytes = Math.max(virtualSizeBytes, fileSizeBytes);
+        long requiredBytes = Math.max(minDiskBytes, imageDiskBytes);
 
         List<Flavor> bigEnough = flavors.stream()
                 .filter(f -> (long) f.getDisk() * 1024 * 1024 * 1024 >= requiredBytes)

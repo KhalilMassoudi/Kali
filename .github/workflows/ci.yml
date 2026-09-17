@@ -1,0 +1,282 @@
+name: CI
+
+on:
+  push:
+    branches: [main]
+  pull_request:
+    branches: [main]
+
+jobs:
+  changes:
+    runs-on: ubuntu-latest
+    outputs:
+      auth-service: ${{ steps.filter.outputs.auth-service }}
+      billing-service: ${{ steps.filter.outputs.billing-service }}
+      chat-service: ${{ steps.filter.outputs.chat-service }}
+      config-server: ${{ steps.filter.outputs.config-server }}
+      discovery-service: ${{ steps.filter.outputs.discovery-service }}
+      gateway-service: ${{ steps.filter.outputs.gateway-service }}
+      infrastructure-service: ${{ steps.filter.outputs.infrastructure-service }}
+      monitoring-service: ${{ steps.filter.outputs.monitoring-service }}
+      support-service: ${{ steps.filter.outputs.support-service }}
+      frontend: ${{ steps.filter.outputs.frontend }}
+      image_owner: ${{ steps.owner.outputs.lower }}
+    steps:
+      - uses: actions/checkout@v4
+      - uses: dorny/paths-filter@v3
+        id: filter
+        with:
+          filters: |
+            auth-service:
+              - 'auth-service/**'
+            billing-service:
+              - 'billing-service/**'
+            chat-service:
+              - 'chat-service/**'
+            config-server:
+              - 'Config-server/**'
+            discovery-service:
+              - 'Discovery-service/**'
+            gateway-service:
+              - 'Gateway-service/**'
+            infrastructure-service:
+              - 'infrastructure-service/**'
+            monitoring-service:
+              - 'monitoring-service/**'
+            support-service:
+              - 'support-service/**'
+            frontend:
+              - 'frontend/**'
+      # GHCR requires a lowercase image path; the GitHub account/owner name may not be.
+      - id: owner
+        run: echo "lower=$(echo '${{ github.repository_owner }}' | tr '[:upper:]' '[:lower:]')" >> "$GITHUB_OUTPUT"
+
+  auth-service:
+    needs: changes
+    if: needs.changes.outputs.auth-service == 'true'
+    runs-on: ubuntu-latest
+    permissions:
+      contents: read
+      packages: write
+    steps:
+      - uses: actions/checkout@v4
+      - uses: docker/setup-buildx-action@v3
+      - uses: docker/login-action@v3
+        with:
+          registry: ghcr.io
+          username: ${{ github.actor }}
+          password: ${{ secrets.GITHUB_TOKEN }}
+      - uses: docker/build-push-action@v6
+        with:
+          context: ./auth-service
+          push: ${{ github.event_name == 'push' }}
+          tags: |
+            ghcr.io/${{ needs.changes.outputs.image_owner }}/auth-service:${{ github.sha }}
+            ghcr.io/${{ needs.changes.outputs.image_owner }}/auth-service:latest
+
+  billing-service:
+    needs: changes
+    if: needs.changes.outputs.billing-service == 'true'
+    runs-on: ubuntu-latest
+    permissions:
+      contents: read
+      packages: write
+    steps:
+      - uses: actions/checkout@v4
+      - uses: docker/setup-buildx-action@v3
+      - uses: docker/login-action@v3
+        with:
+          registry: ghcr.io
+          username: ${{ github.actor }}
+          password: ${{ secrets.GITHUB_TOKEN }}
+      - uses: docker/build-push-action@v6
+        with:
+          context: ./billing-service
+          push: ${{ github.event_name == 'push' }}
+          tags: |
+            ghcr.io/${{ needs.changes.outputs.image_owner }}/billing-service:${{ github.sha }}
+            ghcr.io/${{ needs.changes.outputs.image_owner }}/billing-service:latest
+
+  chat-service:
+    needs: changes
+    if: needs.changes.outputs.chat-service == 'true'
+    runs-on: ubuntu-latest
+    permissions:
+      contents: read
+      packages: write
+    steps:
+      - uses: actions/checkout@v4
+      - uses: docker/setup-buildx-action@v3
+      - uses: docker/login-action@v3
+        with:
+          registry: ghcr.io
+          username: ${{ github.actor }}
+          password: ${{ secrets.GITHUB_TOKEN }}
+      - uses: docker/build-push-action@v6
+        with:
+          context: ./chat-service
+          push: ${{ github.event_name == 'push' }}
+          tags: |
+            ghcr.io/${{ needs.changes.outputs.image_owner }}/chat-service:${{ github.sha }}
+            ghcr.io/${{ needs.changes.outputs.image_owner }}/chat-service:latest
+
+  config-server:
+    needs: changes
+    if: needs.changes.outputs.config-server == 'true'
+    runs-on: ubuntu-latest
+    permissions:
+      contents: read
+      packages: write
+    steps:
+      - uses: actions/checkout@v4
+      - uses: docker/setup-buildx-action@v3
+      - uses: docker/login-action@v3
+        with:
+          registry: ghcr.io
+          username: ${{ github.actor }}
+          password: ${{ secrets.GITHUB_TOKEN }}
+      - uses: docker/build-push-action@v6
+        with:
+          context: ./Config-server
+          push: ${{ github.event_name == 'push' }}
+          tags: |
+            ghcr.io/${{ needs.changes.outputs.image_owner }}/config-server:${{ github.sha }}
+            ghcr.io/${{ needs.changes.outputs.image_owner }}/config-server:latest
+
+  discovery-service:
+    needs: changes
+    if: needs.changes.outputs.discovery-service == 'true'
+    runs-on: ubuntu-latest
+    permissions:
+      contents: read
+      packages: write
+    steps:
+      - uses: actions/checkout@v4
+      - uses: docker/setup-buildx-action@v3
+      - uses: docker/login-action@v3
+        with:
+          registry: ghcr.io
+          username: ${{ github.actor }}
+          password: ${{ secrets.GITHUB_TOKEN }}
+      - uses: docker/build-push-action@v6
+        with:
+          context: ./Discovery-service
+          push: ${{ github.event_name == 'push' }}
+          tags: |
+            ghcr.io/${{ needs.changes.outputs.image_owner }}/discovery-service:${{ github.sha }}
+            ghcr.io/${{ needs.changes.outputs.image_owner }}/discovery-service:latest
+
+  gateway-service:
+    needs: changes
+    if: needs.changes.outputs.gateway-service == 'true'
+    runs-on: ubuntu-latest
+    permissions:
+      contents: read
+      packages: write
+    steps:
+      - uses: actions/checkout@v4
+      - uses: docker/setup-buildx-action@v3
+      - uses: docker/login-action@v3
+        with:
+          registry: ghcr.io
+          username: ${{ github.actor }}
+          password: ${{ secrets.GITHUB_TOKEN }}
+      - uses: docker/build-push-action@v6
+        with:
+          context: ./Gateway-service
+          push: ${{ github.event_name == 'push' }}
+          tags: |
+            ghcr.io/${{ needs.changes.outputs.image_owner }}/gateway-service:${{ github.sha }}
+            ghcr.io/${{ needs.changes.outputs.image_owner }}/gateway-service:latest
+
+  infrastructure-service:
+    needs: changes
+    if: needs.changes.outputs.infrastructure-service == 'true'
+    runs-on: ubuntu-latest
+    permissions:
+      contents: read
+      packages: write
+    steps:
+      - uses: actions/checkout@v4
+      - uses: docker/setup-buildx-action@v3
+      - uses: docker/login-action@v3
+        with:
+          registry: ghcr.io
+          username: ${{ github.actor }}
+          password: ${{ secrets.GITHUB_TOKEN }}
+      - uses: docker/build-push-action@v6
+        with:
+          context: ./infrastructure-service
+          push: ${{ github.event_name == 'push' }}
+          tags: |
+            ghcr.io/${{ needs.changes.outputs.image_owner }}/infrastructure-service:${{ github.sha }}
+            ghcr.io/${{ needs.changes.outputs.image_owner }}/infrastructure-service:latest
+
+  monitoring-service:
+    needs: changes
+    if: needs.changes.outputs.monitoring-service == 'true'
+    runs-on: ubuntu-latest
+    permissions:
+      contents: read
+      packages: write
+    steps:
+      - uses: actions/checkout@v4
+      - uses: docker/setup-buildx-action@v3
+      - uses: docker/login-action@v3
+        with:
+          registry: ghcr.io
+          username: ${{ github.actor }}
+          password: ${{ secrets.GITHUB_TOKEN }}
+      - uses: docker/build-push-action@v6
+        with:
+          context: ./monitoring-service
+          push: ${{ github.event_name == 'push' }}
+          tags: |
+            ghcr.io/${{ needs.changes.outputs.image_owner }}/monitoring-service:${{ github.sha }}
+            ghcr.io/${{ needs.changes.outputs.image_owner }}/monitoring-service:latest
+
+  support-service:
+    needs: changes
+    if: needs.changes.outputs.support-service == 'true'
+    runs-on: ubuntu-latest
+    permissions:
+      contents: read
+      packages: write
+    steps:
+      - uses: actions/checkout@v4
+      - uses: docker/setup-buildx-action@v3
+      - uses: docker/login-action@v3
+        with:
+          registry: ghcr.io
+          username: ${{ github.actor }}
+          password: ${{ secrets.GITHUB_TOKEN }}
+      - uses: docker/build-push-action@v6
+        with:
+          context: ./support-service
+          push: ${{ github.event_name == 'push' }}
+          tags: |
+            ghcr.io/${{ needs.changes.outputs.image_owner }}/support-service:${{ github.sha }}
+            ghcr.io/${{ needs.changes.outputs.image_owner }}/support-service:latest
+
+  frontend:
+    needs: changes
+    if: needs.changes.outputs.frontend == 'true'
+    runs-on: ubuntu-latest
+    permissions:
+      contents: read
+      packages: write
+    steps:
+      - uses: actions/checkout@v4
+      - uses: docker/setup-buildx-action@v3
+      - uses: docker/login-action@v3
+        with:
+          registry: ghcr.io
+          username: ${{ github.actor }}
+          password: ${{ secrets.GITHUB_TOKEN }}
+      - uses: docker/build-push-action@v6
+        with:
+          context: ./frontend
+          push: ${{ github.event_name == 'push' }}
+          tags: |
+            ghcr.io/${{ needs.changes.outputs.image_owner }}/frontend:${{ github.sha }}
+            ghcr.io/${{ needs.changes.outputs.image_owner }}/frontend:latest

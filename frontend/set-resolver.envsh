@@ -1,0 +1,6 @@
+# Sourced by the official nginx image's entrypoint (docker-entrypoint.d/*.envsh)
+# before envsubst runs on nginx.conf.template. Reads whatever DNS resolver this
+# container actually has (Docker's embedded DNS locally, the cluster's CoreDNS
+# in k8s) so nginx can resolve the backend hostname per-request instead of once
+# at startup - see nginx.conf.template's `resolver` directive for why this matters.
+export DNS_RESOLVER=$(awk '/^nameserver/{print $2; exit}' /etc/resolv.conf)

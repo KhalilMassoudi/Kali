@@ -1,0 +1,29 @@
+# DNS_RESOLVER is exported by set-resolver.envsh (sourced before this template is
+# rendered) from this container's own /etc/resolv.conf - Docker's embedded DNS
+# locally, the cluster's CoreDNS in k8s. Using a resolver + a variable in proxy_pass
+# (below) makes nginx resolve the backend per-request instead of once at startup,
+# so it won't refuse to start just because the backend isn't up/registered yet.
+resolver ${DNS_RESOLVER} valid=10s;
+
+server {
+    listen 80;
+    server_name _;
+    root /usr/share/nginx/html;
+    index index.html;
+
+    # Angular client-side routing: unmatched paths fall back to index.html.
+    location / {
+        try_files $uri $uri/ /index.html;
+    }
+
+    # Backend API — target is injected at container start via GATEWAY_URL
+    # (nginx's official image envsubst's *.template files in this directory on boot).
+    location /api/ {
+        set $backend "${GATEWAY_URL}";
+        proxy_pass $backend/api/;
+        proxy_set_header Host $host;
+        proxy_set_header X-Real-IP $remote_addr;
+        proxy_set_header X-Forwarded-For $proxy_add_x_forwarded_for;
+        proxy_set_header X-Forwarded-Proto $scheme;
+    }
+}
