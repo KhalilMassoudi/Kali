@@ -39,7 +39,6 @@
 
 # Logs
 **/*.log
-**/logs/
 
 # OS Files
 **/.DS_Store

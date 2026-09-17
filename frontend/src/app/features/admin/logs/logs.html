@@ -1,0 +1,90 @@
+<div class="page">
+  <div class="page-head">
+    <div>
+      <h2>Logs API</h2>
+      <p class="subtitle">Consommation des API à travers toutes les requêtes proxyfiées par la Gateway</p>
+    </div>
+    <p-button [outlined]="true" size="small" icon="pi pi-refresh" label="Actualiser" (onClick)="refresh()" />
+  </div>
+
+  @if (error()) {
+    <div class="error-banner">
+      <span class="dot"></span>
+      <p>{{ error() }}</p>
+    </div>
+  }
+
+  <div class="filter-bar">
+    <span class="p-input-icon-left search-wrap">
+      <input
+        type="text"
+        pInputText
+        placeholder="Filtrer par chemin (ex: /vps)"
+        [(ngModel)]="search"
+        (ngModelChange)="onSearchInput()"
+      />
+    </span>
+    <p-select
+      [options]="serviceOptions"
+      [ngModel]="serviceFilter()"
+      (ngModelChange)="serviceFilter.set($event); onFilterChange()"
+      optionLabel="label"
+      optionValue="value"
+      placeholder="Tous les services"
+    />
+    <label class="errors-toggle">
+      <p-toggleswitch [ngModel]="errorsOnly()" (ngModelChange)="errorsOnly.set($event); onFilterChange()" />
+      Erreurs uniquement (4xx/5xx)
+    </label>
+  </div>
+
+  <div class="card">
+    <div class="table-wrap">
+      <p-table
+        [value]="page()?.content ?? []"
+        [lazy]="true"
+        [paginator]="true"
+        [rows]="pageSize"
+        [totalRecords]="page()?.totalElements ?? 0"
+        [loading]="loading()"
+        [rowHover]="true"
+        (onLazyLoad)="onLazyLoad($event)"
+      >
+        <ng-template #header>
+          <tr>
+            <th>Heure</th>
+            <th>Méthode</th>
+            <th>Chemin</th>
+            <th>Service</th>
+            <th>Utilisateur</th>
+            <th>Statut</th>
+            <th>Durée</th>
+          </tr>
+        </ng-template>
+        <ng-template #body let-entry>
+          <tr>
+            <td class="mono">{{ entry.timestamp | date: 'short' }}</td>
+            <td><span class="method-badge">{{ entry.method }}</span></td>
+            <td class="mono path-cell">{{ entry.path }}</td>
+            <td>{{ entry.targetService || '—' }}</td>
+            <td>
+              @if (entry.userEmail) {
+                <span>{{ entry.userEmail }}</span>
+                <span class="role-tag">{{ entry.userRole }}</span>
+              } @else {
+                <span class="anon">anonyme</span>
+              }
+            </td>
+            <td><p-tag [value]="entry.statusCode?.toString() ?? '?'" [severity]="statusSeverity(entry.statusCode)" [rounded]="true" /></td>
+            <td class="mono">{{ entry.durationMs != null ? entry.durationMs + ' ms' : '—' }}</td>
+          </tr>
+        </ng-template>
+        <ng-template #emptymessage>
+          <tr>
+            <td colspan="7" class="empty-row">Aucun appel API enregistré pour l'instant</td>
+          </tr>
+        </ng-template>
+      </p-table>
+    </div>
+  </div>
+</div>
