@@ -1,0 +1,48 @@
+# Prerequisite (run once on the cluster, never committed — it's the private key):
+#   kubectl create secret generic gpu-tunnel-key --from-file=id_ed25519=/root/.ssh/gpu_tunnel
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: ollama-tunnel
+  labels:
+    app: ollama-tunnel
+spec:
+  replicas: 1
+  strategy:
+    type: Recreate
+  selector:
+    matchLabels:
+      app: ollama-tunnel
+  template:
+    metadata:
+      labels:
+        app: ollama-tunnel
+    spec:
+      containers:
+        - name: ollama-tunnel
+          image: ghcr.io/khalilmassoudi/ollama-tunnel:latest
+          env:
+            - name: SSH_HOST
+              value: "117.18.102.45"
+            - name: SSH_PORT
+              value: "31487"
+            - name: SSH_USER
+              value: "ubuntu"
+            - name: LOCAL_PORT
+              value: "11434"
+            - name: REMOTE_PORT
+              value: "11434"
+          ports:
+            - containerPort: 11434
+          volumeMounts:
+            - name: gpu-tunnel-key
+              mountPath: /keys
+              readOnly: true
+      volumes:
+        - name: gpu-tunnel-key
+          secret:
+            secretName: gpu-tunnel-key
+            defaultMode: 0400
+            items:
+              - key: id_ed25519
+                path: gpu_tunnel

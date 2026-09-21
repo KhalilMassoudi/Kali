@@ -20,6 +20,7 @@ jobs:
       monitoring-service: ${{ steps.filter.outputs.monitoring-service }}
       support-service: ${{ steps.filter.outputs.support-service }}
       frontend: ${{ steps.filter.outputs.frontend }}
+      ollama-tunnel: ${{ steps.filter.outputs.ollama-tunnel }}
       image_owner: ${{ steps.owner.outputs.lower }}
     steps:
       - uses: actions/checkout@v4
@@ -47,6 +48,8 @@ jobs:
               - 'support-service/**'
             frontend:
               - 'frontend/**'
+            ollama-tunnel:
+              - 'ollama-tunnel/**'
       # GHCR requires a lowercase image path; the GitHub account/owner name may not be.
       - id: owner
         run: echo "lower=$(echo '${{ github.repository_owner }}' | tr '[:upper:]' '[:lower:]')" >> "$GITHUB_OUTPUT"
@@ -280,3 +283,26 @@ jobs:
           tags: |
             ghcr.io/${{ needs.changes.outputs.image_owner }}/frontend:${{ github.sha }}
             ghcr.io/${{ needs.changes.outputs.image_owner }}/frontend:latest
+
+  ollama-tunnel:
+    needs: changes
+    if: needs.changes.outputs.ollama-tunnel == 'true'
+    runs-on: ubuntu-latest
+    permissions:
+      contents: read
+      packages: write
+    steps:
+      - uses: actions/checkout@v4
+      - uses: docker/setup-buildx-action@v3
+      - uses: docker/login-action@v3
+        with:
+          registry: ghcr.io
+          username: ${{ github.actor }}
+          password: ${{ secrets.GITHUB_TOKEN }}
+      - uses: docker/build-push-action@v6
+        with:
+          context: ./ollama-tunnel
+          push: ${{ github.event_name == 'push' }}
+          tags: |
+            ghcr.io/${{ needs.changes.outputs.image_owner }}/ollama-tunnel:${{ github.sha }}
+            ghcr.io/${{ needs.changes.outputs.image_owner }}/ollama-tunnel:latest
