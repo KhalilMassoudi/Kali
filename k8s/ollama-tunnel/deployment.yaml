@@ -18,6 +18,16 @@ spec:
       labels:
         app: ollama-tunnel
     spec:
+      # Pinned to the control-plane node: it's the only node whose outbound
+      # SSH path to the GPU box has actually been verified (the worker
+      # node's egress got refused — likely a source-IP restriction on the
+      # GPU box's side that hasn't been checked against the worker yet).
+      nodeSelector:
+        kubernetes.io/hostname: node18783-env-3618209.my.p4d.click
+      tolerations:
+        - key: node-role.kubernetes.io/control-plane
+          operator: Exists
+          effect: NoSchedule
       containers:
         - name: ollama-tunnel
           image: ghcr.io/khalilmassoudi/ollama-tunnel:latest
