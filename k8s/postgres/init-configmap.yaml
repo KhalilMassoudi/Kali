@@ -1,0 +1,12 @@
+apiVersion: v1
+kind: ConfigMap
+metadata:
+  name: postgres-init
+data:
+  init.sql: |
+    CREATE DATABASE auth_db;
+    CREATE DATABASE infrastructure_db;
+    CREATE DATABASE chat_db;
+    CREATE DATABASE monitoring_db;
+    CREATE DATABASE billing_db;
+    CREATE DATABASE support_db;
