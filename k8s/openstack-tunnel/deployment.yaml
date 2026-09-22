@@ -1,0 +1,71 @@
+# Prerequisite (run once on the cluster, never committed - real VPN/network
+# details, not source code):
+#   kubectl create secret generic openstack-tunnel-config \
+#     --from-literal=private-key='<this peer's private key>' \
+#     --from-literal=address='<this peer's VPN address, e.g. 10.10.10.x/32>' \
+#     --from-literal=peer-pubkey='<the office VPN server's public key>' \
+#     --from-literal=peer-endpoint='<the office VPN server's public ip:port>' \
+#     --from-literal=allowed-ips='<the private subnet to route through the tunnel>'
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: openstack-tunnel
+  labels:
+    app: openstack-tunnel
+spec:
+  replicas: 1
+  strategy:
+    type: Recreate
+  selector:
+    matchLabels:
+      app: openstack-tunnel
+  template:
+    metadata:
+      labels:
+        app: openstack-tunnel
+    spec:
+      # hostNetwork so the wg0 interface and route apply to the node itself -
+      # any pod scheduled on this same node can then reach the OpenStack
+      # subnet directly, the same way it worked when set up manually.
+      hostNetwork: true
+      nodeSelector:
+        kubernetes.io/hostname: node18784-env-3618209.my.p4d.click
+      containers:
+        - name: openstack-tunnel
+          image: ghcr.io/khalilmassoudi/openstack-tunnel:latest
+          securityContext:
+            capabilities:
+              add: ["NET_ADMIN"]
+          env:
+            - name: WG_ADDRESS
+              valueFrom:
+                secretKeyRef:
+                  name: openstack-tunnel-config
+                  key: address
+            - name: WG_PEER_PUBKEY
+              valueFrom:
+                secretKeyRef:
+                  name: openstack-tunnel-config
+                  key: peer-pubkey
+            - name: WG_PEER_ENDPOINT
+              valueFrom:
+                secretKeyRef:
+                  name: openstack-tunnel-config
+                  key: peer-endpoint
+            - name: WG_ALLOWED_IPS
+              valueFrom:
+                secretKeyRef:
+                  name: openstack-tunnel-config
+                  key: allowed-ips
+            - name: WG_PRIVATE_KEY
+              valueFrom:
+                secretKeyRef:
+                  name: openstack-tunnel-config
+                  key: private-key
+          volumeMounts:
+            - name: tun-device
+              mountPath: /dev/net/tun
+      volumes:
+        - name: tun-device
+          hostPath:
+            path: /dev/net/tun
