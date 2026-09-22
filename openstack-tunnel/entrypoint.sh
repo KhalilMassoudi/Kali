@@ -21,7 +21,7 @@ chmod 600 /etc/wireguard/wg0.conf
 
 ip link delete dev wg0 2>/dev/null || true
 
-WG_SUDO=true /usr/local/bin/boringtun-cli --disable-drop-privileges -v info wg0 &
+WG_SUDO=true /usr/local/bin/boringtun-cli -f --disable-drop-privileges -v info wg0 &
 TUNNEL_PID=$!
 sleep 2
 
