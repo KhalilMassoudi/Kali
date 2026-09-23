@@ -27,6 +27,15 @@ spec:
       # with a route to the OpenStack subnet (see openstack-tunnel).
       nodeSelector:
         kubernetes.io/hostname: node18784-env-3618209.my.p4d.click
+      # Keystone's own service catalog reports Nova/Neutron/Cinder/etc. using
+      # the internal hostname "controller" (not the 192.168.10.50 IP used for
+      # the initial auth call) - meaningless outside the office LAN's own
+      # DNS/hosts setup, which the tunnel doesn't provide. Every OpenStack
+      # endpoint in this config points at the same IP, so it's one host.
+      hostAliases:
+        - ip: "192.168.10.50"
+          hostnames:
+            - "controller"
       containers:
         - name: infrastructure-service
           image: ghcr.io/khalilmassoudi/infrastructure-service:latest
