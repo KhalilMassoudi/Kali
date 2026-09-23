@@ -140,7 +140,7 @@
         <div class="card-header">
           <div class="card-header-left">
             <i class="pi pi-shield card-header-icon good"></i>
-            <span class="card-header-title">Santé infrastructure</span>
+            <span class="card-header-title">Mes ressources</span>
           </div>
         </div>
         <div>
@@ -154,23 +154,23 @@
           <div class="health-row">
             <div class="health-left">
               <span class="health-dot"></span>
-              <span>Réseau</span>
+              <span>Réseaux</span>
             </div>
-            <span class="health-val">Opérationnel</span>
+            <span class="health-val">{{ networks().length }}</span>
           </div>
           <div class="health-row">
             <div class="health-left">
               <span class="health-dot"></span>
-              <span>Stockage</span>
+              <span>Volumes</span>
             </div>
-            <span class="health-val">Opérationnel</span>
+            <span class="health-val">{{ volumes().length }}</span>
           </div>
           <div class="health-row">
             <div class="health-left">
               <span class="health-dot"></span>
-              <span>Sécurité</span>
+              <span>Groupes de sécurité</span>
             </div>
-            <span class="health-val">Protégé</span>
+            <span class="health-val">{{ securityGroups().length }}</span>
           </div>
         </div>
       </div>

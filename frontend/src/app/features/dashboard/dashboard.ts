@@ -6,6 +6,9 @@ import { AuthService } from '../../core/services/auth.service';
 import { VmService } from '../../core/services/vm.service';
 import { QuotaService } from '../../core/services/quota.service';
 import { MetricsService } from '../../core/services/metrics.service';
+import { VolumeService } from '../../core/services/volume.service';
+import { NetworkService } from '../../core/services/network.service';
+import { SecurityGroupService } from '../../core/services/security-group.service';
 import { VmTable } from '../../shared/vm-table/vm-table';
 import { AdminOverview } from './admin-overview/admin-overview';
 import { ResourceGauge } from '../../shared/resource-gauge/resource-gauge';
@@ -29,6 +32,9 @@ export class Dashboard {
   readonly vmService = inject(VmService);
   readonly quotaService = inject(QuotaService);
   readonly metricsService = inject(MetricsService);
+  readonly volumeService = inject(VolumeService);
+  readonly networkService = inject(NetworkService);
+  readonly securityGroupService = inject(SecurityGroupService);
   private readonly router = inject(Router);
 
   readonly quota = this.quotaService.myQuota;
@@ -43,6 +49,9 @@ export class Dashboard {
   readonly errored = this.vmService.errored;
   readonly totalCpu = this.vmService.totalCpu;
   readonly totalRam = this.vmService.totalRam;
+  readonly volumes = this.volumeService.volumes;
+  readonly networks = this.networkService.networks;
+  readonly securityGroups = this.securityGroupService.groups;
 
   readonly recentVms = computed(() => this.vms().slice(0, 6));
 
@@ -80,7 +89,12 @@ export class Dashboard {
   constructor() {
     effect(() => {
       const user = this.auth.user();
-      if (user) this.vmService.fetchVms(user.id);
+      if (user) {
+        this.vmService.fetchVms(user.id);
+        this.volumeService.fetchVolumes(user.id);
+        this.networkService.fetchNetworks(user.id);
+        this.securityGroupService.fetchGroups(user.id);
+      }
     });
     this.quotaService.loadMyQuota();
     this.metricsService.loadMySummary();
@@ -88,7 +102,12 @@ export class Dashboard {
 
   refresh(): void {
     const user = this.user();
-    if (user) this.vmService.fetchVms(user.id);
+    if (user) {
+      this.vmService.fetchVms(user.id);
+      this.volumeService.fetchVolumes(user.id);
+      this.networkService.fetchNetworks(user.id);
+      this.securityGroupService.fetchGroups(user.id);
+    }
     this.quotaService.loadMyQuota();
     this.metricsService.loadMySummary();
   }
