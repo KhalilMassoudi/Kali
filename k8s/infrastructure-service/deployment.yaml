@@ -1,0 +1,87 @@
+# Prerequisite (run once on the cluster, never committed - real credentials):
+#   kubectl create secret generic infrastructure-service-secrets \
+#     --from-literal=openstack-password='<the real OpenStack password>' \
+#     --from-literal=os-keystone-url='<value from infrastructure-service/.env>' \
+#     --from-literal=os-gnocchi-url='<value from infrastructure-service/.env>' \
+#     --from-literal=os-username='<value from infrastructure-service/.env>' \
+#     --from-literal=os-password='<value from infrastructure-service/.env>' \
+#     --from-literal=os-project-name='<value from infrastructure-service/.env>' \
+#     --from-literal=os-user-domain='<value from infrastructure-service/.env>'
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: infrastructure-service
+  labels:
+    app: infrastructure-service
+spec:
+  replicas: 1
+  selector:
+    matchLabels:
+      app: infrastructure-service
+  template:
+    metadata:
+      labels:
+        app: infrastructure-service
+    spec:
+      # Pinned to the same node as openstack-tunnel - that's the only node
+      # with a route to the OpenStack subnet (see openstack-tunnel).
+      nodeSelector:
+        kubernetes.io/hostname: node18784-env-3618209.my.p4d.click
+      containers:
+        - name: infrastructure-service
+          image: ghcr.io/khalilmassoudi/infrastructure-service:latest
+          ports:
+            - containerPort: 8083
+          env:
+            - name: SPRING_DATASOURCE_URL
+              value: "jdbc:postgresql://postgres:5432/infrastructure_db"
+            - name: SPRING_CONFIG_IMPORT
+              value: "optional:configserver:http://config-server:8888"
+            - name: EUREKA_CLIENT_SERVICE-URL_DEFAULTZONE
+              value: "http://discovery-service:8761/eureka/"
+            - name: OPENSTACK_PASSWORD
+              valueFrom:
+                secretKeyRef:
+                  name: infrastructure-service-secrets
+                  key: openstack-password
+            - name: OS_KEYSTONE_URL
+              valueFrom:
+                secretKeyRef:
+                  name: infrastructure-service-secrets
+                  key: os-keystone-url
+            - name: OS_GNOCCHI_URL
+              valueFrom:
+                secretKeyRef:
+                  name: infrastructure-service-secrets
+                  key: os-gnocchi-url
+            - name: OS_USERNAME
+              valueFrom:
+                secretKeyRef:
+                  name: infrastructure-service-secrets
+                  key: os-username
+            - name: OS_PASSWORD
+              valueFrom:
+                secretKeyRef:
+                  name: infrastructure-service-secrets
+                  key: os-password
+            - name: OS_PROJECT_NAME
+              valueFrom:
+                secretKeyRef:
+                  name: infrastructure-service-secrets
+                  key: os-project-name
+            - name: OS_USER_DOMAIN
+              valueFrom:
+                secretKeyRef:
+                  name: infrastructure-service-secrets
+                  key: os-user-domain
+---
+apiVersion: v1
+kind: Service
+metadata:
+  name: infrastructure-service
+spec:
+  selector:
+    app: infrastructure-service
+  ports:
+    - port: 8083
+      targetPort: 8083
