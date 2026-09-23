@@ -5,6 +5,8 @@ import { ButtonModule } from 'primeng/button';
 import { TableModule } from 'primeng/table';
 import { TagModule } from 'primeng/tag';
 import { TooltipModule } from 'primeng/tooltip';
+import { SelectModule } from 'primeng/select';
+import { FormsModule } from '@angular/forms';
 import { AuthService } from '../../core/services/auth.service';
 import { NetworkService } from '../../core/services/network.service';
 import { SecurityGroupService } from '../../core/services/security-group.service';
@@ -23,6 +25,9 @@ type Tab = 'topology' | 'networks' | 'routers' | 'security-groups' | 'floating-i
 
 interface RouterRowState {
   deleting: boolean;
+  editingGateway: boolean;
+  gatewaySelection: string | null;
+  savingGateway: boolean;
 }
 
 interface FloatingIpRowState {
@@ -37,6 +42,8 @@ interface FloatingIpRowState {
     TableModule,
     TagModule,
     TooltipModule,
+    SelectModule,
+    FormsModule,
     Networks,
     SecurityGroups,
     NetworkTopology,
@@ -142,16 +149,61 @@ export class NetworkHub {
     return this.vms().find((v) => v.id === vpsId)?.name ?? `VM #${vpsId}`;
   }
 
+  private readonly defaultRouterRowState: RouterRowState = {
+    deleting: false,
+    editingGateway: false,
+    gatewaySelection: null,
+    savingGateway: false,
+  };
+
   routerRowState(router: ClientRouter): RouterRowState {
-    return this.routerRowStates()[router.id] ?? { deleting: false };
+    return this.routerRowStates()[router.id] ?? this.defaultRouterRowState;
+  }
+
+  toggleGatewayEdit(router: ClientRouter): void {
+    const current = this.routerRowState(router);
+    this.routerRowStates.update((s) => ({
+      ...s,
+      [router.id]: { ...current, editingGateway: !current.editingGateway, gatewaySelection: router.externalGatewayNetworkId ?? null },
+    }));
+  }
+
+  setGatewaySelection(router: ClientRouter, networkId: string | null): void {
+    const current = this.routerRowState(router);
+    this.routerRowStates.update((s) => ({ ...s, [router.id]: { ...current, gatewaySelection: networkId } }));
+  }
+
+  async saveGateway(router: ClientRouter): Promise<void> {
+    const current = this.routerRowState(router);
+    if (!current.gatewaySelection) return;
+    this.routerRowStates.update((s) => ({ ...s, [router.id]: { ...current, savingGateway: true } }));
+    try {
+      await this.routerService.setGateway(router.id, current.gatewaySelection);
+      this.routerRowStates.update((s) => ({
+        ...s,
+        [router.id]: { ...this.defaultRouterRowState },
+      }));
+    } finally {
+      this.routerRowStates.update((s) => ({ ...s, [router.id]: { ...this.routerRowState(router), savingGateway: false } }));
+    }
+  }
+
+  async clearGateway(router: ClientRouter): Promise<void> {
+    const current = this.routerRowState(router);
+    this.routerRowStates.update((s) => ({ ...s, [router.id]: { ...current, savingGateway: true } }));
+    try {
+      await this.routerService.clearGateway(router.id);
+    } finally {
+      this.routerRowStates.update((s) => ({ ...s, [router.id]: { ...this.defaultRouterRowState } }));
+    }
   }
 
   async removeRouter(router: ClientRouter): Promise<void> {
-    this.routerRowStates.update((s) => ({ ...s, [router.id]: { deleting: true } }));
+    this.routerRowStates.update((s) => ({ ...s, [router.id]: { ...this.defaultRouterRowState, deleting: true } }));
     try {
       await this.routerService.deleteRouter(router.id);
     } finally {
-      this.routerRowStates.update((s) => ({ ...s, [router.id]: { deleting: false } }));
+      this.routerRowStates.update((s) => ({ ...s, [router.id]: { ...this.defaultRouterRowState, deleting: false } }));
     }
   }
 

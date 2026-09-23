@@ -64,7 +64,63 @@
               <ng-template #body let-router>
                 <tr>
                   <td class="row-name">{{ router.name }}</td>
-                  <td><p-tag [value]="router.externalGatewayNetworkId ? 'Oui' : 'Aucune'" [rounded]="true" /></td>
+                  <td>
+                    @if (routerRowState(router).editingGateway) {
+                      <div class="action-group">
+                        <p-select
+                          [options]="externalNetworkOptions()"
+                          [ngModel]="routerRowState(router).gatewaySelection"
+                          (ngModelChange)="setGatewaySelection(router, $event)"
+                          optionLabel="name"
+                          optionValue="id"
+                          placeholder="Choisir un réseau externe"
+                          [style]="{ minWidth: '14rem' }"
+                        />
+                        <p-button
+                          size="small"
+                          icon="pi pi-check"
+                          [disabled]="!routerRowState(router).gatewaySelection || routerRowState(router).savingGateway"
+                          [loading]="routerRowState(router).savingGateway"
+                          pTooltip="Confirmer"
+                          tooltipPosition="top"
+                          (onClick)="saveGateway(router)"
+                        />
+                        <p-button
+                          [outlined]="true"
+                          size="small"
+                          icon="pi pi-times"
+                          [disabled]="routerRowState(router).savingGateway"
+                          pTooltip="Annuler"
+                          tooltipPosition="top"
+                          (onClick)="toggleGatewayEdit(router)"
+                        />
+                      </div>
+                    } @else {
+                      <div class="action-group">
+                        <p-tag [value]="router.externalGatewayNetworkId ? 'Oui' : 'Aucune'" [rounded]="true" />
+                        <p-button
+                          [outlined]="true"
+                          size="small"
+                          icon="pi pi-pencil"
+                          pTooltip="Modifier la passerelle"
+                          tooltipPosition="top"
+                          (onClick)="toggleGatewayEdit(router)"
+                        />
+                        @if (router.externalGatewayNetworkId) {
+                          <p-button
+                            [outlined]="true"
+                            size="small"
+                            severity="danger"
+                            [icon]="routerRowState(router).savingGateway ? 'pi pi-spin pi-spinner' : 'pi pi-times-circle'"
+                            [disabled]="routerRowState(router).savingGateway"
+                            pTooltip="Supprimer la passerelle"
+                            tooltipPosition="top"
+                            (onClick)="clearGateway(router)"
+                          />
+                        }
+                      </div>
+                    }
+                  </td>
                   <td class="mono">{{ router.createdAt | date: 'mediumDate' }}</td>
                   <td>
                     <div class="action-group">

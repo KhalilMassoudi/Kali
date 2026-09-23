@@ -65,6 +65,28 @@ export class RouterService {
     }
   }
 
+  async setGateway(id: number, externalNetworkId: string): Promise<void> {
+    try {
+      const router = await firstValueFrom(
+        this.http.put<ClientRouter>(`/api/infrastructure/routers/${id}/gateway`, { externalNetworkId }),
+      );
+      this._routers.update((routers) => routers.map((r) => (r.id === id ? router : r)));
+    } catch (err: any) {
+      this._error.set(err?.error?.message || "Erreur lors de la définition de la passerelle");
+      throw err;
+    }
+  }
+
+  async clearGateway(id: number): Promise<void> {
+    try {
+      const router = await firstValueFrom(this.http.delete<ClientRouter>(`/api/infrastructure/routers/${id}/gateway`));
+      this._routers.update((routers) => routers.map((r) => (r.id === id ? router : r)));
+    } catch (err: any) {
+      this._error.set(err?.error?.message || "Erreur lors de la suppression de la passerelle");
+      throw err;
+    }
+  }
+
   async deleteRouter(id: number): Promise<void> {
     try {
       await firstValueFrom(this.http.delete(`/api/infrastructure/routers/${id}`));

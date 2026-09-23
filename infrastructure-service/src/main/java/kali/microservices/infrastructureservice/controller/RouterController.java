@@ -3,6 +3,7 @@ package kali.microservices.infrastructureservice.controller;
 import jakarta.validation.Valid;
 import kali.microservices.infrastructureservice.dto.CreateRouterRequest;
 import kali.microservices.infrastructureservice.dto.RouterInterfaceRequest;
+import kali.microservices.infrastructureservice.dto.SetRouterGatewayRequest;
 import kali.microservices.infrastructureservice.entities.ClientRouter;
 import kali.microservices.infrastructureservice.openstack.RouterInterfaceDetails;
 import kali.microservices.infrastructureservice.security.AuthContext;
@@ -61,6 +62,23 @@ public class RouterController {
         authContext.requireOwnerOrAdmin(authHeader, router.getUserId());
         service.detachInterface(id, subnetId);
         return ResponseEntity.noContent().build();
+    }
+
+    @PutMapping("/{id}/gateway")
+    public ResponseEntity<ClientRouter> setGateway(@RequestHeader("Authorization") String authHeader,
+                                                     @PathVariable Long id,
+                                                     @Valid @RequestBody SetRouterGatewayRequest request) {
+        ClientRouter router = service.getById(id);
+        authContext.requireOwnerOrAdmin(authHeader, router.getUserId());
+        return ResponseEntity.ok(service.setGateway(id, request.getExternalNetworkId()));
+    }
+
+    @DeleteMapping("/{id}/gateway")
+    public ResponseEntity<ClientRouter> clearGateway(@RequestHeader("Authorization") String authHeader,
+                                                       @PathVariable Long id) {
+        ClientRouter router = service.getById(id);
+        authContext.requireOwnerOrAdmin(authHeader, router.getUserId());
+        return ResponseEntity.ok(service.clearGateway(id));
     }
 
     @DeleteMapping("/{id}")

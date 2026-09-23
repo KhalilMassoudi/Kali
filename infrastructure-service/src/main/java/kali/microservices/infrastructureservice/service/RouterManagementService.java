@@ -60,6 +60,20 @@ public class RouterManagementService {
         cloudProviderFactory.getProvider().detachRouterInterface(router.getExternalId(), subnetId);
     }
 
+    public ClientRouter setGateway(Long id, String externalNetworkId) {
+        ClientRouter router = getById(id);
+        cloudProviderFactory.getProvider().setRouterGateway(router.getExternalId(), externalNetworkId);
+        router.setExternalGatewayNetworkId(externalNetworkId);
+        return repository.save(router);
+    }
+
+    public ClientRouter clearGateway(Long id) {
+        ClientRouter router = getById(id);
+        cloudProviderFactory.getProvider().clearRouterGateway(router.getExternalId());
+        router.setExternalGatewayNetworkId(null);
+        return repository.save(router);
+    }
+
     public void delete(Long id) {
         ClientRouter router = getById(id);
         try {
