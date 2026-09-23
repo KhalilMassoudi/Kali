@@ -30,9 +30,32 @@ kind: Service
 metadata:
   name: frontend
 spec:
-  type: NodePort
   selector:
     app: frontend
   ports:
     - port: 80
       targetPort: 80
+---
+# Replaces the cluster's pre-existing "helloworld" Ingress, which claimed the
+# same host/path for the bundled hello-kubernetes sample app - delete that
+# one when applying this (kubectl delete ingress helloworld), same
+# host/path/nginx-controller pattern, just pointed at our own frontend.
+apiVersion: networking.k8s.io/v1
+kind: Ingress
+metadata:
+  name: frontend
+  annotations:
+    nginx.ingress.kubernetes.io/ssl-redirect: "false"
+spec:
+  ingressClassName: nginx
+  rules:
+    - host: env-3618209.my.p4d.click
+      http:
+        paths:
+          - path: /
+            pathType: Prefix
+            backend:
+              service:
+                name: frontend
+                port:
+                  number: 80
