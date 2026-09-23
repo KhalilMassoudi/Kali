@@ -2,6 +2,7 @@ package kali.microservices.gatewayservice.config;
 
 import kali.microservices.gatewayservice.logging.ApiLogClient;
 import lombok.extern.slf4j.Slf4j;
+import org.springframework.beans.factory.annotation.Value;
 import org.springframework.context.annotation.Bean;
 import org.springframework.context.annotation.Configuration;
 import org.springframework.http.HttpHeaders;
@@ -39,21 +40,39 @@ public class GatewayRoutesConfig {
         return rt;
     }
 
+    @Value("${services.auth.url:http://localhost:8081}")
+    private String authServiceUrl;
+
+    @Value("${services.chat.url:http://localhost:8082}")
+    private String chatServiceUrl;
+
+    @Value("${services.infrastructure.url:http://localhost:8083}")
+    private String infrastructureServiceUrl;
+
+    @Value("${services.billing.url:http://localhost:8084}")
+    private String billingServiceUrl;
+
+    @Value("${services.support.url:http://localhost:8085}")
+    private String supportServiceUrl;
+
+    @Value("${services.monitoring.url:http://localhost:8086}")
+    private String monitoringServiceUrl;
+
     @Bean
     public RouterFunction<ServerResponse> routes(RestTemplate proxyRestTemplate, ApiLogClient apiLogClient) {
         return RouterFunctions.route()
                 .route(RequestPredicates.path("/api/auth/**"),
-                        req -> proxyTo(req, "http://localhost:8081", "auth-service", proxyRestTemplate, apiLogClient))
+                        req -> proxyTo(req, authServiceUrl, "auth-service", proxyRestTemplate, apiLogClient))
                 .route(RequestPredicates.path("/api/chat/**"),
-                        req -> proxyTo(req, "http://localhost:8082", "chat-service", proxyRestTemplate, apiLogClient))
+                        req -> proxyTo(req, chatServiceUrl, "chat-service", proxyRestTemplate, apiLogClient))
                 .route(RequestPredicates.path("/api/infrastructure/**"),
-                        req -> proxyTo(req, "http://localhost:8083", "infrastructure-service", proxyRestTemplate, apiLogClient))
+                        req -> proxyTo(req, infrastructureServiceUrl, "infrastructure-service", proxyRestTemplate, apiLogClient))
                 .route(RequestPredicates.path("/api/billing/**"),
-                        req -> proxyTo(req, "http://localhost:8084", "billing-service", proxyRestTemplate, apiLogClient))
+                        req -> proxyTo(req, billingServiceUrl, "billing-service", proxyRestTemplate, apiLogClient))
                 .route(RequestPredicates.path("/api/support/**"),
-                        req -> proxyTo(req, "http://localhost:8085", "support-service", proxyRestTemplate, apiLogClient))
+                        req -> proxyTo(req, supportServiceUrl, "support-service", proxyRestTemplate, apiLogClient))
                 .route(RequestPredicates.path("/api/monitoring/**"),
-                        req -> proxyTo(req, "http://localhost:8086", "monitoring-service", proxyRestTemplate, apiLogClient))
+                        req -> proxyTo(req, monitoringServiceUrl, "monitoring-service", proxyRestTemplate, apiLogClient))
                 .build();
     }
 

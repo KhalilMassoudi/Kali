@@ -1,6 +1,7 @@
 package kali.microservices.gatewayservice.logging;
 
 import lombok.extern.slf4j.Slf4j;
+import org.springframework.beans.factory.annotation.Value;
 import org.springframework.http.client.SimpleClientHttpRequestFactory;
 import org.springframework.scheduling.annotation.Async;
 import org.springframework.stereotype.Service;
@@ -19,7 +20,8 @@ import java.util.Map;
 @Service
 public class ApiLogClient {
 
-    private static final String INGEST_URL = "http://localhost:8086/api/monitoring/logs/ingest";
+    @Value("${services.monitoring.url:http://localhost:8086}")
+    private String monitoringServiceUrl;
 
     private final RestTemplate restTemplate;
 
@@ -42,7 +44,7 @@ public class ApiLogClient {
             body.put("userRole", userRole);
             body.put("statusCode", statusCode);
             body.put("durationMs", durationMs);
-            restTemplate.postForEntity(INGEST_URL, body, Void.class);
+            restTemplate.postForEntity(monitoringServiceUrl + "/api/monitoring/logs/ingest", body, Void.class);
         } catch (Exception e) {
             log.debug("Failed to ship API log entry for {} {}: {}", method, path, e.getMessage());
         }
