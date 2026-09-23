@@ -18,9 +18,15 @@ server {
 
     # Backend API — target is injected at container start via GATEWAY_URL
     # (nginx's official image envsubst's *.template files in this directory on boot).
+    #
+    # No URI part after $backend here, deliberately: when proxy_pass's target
+    # contains a variable, nginx skips its usual location-prefix-stripping and
+    # forwards the full original request URI as-is instead - since that URI
+    # already starts with /api/ (this location matched it), adding another
+    # literal /api/ here doubled it to /api/api/... and broke every request.
     location /api/ {
         set $backend "${GATEWAY_URL}";
-        proxy_pass $backend/api/;
+        proxy_pass $backend;
         proxy_set_header Host $host;
         proxy_set_header X-Real-IP $remote_addr;
         proxy_set_header X-Forwarded-For $proxy_add_x_forwarded_for;
