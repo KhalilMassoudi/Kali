@@ -20,10 +20,12 @@ spec:
           ports:
             - containerPort: 80
           env:
-            # Already the image's own default (see frontend/Dockerfile) - set explicitly
-            # here anyway so the manifest is self-documenting.
+            # Fully-qualified Kubernetes DNS name, not the short "gateway-service" -
+            # nginx's `resolver` directive doesn't apply the DNS search-domain suffix
+            # the way a normal OS resolver does, so the short name failed to resolve
+            # ("Host not found") even though the Service genuinely exists.
             - name: GATEWAY_URL
-              value: "http://gateway-service:8080"
+              value: "http://gateway-service.default.svc.cluster.local:8080"
 ---
 apiVersion: v1
 kind: Service
