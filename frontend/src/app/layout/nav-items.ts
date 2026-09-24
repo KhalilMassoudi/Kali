@@ -24,7 +24,6 @@ export const ADMIN_NAV_ITEMS: NavItem[] = [
   { to: '/admin/compute', icon: 'pi pi-server', label: 'Compute', desc: 'Instances, images, clés, groupes' },
   { to: '/admin/volumes', icon: 'pi pi-database', label: 'Volumes', desc: 'Stockage bloc & snapshots' },
   { to: '/admin/network', icon: 'pi pi-share-alt', label: 'Réseau', desc: 'Réseaux & sécurité' },
-  { to: '/admin/domains', icon: 'pi pi-globe', label: 'Domaines', desc: 'Noms de domaine' },
 
   // Clients group — kept on its own
   { to: '/admin/users', icon: 'pi pi-users', label: 'Clients', desc: 'Comptes, projets & usage', divider: true },

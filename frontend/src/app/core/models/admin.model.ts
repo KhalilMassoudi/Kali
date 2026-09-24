@@ -34,8 +34,6 @@ export interface AdminUser {
   createdAt: string | null;
 }
 
-export type DomainStatus = 'PENDING' | 'ACTIVE' | 'EXPIRED' | 'TRANSFERRED' | 'DELETED';
-
 export type AlertSeverity = 'INFO' | 'WARNING' | 'CRITICAL';
 export type AlertType = 'CPU_HIGH' | 'MEMORY_HIGH' | 'RESPONSE_TIME_HIGH' | 'SERVICE_DOWN' | 'ERROR_RATE_HIGH';
 
@@ -102,15 +100,3 @@ export interface TicketAgent {
   grantedAt: string | null;
 }
 
-export interface AdminDomain {
-  id: number;
-  userId: number;
-  name: string;
-  tld: string | null;
-  status: DomainStatus;
-  registeredAt: string | null;
-  expiresAt: string | null;
-  nameserver1: string | null;
-  nameserver2: string | null;
-  createdAt: string;
-}

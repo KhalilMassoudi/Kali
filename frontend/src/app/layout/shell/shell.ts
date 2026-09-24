@@ -35,7 +35,6 @@ const PAGE_TITLES: Record<string, string> = {
   '/admin/compute': 'Compute',
   '/admin/volumes': 'Volumes',
   '/admin/network': 'Réseau',
-  '/admin/domains': 'Domaines',
   '/admin/logs': 'Logs API',
   '/admin/alerts': 'Alertes',
   '/admin/support': 'Tickets support',

@@ -2,7 +2,6 @@ import { Injectable, inject, signal } from '@angular/core';
 import { HttpClient, HttpParams } from '@angular/common/http';
 import { firstValueFrom } from 'rxjs';
 import {
-  AdminDomain,
   AdminUser,
   AlertEvent,
   AlertRule,
@@ -38,7 +37,6 @@ export class AdminService {
 
   private readonly _allVps = signal<Vm[]>([]);
   private readonly _allVolumes = signal<Volume[]>([]);
-  private readonly _allDomains = signal<AdminDomain[]>([]);
   private readonly _allNetworks = signal<VpsNetwork[]>([]);
   private readonly _allRouters = signal<ClientRouter[]>([]);
   private readonly _allFloatingIps = signal<ClientFloatingIp[]>([]);
@@ -65,7 +63,6 @@ export class AdminService {
 
   readonly allVps = this._allVps.asReadonly();
   readonly allVolumes = this._allVolumes.asReadonly();
-  readonly allDomains = this._allDomains.asReadonly();
   readonly allNetworks = this._allNetworks.asReadonly();
   readonly allRouters = this._allRouters.asReadonly();
   readonly allFloatingIps = this._allFloatingIps.asReadonly();
@@ -191,17 +188,6 @@ export class AdminService {
       this._allVolumes.set(Array.isArray(volumes) ? volumes : []);
     } catch (err: any) {
       this._error.set(err?.error?.message || 'Erreur lors du chargement des volumes');
-      throw err;
-    }
-  }
-
-  async loadAllDomains(): Promise<void> {
-    this._error.set(null);
-    try {
-      const domains = await firstValueFrom(this.http.get<AdminDomain[]>('/api/infrastructure/admin/domains'));
-      this._allDomains.set(Array.isArray(domains) ? domains : []);
-    } catch (err: any) {
-      this._error.set(err?.error?.message || 'Erreur lors du chargement des domaines');
       throw err;
     }
   }
