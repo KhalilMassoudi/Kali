@@ -80,13 +80,23 @@ public class VolumeService {
         String device = "/dev/vd" + (char) ('b' + volumeRepository.findByAttachedVpsId(vpsId).size());
         try {
             cloudProviderFactory.getProvider().attachVolume(vps.getExternalId(), volume.getExternalId(), device);
-            volume.setAttachedVpsId(vpsId);
-            volume.setDevice(device);
-            volume.setStatus(VpsVolume.VolumeStatus.IN_USE);
         } catch (Exception e) {
+            // A redundant attach to the exact VM OpenStack already reports it attached to is a
+            // harmless no-op, not a real failure - sync local state to match instead of erroring.
+            if (e.getMessage() != null && e.getMessage().contains("already attached")
+                    && e.getMessage().contains(vps.getExternalId())) {
+                log.info("Volume {} already attached to VPS {} on OpenStack's side - syncing local state", volumeId, vpsId);
+                volume.setAttachedVpsId(vpsId);
+                volume.setDevice(device);
+                volume.setStatus(VpsVolume.VolumeStatus.IN_USE);
+                return volumeRepository.save(volume);
+            }
             log.error("Failed to attach volume {} to VPS {}: {}", volumeId, vpsId, e.getMessage());
-            volume.setStatus(VpsVolume.VolumeStatus.ERROR);
+            throw new RuntimeException("Échec de l'attachement du volume sur OpenStack: " + e.getMessage(), e);
         }
+        volume.setAttachedVpsId(vpsId);
+        volume.setDevice(device);
+        volume.setStatus(VpsVolume.VolumeStatus.IN_USE);
         return volumeRepository.save(volume);
     }
 
@@ -102,13 +112,13 @@ public class VolumeService {
             if (vps.getExternalId() != null && volume.getExternalId() != null) {
                 cloudProviderFactory.getProvider().detachVolume(vps.getExternalId(), volume.getExternalId());
             }
-            volume.setAttachedVpsId(null);
-            volume.setDevice(null);
-            volume.setStatus(VpsVolume.VolumeStatus.AVAILABLE);
         } catch (Exception e) {
             log.error("Failed to detach volume {}: {}", volumeId, e.getMessage());
-            volume.setStatus(VpsVolume.VolumeStatus.ERROR);
+            throw new RuntimeException("Échec du détachement du volume sur OpenStack: " + e.getMessage(), e);
         }
+        volume.setAttachedVpsId(null);
+        volume.setDevice(null);
+        volume.setStatus(VpsVolume.VolumeStatus.AVAILABLE);
         return volumeRepository.save(volume);
     }
 
