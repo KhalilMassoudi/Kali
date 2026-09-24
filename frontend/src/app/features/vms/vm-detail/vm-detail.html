@@ -52,19 +52,35 @@
       <p>Chargement...</p>
     </div>
   } @else if (vm(); as v) {
-    <div class="grid">
-      <div class="card">
-        <div class="card-header"><div class="card-header-left"><i class="pi pi-info-circle card-header-icon"></i><span class="card-header-title">Vue d'ensemble</span></div></div>
-        <div class="info-grid">
-          <div><span class="info-label">CPU</span><span class="info-value">{{ v.cpu }} vCPU</span></div>
-          <div><span class="info-label">RAM</span><span class="info-value">{{ formatRam(v.ram) }}</span></div>
-          <div><span class="info-label">Stockage</span><span class="info-value">{{ v.storage }} GB</span></div>
-          <div><span class="info-label">ID OpenStack</span><span class="info-value mono">{{ v.externalId || '—' }}</span></div>
-          <div><span class="info-label">Créée le</span><span class="info-value">{{ v.createdAt | date: 'short' }}</span></div>
-          <div><span class="info-label">Mise à jour</span><span class="info-value">{{ v.updatedAt | date: 'short' }}</span></div>
+    <section class="section">
+      <h3 class="section-title">Aperçu</h3>
+      <div class="grid">
+        <div class="card">
+          <div class="card-header"><div class="card-header-left"><i class="pi pi-info-circle card-header-icon"></i><span class="card-header-title">Vue d'ensemble</span></div></div>
+          <div class="info-grid">
+            <div><span class="info-label">CPU</span><span class="info-value">{{ v.cpu }} vCPU</span></div>
+            <div><span class="info-label">RAM</span><span class="info-value">{{ formatRam(v.ram) }}</span></div>
+            <div><span class="info-label">Stockage</span><span class="info-value">{{ v.storage }} GB</span></div>
+            <div><span class="info-label">ID OpenStack</span><span class="info-value mono">{{ v.externalId || '—' }}</span></div>
+            <div><span class="info-label">Créée le</span><span class="info-value">{{ v.createdAt | date: 'short' }}</span></div>
+            <div><span class="info-label">Mise à jour</span><span class="info-value">{{ v.updatedAt | date: 'short' }}</span></div>
+          </div>
+        </div>
+
+        <div class="card">
+          <div class="card-header"><div class="card-header-left"><i class="pi pi-chart-line card-header-icon"></i><span class="card-header-title">Utilisation (CPU)</span></div></div>
+          @if (telemetryUnavailable()) {
+            <p class="empty-hint">Pas encore de données de télémétrie pour cette VM.</p>
+          } @else {
+            <app-timeseries-chart [points]="cpuMeasures()" unit="%" />
+          }
         </div>
       </div>
+    </section>
 
+    <section class="section">
+      <h3 class="section-title">Réseau & accès</h3>
+      <div class="grid">
       <div class="card">
         <div class="card-header"><div class="card-header-left"><i class="pi pi-globe card-header-icon"></i><span class="card-header-title">Réseau & SSH</span></div></div>
         <div class="info-grid">
@@ -103,162 +119,6 @@
           }
         </div>
       </div>
-
-      <div class="card">
-        <div class="card-header"><div class="card-header-left"><i class="pi pi-database card-header-icon"></i><span class="card-header-title">Volumes attachés</span></div></div>
-        <div class="volume-list">
-          @for (vol of attachedVolumes(); track vol.id) {
-            <div class="volume-row">
-              <span>{{ vol.name }} ({{ vol.sizeGb }} GB) — {{ vol.device || '' }}</span>
-              <p-button [outlined]="true" size="small" severity="danger" icon="pi pi-times" label="Détacher" [loading]="volumeActionLoading() === vol.id" (onClick)="detachVolume(vol)" />
-            </div>
-          }
-          @if (attachedVolumes().length === 0) {
-            <p class="empty-hint">Aucun volume attaché</p>
-          }
-        </div>
-        @if (availableVolumes().length > 0) {
-          <div class="attach-volume-form">
-            <p-select [options]="availableVolumes()" [ngModel]="selectedVolumeId()" (ngModelChange)="selectedVolumeId.set($event)" optionLabel="name" optionValue="id" placeholder="Choisir un volume" [style]="{ minWidth: '14rem' }" />
-            <p-button size="small" icon="pi pi-plus" label="Attacher" [disabled]="!selectedVolumeId()" [loading]="!!volumeActionLoading()" (onClick)="attachVolume()" />
-          </div>
-        }
-      </div>
-
-      <div class="card">
-        <div class="card-header"><div class="card-header-left"><i class="pi pi-expand card-header-icon"></i><span class="card-header-title">Redimensionner</span></div></div>
-        @if (v.status === 'VERIFY_RESIZE') {
-          <p class="resize-hint">Redimensionnement effectué — confirmez ou annulez.</p>
-          <div class="resize-form">
-            <p-button size="small" icon="pi pi-check" label="Confirmer" [loading]="resizing()" (onClick)="confirmResize()" />
-            <p-button [outlined]="true" size="small" icon="pi pi-undo" label="Annuler" [loading]="resizing()" (onClick)="revertResize()" />
-          </div>
-        } @else {
-          @if (v.status !== 'STOPPED') {
-            <p class="resize-hint">La VM doit être arrêtée pour être redimensionnée.</p>
-          }
-          <div class="resize-form">
-            <p-select [options]="flavorOptions" [ngModel]="selectedFlavorId()" (ngModelChange)="selectedFlavorId.set($event)" optionLabel="label" optionValue="value" placeholder="Choisir une taille" [style]="{ minWidth: '18rem' }" />
-            <p-button size="small" icon="pi pi-expand" label="Redimensionner" [disabled]="v.status !== 'STOPPED' || !selectedFlavorId()" [loading]="resizing()" (onClick)="resize()" />
-          </div>
-        }
-      </div>
-
-      <div class="card">
-        <div class="card-header"><div class="card-header-left"><i class="pi pi-camera card-header-icon"></i><span class="card-header-title">Snapshot</span></div></div>
-        @if (snapshotResult(); as imageId) {
-          <p class="snapshot-success">Snapshot créé — image {{ imageId }}</p>
-        }
-        <div class="snapshot-form">
-          <input type="text" pInputText [ngModel]="snapshotName()" (ngModelChange)="snapshotName.set($event)" placeholder="Nom du snapshot" />
-          <p-button size="small" icon="pi pi-camera" label="Créer un snapshot" [disabled]="!snapshotName().trim()" [loading]="snapshotting()" (onClick)="takeSnapshot()" />
-        </div>
-      </div>
-
-      <div class="card">
-        <div class="card-header"><div class="card-header-left"><i class="pi pi-tags card-header-icon"></i><span class="card-header-title">Métadonnées</span></div></div>
-        <div class="metadata-list">
-          @for (entry of metadataEntries; track entry[0]) {
-            <div class="metadata-row">
-              <span class="meta-key">{{ entry[0] }}</span>
-              <span class="meta-value">{{ entry[1] }}</span>
-              <p-button [outlined]="true" size="small" severity="danger" icon="pi pi-trash" [loading]="metaActionLoading() === entry[0]" (onClick)="deleteMetadata(entry[0])" />
-            </div>
-          }
-          @if (metadataEntries.length === 0) {
-            <p class="empty-hint">Aucune métadonnée</p>
-          }
-        </div>
-        <div class="add-metadata-form">
-          <input type="text" pInputText [ngModel]="newMetaKey()" (ngModelChange)="newMetaKey.set($event)" placeholder="Clé" />
-          <input type="text" pInputText [ngModel]="newMetaValue()" (ngModelChange)="newMetaValue.set($event)" placeholder="Valeur" />
-          <p-button size="small" icon="pi pi-plus" [disabled]="!newMetaKey().trim()" [loading]="!!metaActionLoading()" (onClick)="addMetadata()" />
-        </div>
-      </div>
-
-      <div class="card">
-        <div class="card-header"><div class="card-header-left"><i class="pi pi-chart-line card-header-icon"></i><span class="card-header-title">Utilisation (CPU)</span></div></div>
-        @if (telemetryUnavailable()) {
-          <p class="empty-hint">Pas encore de données de télémétrie pour cette VM.</p>
-        } @else {
-          <app-timeseries-chart [points]="cpuMeasures()" unit="%" />
-        }
-      </div>
-
-      <div class="card">
-        <div class="card-header"><div class="card-header-left"><i class="pi pi-history card-header-icon"></i><span class="card-header-title">Journal d'activité</span></div></div>
-        <div class="activity-list">
-          @if (activityLoading()) {
-            <p class="empty-hint">Chargement...</p>
-          } @else if (activityLog().length === 0) {
-            <p class="empty-hint">Aucune action enregistrée</p>
-          } @else {
-            @for (entry of activityLog(); track entry.id) {
-              <div class="activity-row">
-                <span class="activity-action">{{ entry.action }}</span>
-                <span class="activity-detail">{{ entry.detail || '' }}</span>
-                <span class="activity-time">{{ entry.createdAt | date: 'short' }}</span>
-              </div>
-            }
-          }
-        </div>
-      </div>
-
-      <div class="card">
-        <div class="card-header"><div class="card-header-left"><i class="pi pi-cloud-upload card-header-icon"></i><span class="card-header-title">Sauvegardes</span></div></div>
-        <div class="backup-schedule-form">
-          <p-select
-            [options]="[{ label: 'Quotidien', value: 'DAILY' }, { label: 'Hebdomadaire', value: 'WEEKLY' }]"
-            [ngModel]="backupFrequency()"
-            (ngModelChange)="backupFrequency.set($event)"
-            optionLabel="label"
-            optionValue="value"
-            [style]="{ minWidth: '10rem' }"
-          />
-          <input type="number" pInputText [ngModel]="backupRetention()" (ngModelChange)="backupRetention.set($event)" min="1" placeholder="Rétention" [style]="{ width: '6rem' }" />
-          <label class="backup-enabled-toggle">
-            <input type="checkbox" [ngModel]="backupEnabled()" (ngModelChange)="backupEnabled.set($event)" />
-            Activé
-          </label>
-          <p-button size="small" icon="pi pi-save" label="Enregistrer" [loading]="backupSaving()" (onClick)="saveBackupSchedule()" />
-          @if (backupSchedule()) {
-            <p-button [outlined]="true" size="small" severity="danger" icon="pi pi-trash" [loading]="backupSaving()" (onClick)="deleteBackupSchedule()" />
-          }
-        </div>
-        @if (backupSchedule()?.nextRunAt) {
-          <p class="resize-hint">Prochaine sauvegarde: {{ backupSchedule()!.nextRunAt | date: 'short' }}</p>
-        }
-        <div class="volume-list">
-          @for (backup of backups(); track backup.id) {
-            <div class="volume-row"><span>{{ backup.name }}</span></div>
-          }
-          @if (backups().length === 0) {
-            <p class="empty-hint">Aucune sauvegarde pour le moment</p>
-          }
-        </div>
-      </div>
-
-      <div class="card">
-        <div class="card-header"><div class="card-header-left"><i class="pi pi-desktop card-header-icon"></i><span class="card-header-title">Console</span></div></div>
-        <div class="resize-form">
-          <p-button [outlined]="true" size="small" icon="pi pi-external-link" label="Ouvrir la console" [loading]="consoleLoading()" (onClick)="openConsole()" />
-          <p-button [outlined]="true" size="small" icon="pi pi-file" label="Voir les logs" [loading]="consoleLogLoading()" (onClick)="viewConsoleLog()" />
-        </div>
-      </div>
-
-      @if (showConsoleLogDialog()) {
-        <div class="card">
-          <div class="card-header">
-            <div class="card-header-left"><i class="pi pi-file card-header-icon"></i><span class="card-header-title">Logs de la console</span></div>
-            <p-button [outlined]="true" size="small" icon="pi pi-times" (onClick)="showConsoleLogDialog.set(false)" />
-          </div>
-          @if (consoleLogLoading()) {
-            <p class="resize-hint">Chargement...</p>
-          } @else {
-            <pre class="console-log">{{ consoleLog() || 'Aucun log disponible' }}</pre>
-          }
-        </div>
-      }
 
       <div class="card">
         <div class="card-header"><div class="card-header-left"><i class="pi pi-sitemap card-header-icon"></i><span class="card-header-title">Interfaces réseau</span></div></div>
@@ -326,7 +186,129 @@
       }
 
       <div class="card">
-        <div class="card-header"><div class="card-header-left"><i class="pi pi-cog card-header-icon"></i><span class="card-header-title">Actions avancées</span></div></div>
+        <div class="card-header"><div class="card-header-left"><i class="pi pi-desktop card-header-icon"></i><span class="card-header-title">Console</span></div></div>
+        <div class="resize-form">
+          <p-button [outlined]="true" size="small" icon="pi pi-external-link" label="Ouvrir la console" [loading]="consoleLoading()" (onClick)="openConsole()" />
+          <p-button [outlined]="true" size="small" icon="pi pi-file" label="Voir les logs" [loading]="consoleLogLoading()" (onClick)="viewConsoleLog()" />
+        </div>
+      </div>
+
+      @if (showConsoleLogDialog()) {
+        <div class="card">
+          <div class="card-header">
+            <div class="card-header-left"><i class="pi pi-file card-header-icon"></i><span class="card-header-title">Logs de la console</span></div>
+            <p-button [outlined]="true" size="small" icon="pi pi-times" (onClick)="showConsoleLogDialog.set(false)" />
+          </div>
+          @if (consoleLogLoading()) {
+            <p class="resize-hint">Chargement...</p>
+          } @else {
+            <pre class="console-log">{{ consoleLog() || 'Aucun log disponible' }}</pre>
+          }
+        </div>
+      }
+      </div>
+    </section>
+
+    <section class="section">
+      <h3 class="section-title">Stockage & sauvegarde</h3>
+      <div class="grid">
+      <div class="card">
+        <div class="card-header"><div class="card-header-left"><i class="pi pi-database card-header-icon"></i><span class="card-header-title">Volumes attachés</span></div></div>
+        <div class="volume-list">
+          @for (vol of attachedVolumes(); track vol.id) {
+            <div class="volume-row">
+              <span>{{ vol.name }} ({{ vol.sizeGb }} GB) — {{ vol.device || '' }}</span>
+              <p-button [outlined]="true" size="small" severity="danger" icon="pi pi-times" label="Détacher" [loading]="volumeActionLoading() === vol.id" (onClick)="detachVolume(vol)" />
+            </div>
+          }
+          @if (attachedVolumes().length === 0) {
+            <p class="empty-hint">Aucun volume attaché</p>
+          }
+        </div>
+        @if (availableVolumes().length > 0) {
+          <div class="attach-volume-form">
+            <p-select [options]="availableVolumes()" [ngModel]="selectedVolumeId()" (ngModelChange)="selectedVolumeId.set($event)" optionLabel="name" optionValue="id" placeholder="Choisir un volume" [style]="{ minWidth: '14rem' }" />
+            <p-button size="small" icon="pi pi-plus" label="Attacher" [disabled]="!selectedVolumeId()" [loading]="!!volumeActionLoading()" (onClick)="attachVolume()" />
+          </div>
+        }
+      </div>
+
+      <div class="card">
+        <div class="card-header"><div class="card-header-left"><i class="pi pi-camera card-header-icon"></i><span class="card-header-title">Snapshot</span></div></div>
+        @if (snapshotResult(); as imageId) {
+          <p class="snapshot-success">Snapshot créé — image {{ imageId }}</p>
+        }
+        <div class="snapshot-form">
+          <input type="text" pInputText [ngModel]="snapshotName()" (ngModelChange)="snapshotName.set($event)" placeholder="Nom du snapshot" />
+          <p-button size="small" icon="pi pi-camera" label="Créer un snapshot" [disabled]="!snapshotName().trim()" [loading]="snapshotting()" (onClick)="takeSnapshot()" />
+        </div>
+      </div>
+
+      <div class="card">
+        <div class="card-header"><div class="card-header-left"><i class="pi pi-cloud-upload card-header-icon"></i><span class="card-header-title">Sauvegardes</span></div></div>
+        <div class="backup-schedule-form">
+          <p-select
+            [options]="[{ label: 'Quotidien', value: 'DAILY' }, { label: 'Hebdomadaire', value: 'WEEKLY' }]"
+            [ngModel]="backupFrequency()"
+            (ngModelChange)="backupFrequency.set($event)"
+            optionLabel="label"
+            optionValue="value"
+            [style]="{ minWidth: '10rem' }"
+          />
+          <input type="number" pInputText [ngModel]="backupRetention()" (ngModelChange)="backupRetention.set($event)" min="1" placeholder="Rétention" [style]="{ width: '6rem' }" />
+          <label class="backup-enabled-toggle">
+            <input type="checkbox" [ngModel]="backupEnabled()" (ngModelChange)="backupEnabled.set($event)" />
+            Activé
+          </label>
+          <p-button size="small" icon="pi pi-save" label="Enregistrer" [loading]="backupSaving()" (onClick)="saveBackupSchedule()" />
+          @if (backupSchedule()) {
+            <p-button [outlined]="true" size="small" severity="danger" icon="pi pi-trash" [loading]="backupSaving()" (onClick)="deleteBackupSchedule()" />
+          }
+        </div>
+        @if (backupSchedule()?.nextRunAt) {
+          <p class="resize-hint">Prochaine sauvegarde: {{ backupSchedule()!.nextRunAt | date: 'short' }}</p>
+        }
+        <div class="volume-list">
+          @for (backup of backups(); track backup.id) {
+            <div class="volume-row"><span>{{ backup.name }}</span></div>
+          }
+          @if (backups().length === 0) {
+            <p class="empty-hint">Aucune sauvegarde pour le moment</p>
+          }
+        </div>
+      </div>
+      </div>
+    </section>
+
+    <section class="section">
+      <h3 class="section-title">Redimensionnement</h3>
+      <div class="grid">
+      <div class="card">
+        <div class="card-header"><div class="card-header-left"><i class="pi pi-expand card-header-icon"></i><span class="card-header-title">Redimensionner</span></div></div>
+        @if (v.status === 'VERIFY_RESIZE') {
+          <p class="resize-hint">Redimensionnement effectué — confirmez ou annulez.</p>
+          <div class="resize-form">
+            <p-button size="small" icon="pi pi-check" label="Confirmer" [loading]="resizing()" (onClick)="confirmResize()" />
+            <p-button [outlined]="true" size="small" icon="pi pi-undo" label="Annuler" [loading]="resizing()" (onClick)="revertResize()" />
+          </div>
+        } @else {
+          @if (v.status !== 'STOPPED') {
+            <p class="resize-hint">La VM doit être arrêtée pour être redimensionnée.</p>
+          }
+          <div class="resize-form">
+            <p-select [options]="flavorOptions" [ngModel]="selectedFlavorId()" (ngModelChange)="selectedFlavorId.set($event)" optionLabel="label" optionValue="value" placeholder="Choisir une taille" [style]="{ minWidth: '18rem' }" />
+            <p-button size="small" icon="pi pi-expand" label="Redimensionner" [disabled]="v.status !== 'STOPPED' || !selectedFlavorId()" [loading]="resizing()" (onClick)="resize()" />
+          </div>
+        }
+      </div>
+      </div>
+    </section>
+
+    <section class="section">
+      <h3 class="section-title">Actions avancées</h3>
+      <div class="grid">
+      <div class="card">
+        <div class="card-header"><div class="card-header-left"><i class="pi pi-cog card-header-icon"></i><span class="card-header-title">États de la VM</span></div></div>
         <div class="resize-form">
           @if (v.status !== 'PAUSED') {
             <p-button [outlined]="true" size="small" icon="pi pi-pause" label="Pause" [loading]="advancedActionLoading() === 'pause'" [disabled]="!!advancedActionLoading()" (onClick)="pause()" />
@@ -349,6 +331,13 @@
             <p-button size="small" icon="pi pi-lock-open" label="Déverrouiller" [loading]="advancedActionLoading() === 'unlock'" [disabled]="!!advancedActionLoading()" (onClick)="unlockVm()" />
           }
           <p-button [outlined]="true" size="small" icon="pi pi-refresh" label="Redémarrage souple" [loading]="advancedActionLoading() === 'soft-reboot'" [disabled]="!!advancedActionLoading()" (onClick)="softReboot()" />
+        </div>
+      </div>
+
+      <div class="card danger-zone">
+        <div class="card-header"><div class="card-header-left"><i class="pi pi-exclamation-triangle card-header-icon danger"></i><span class="card-header-title">Zone sensible</span></div></div>
+        <p class="resize-hint">La reconstruction réinstalle la VM depuis une image — toutes les données du disque root sont perdues.</p>
+        <div class="resize-form">
           <p-button [outlined]="true" size="small" severity="danger" icon="pi pi-replay" label="Reconstruire" [disabled]="!!advancedActionLoading()" (onClick)="showRebuildForm.set(!showRebuildForm())" />
         </div>
         @if (showRebuildForm()) {
@@ -363,19 +352,19 @@
               (onClick)="rebuild()"
             />
           </div>
-          <p class="resize-hint">La reconstruction réinstalle la VM depuis une image — toutes les données du disque root sont perdues.</p>
         }
       </div>
 
       @if (isAdmin()) {
-        <div class="card">
-          <div class="card-header"><div class="card-header-left"><i class="pi pi-life-ring card-header-icon"></i><span class="card-header-title">Mode rescue (admin)</span></div></div>
+        <div class="card danger-zone">
+          <div class="card-header"><div class="card-header-left"><i class="pi pi-life-ring card-header-icon danger"></i><span class="card-header-title">Mode rescue (admin)</span></div></div>
           @if (rescuePassword(); as pwd) {
             <div class="ssh-hint">
               <span>Mot de passe temporaire:</span>
               <code>{{ pwd }}</code>
             </div>
           }
+          <p class="resize-hint">Boot dans une image de secours pour réparer une VM inaccessible — réservé aux administrateurs.</p>
           <div class="resize-form">
             @if (v.status !== 'RESCUE') {
               <p-button [outlined]="true" size="small" severity="warn" icon="pi pi-life-ring" label="Entrer en mode rescue" [loading]="rescuing()" (onClick)="rescue()" />
@@ -383,9 +372,54 @@
               <p-button size="small" icon="pi pi-check" label="Sortir du mode rescue" [loading]="rescuing()" (onClick)="unrescue()" />
             }
           </div>
-          <p class="resize-hint">Boot dans une image de secours pour réparer une VM inaccessible — réservé aux administrateurs.</p>
         </div>
       }
-    </div>
+      </div>
+    </section>
+
+    <section class="section">
+      <h3 class="section-title">Métadonnées & journal</h3>
+      <div class="grid">
+      <div class="card">
+        <div class="card-header"><div class="card-header-left"><i class="pi pi-tags card-header-icon"></i><span class="card-header-title">Métadonnées</span></div></div>
+        <div class="metadata-list">
+          @for (entry of metadataEntries; track entry[0]) {
+            <div class="metadata-row">
+              <span class="meta-key">{{ entry[0] }}</span>
+              <span class="meta-value">{{ entry[1] }}</span>
+              <p-button [outlined]="true" size="small" severity="danger" icon="pi pi-trash" [loading]="metaActionLoading() === entry[0]" (onClick)="deleteMetadata(entry[0])" />
+            </div>
+          }
+          @if (metadataEntries.length === 0) {
+            <p class="empty-hint">Aucune métadonnée</p>
+          }
+        </div>
+        <div class="add-metadata-form">
+          <input type="text" pInputText [ngModel]="newMetaKey()" (ngModelChange)="newMetaKey.set($event)" placeholder="Clé" />
+          <input type="text" pInputText [ngModel]="newMetaValue()" (ngModelChange)="newMetaValue.set($event)" placeholder="Valeur" />
+          <p-button size="small" icon="pi pi-plus" [disabled]="!newMetaKey().trim()" [loading]="!!metaActionLoading()" (onClick)="addMetadata()" />
+        </div>
+      </div>
+
+      <div class="card">
+        <div class="card-header"><div class="card-header-left"><i class="pi pi-history card-header-icon"></i><span class="card-header-title">Journal d'activité</span></div></div>
+        <div class="activity-list">
+          @if (activityLoading()) {
+            <p class="empty-hint">Chargement...</p>
+          } @else if (activityLog().length === 0) {
+            <p class="empty-hint">Aucune action enregistrée</p>
+          } @else {
+            @for (entry of activityLog(); track entry.id) {
+              <div class="activity-row">
+                <span class="activity-action">{{ entry.action }}</span>
+                <span class="activity-detail" [pTooltip]="entry.detail || ''" tooltipPosition="top">{{ entry.detail || '' }}</span>
+                <span class="activity-time">{{ entry.createdAt | date: 'short' }}</span>
+              </div>
+            }
+          }
+        </div>
+      </div>
+      </div>
+    </section>
   }
 </div>

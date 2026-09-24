@@ -34,6 +34,21 @@
   gap: 0.5rem;
 }
 
+.section {
+  margin-bottom: 1.75rem;
+
+  &:last-child { margin-bottom: 0; }
+}
+
+.section-title {
+  margin: 0 0 0.75rem;
+  font-size: 0.8125rem;
+  font-weight: 700;
+  color: var(--text-dim);
+  text-transform: uppercase;
+  letter-spacing: 0.04em;
+}
+
 .grid {
   display: grid;
   grid-template-columns: repeat(auto-fit, minmax(22rem, 1fr));
@@ -42,6 +57,14 @@
 
 .card {
   padding: 0;
+}
+
+.danger-zone {
+  border-color: color-mix(in srgb, var(--brand-danger, #ef4444) 30%, var(--brand-border-soft));
+}
+
+.card-header-icon.danger {
+  color: var(--brand-danger, #ef4444);
 }
 
 .info-grid {
@@ -246,6 +269,10 @@
 
 .activity-detail {
   flex: 1;
+  min-width: 0;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
   color: var(--text-dim);
   font-family: var(--font-mono, monospace);
 }
