@@ -1,0 +1,75 @@
+<div class="page">
+  <div class="page-head">
+    <div>
+      <h2>Facturation</h2>
+      <p class="subtitle">Crédit, recharges et historique de consommation</p>
+    </div>
+    <div class="head-actions">
+      <p-button
+        label="Actualiser"
+        [icon]="loading() ? 'pi pi-spin pi-spinner' : 'pi pi-refresh'"
+        severity="secondary"
+        [outlined]="true"
+        [disabled]="loading()"
+        (onClick)="refresh()"
+      />
+      <p-button label="Recharger" icon="pi pi-wallet" (onClick)="showRechargeDialog.set(true)" />
+    </div>
+  </div>
+
+  @if (error()) {
+    <div class="error-banner">
+      <span class="dot"></span>
+      <p>{{ error() }}</p>
+      <button type="button" (click)="clearError()">Fermer</button>
+    </div>
+  }
+
+  <div class="card balance-card">
+    <div class="balance-label">Solde actuel</div>
+    <div class="balance-value">
+      {{ wallet()?.balance ?? 0 | number: '1.2-2' }} <span class="currency">{{ wallet()?.currency || 'TND' }}</span>
+    </div>
+    @if ((wallet()?.balance ?? 0) < 5) {
+      <p class="balance-warning">
+        <i class="pi pi-exclamation-triangle"></i>
+        Solde faible — pensez à recharger pour éviter une interruption de service.
+      </p>
+    }
+  </div>
+
+  <div class="card">
+    <div class="card-header"><div class="card-header-left"><i class="pi pi-history card-header-icon"></i><span class="card-header-title">Historique</span></div></div>
+    <div class="table-wrap">
+      <p-table [value]="transactions()" [rowHover]="true">
+        <ng-template #header>
+          <tr>
+            <th>Type</th>
+            <th>Description</th>
+            <th>Montant</th>
+            <th>Solde après</th>
+            <th>Date</th>
+          </tr>
+        </ng-template>
+        <ng-template #body let-tx>
+          <tr>
+            <td><p-tag [value]="typeLabel(tx.type)" [severity]="typeSeverity(tx.type)" [rounded]="true" /></td>
+            <td class="tx-desc">{{ tx.description || '—' }}</td>
+            <td class="mono" [class.positive]="tx.amount > 0" [class.negative]="tx.amount < 0">
+              {{ tx.amount > 0 ? '+' : '' }}{{ tx.amount | number: '1.2-4' }}
+            </td>
+            <td class="mono">{{ tx.balanceAfter | number: '1.2-2' }}</td>
+            <td class="mono">{{ tx.createdAt | date: 'short' }}</td>
+          </tr>
+        </ng-template>
+        <ng-template #emptymessage>
+          <tr>
+            <td colspan="5" class="empty-row">Aucune transaction pour le moment</td>
+          </tr>
+        </ng-template>
+      </p-table>
+    </div>
+  </div>
+
+  <app-recharge-dialog [(visible)]="showRechargeDialog" (recharged)="refresh()" />
+</div>

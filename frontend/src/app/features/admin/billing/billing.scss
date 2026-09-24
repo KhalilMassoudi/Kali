@@ -1,0 +1,68 @@
+@use '../../../shared/styles/page-shell' as *;
+
+:host {
+  display: block;
+}
+
+.pricing-card {
+  padding: 1.25rem;
+  margin-bottom: 1rem;
+}
+
+::ng-deep .pricing-message {
+  display: block;
+  margin: 0 0 1rem;
+}
+
+.pricing-form {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(14rem, 1fr));
+  gap: 1rem;
+  align-items: end;
+}
+
+.pricing-field {
+  label {
+    display: block;
+    margin-bottom: 0.5rem;
+    font-size: 0.75rem;
+    font-weight: 600;
+    color: #cbd5e1;
+  }
+}
+
+::ng-deep .pricing-save-btn {
+  grid-column: 1 / -1;
+  justify-self: start;
+}
+
+.pricing-hint {
+  margin-top: 1rem;
+  font-size: 0.75rem;
+  color: var(--text-dim);
+  line-height: 1.5;
+}
+
+.table-wrap {
+  overflow-x: auto;
+}
+
+.mono {
+  font-family: var(--font-mono, monospace);
+  font-size: 0.8125rem;
+
+  &.low { color: var(--brand-crit, #ef4444); }
+}
+
+.action-group {
+  display: flex;
+  align-items: center;
+  gap: 0.375rem;
+}
+
+.empty-row {
+  padding: 2rem;
+  text-align: center;
+  color: var(--text-dim);
+  font-size: 0.875rem;
+}

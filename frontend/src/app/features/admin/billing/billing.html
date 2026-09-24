@@ -1,0 +1,106 @@
+<div class="page">
+  <div class="page-head">
+    <div>
+      <h2>Facturation & tarification</h2>
+      <p class="subtitle">Tarifs de consommation et soldes des clients</p>
+    </div>
+    <div class="head-actions">
+      <p-button
+        label="Actualiser"
+        [icon]="loading() ? 'pi pi-spin pi-spinner' : 'pi pi-refresh'"
+        severity="secondary"
+        [outlined]="true"
+        [disabled]="loading()"
+        (onClick)="refresh()"
+      />
+    </div>
+  </div>
+
+  <div class="card pricing-card">
+    <div class="card-header"><div class="card-header-left"><i class="pi pi-tags card-header-icon"></i><span class="card-header-title">Tarification (par heure)</span></div></div>
+
+    @if (pricingError()) {
+      <p-message severity="error" styleClass="pricing-message">{{ pricingError() }}</p-message>
+    }
+    @if (pricingSaved()) {
+      <p-message severity="success" styleClass="pricing-message">Tarification mise à jour</p-message>
+    }
+
+    <form [formGroup]="pricingForm" (ngSubmit)="savePricing()" class="pricing-form">
+      <div class="pricing-field">
+        <label>Prix / vCPU / heure (TND)</label>
+        <p-inputnumber formControlName="pricePerVcpuHour" [min]="0" [minFractionDigits]="4" [maxFractionDigits]="6" [fluid]="true" />
+      </div>
+      <div class="pricing-field">
+        <label>Prix / GB RAM / heure (TND)</label>
+        <p-inputnumber formControlName="pricePerRamGbHour" [min]="0" [minFractionDigits]="4" [maxFractionDigits]="6" [fluid]="true" />
+      </div>
+      <div class="pricing-field">
+        <label>Prix / GB stockage / heure (TND)</label>
+        <p-inputnumber formControlName="pricePerStorageGbHour" [min]="0" [minFractionDigits]="4" [maxFractionDigits]="6" [fluid]="true" />
+      </div>
+      <div class="pricing-field">
+        <label>Prix / IP flottante / heure (TND)</label>
+        <p-inputnumber formControlName="pricePerFloatingIpHour" [min]="0" [minFractionDigits]="4" [maxFractionDigits]="6" [fluid]="true" />
+      </div>
+      <p-button label="Enregistrer la tarification" type="submit" icon="pi pi-save" styleClass="pricing-save-btn" />
+    </form>
+    <p class="pricing-hint">
+      Le stockage (disque VM + volumes) et les IP flottantes sont facturés en continu, même si la VM est arrêtée. Le calcul (CPU + RAM) n'est facturé que pour les VM actives — même logique qu'AWS.
+    </p>
+  </div>
+
+  <div class="card">
+    <div class="card-header"><div class="card-header-left"><i class="pi pi-wallet card-header-icon"></i><span class="card-header-title">Soldes des clients ({{ walletRows().length }})</span></div></div>
+    <div class="table-wrap">
+      <p-table [value]="walletRows()" [rowHover]="true">
+        <ng-template #header>
+          <tr>
+            <th>Client</th>
+            <th>Solde</th>
+            <th>Mise à jour</th>
+            <th></th>
+          </tr>
+        </ng-template>
+        <ng-template #body let-row>
+          <tr>
+            <td>{{ row.user?.email || ('#' + row.wallet.userId) }}</td>
+            <td class="mono" [class.low]="row.wallet.balance < 5">{{ row.wallet.balance | number: '1.2-2' }} {{ row.wallet.currency }}</td>
+            <td class="mono">{{ row.wallet.updatedAt | date: 'short' }}</td>
+            <td>
+              @if (rowState(row.wallet).open) {
+                <div class="action-group">
+                  <p-inputnumber
+                    [ngModel]="rowState(row.wallet).amount"
+                    (ngModelChange)="setAdjustAmount(row.wallet, $event)"
+                    [ngModelOptions]="{ standalone: true }"
+                    placeholder="+/- montant"
+                    mode="currency"
+                    currency="TND"
+                    locale="fr-TN"
+                    [style]="{ width: '10rem' }"
+                  />
+                  <p-button
+                    size="small"
+                    icon="pi pi-check"
+                    [disabled]="!rowState(row.wallet).amount"
+                    [loading]="rowState(row.wallet).saving"
+                    (onClick)="applyAdjust(row.wallet)"
+                  />
+                  <p-button [outlined]="true" size="small" icon="pi pi-times" (onClick)="toggleAdjust(row.wallet)" />
+                </div>
+              } @else {
+                <p-button [outlined]="true" size="small" icon="pi pi-pencil" label="Ajuster" (onClick)="toggleAdjust(row.wallet)" />
+              }
+            </td>
+          </tr>
+        </ng-template>
+        <ng-template #emptymessage>
+          <tr>
+            <td colspan="4" class="empty-row">Aucun portefeuille pour le moment</td>
+          </tr>
+        </ng-template>
+      </p-table>
+    </div>
+  </div>
+</div>

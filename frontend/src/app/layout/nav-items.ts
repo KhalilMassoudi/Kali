@@ -11,6 +11,7 @@ export const NAV_ITEMS: NavItem[] = [
   { to: '/dashboard', icon: 'pi pi-th-large', label: 'Dashboard', desc: 'Vue générale' },
   { to: '/vms', icon: 'pi pi-server', label: 'Mes VMs', desc: 'Gérer les serveurs' },
   { to: '/volumes', icon: 'pi pi-database', label: 'Volumes', desc: 'Stockage bloc' },
+  { to: '/billing', icon: 'pi pi-wallet', label: 'Facturation', desc: 'Crédit & consommation' },
   { to: '/networks', icon: 'pi pi-share-alt', label: 'Réseau', desc: 'Réseaux, routeurs, sécurité, IP flottantes' },
   { to: '/projects', icon: 'pi pi-folder', label: 'Projets', desc: 'Regrouper mes ressources' },
   { to: '/chat', icon: 'pi pi-comments', label: 'Assistant IA', desc: 'Support intelligent' },
@@ -24,6 +25,7 @@ export const ADMIN_NAV_ITEMS: NavItem[] = [
   { to: '/admin/compute', icon: 'pi pi-server', label: 'Compute', desc: 'Instances, images, clés, groupes' },
   { to: '/admin/volumes', icon: 'pi pi-database', label: 'Volumes', desc: 'Stockage bloc & snapshots' },
   { to: '/admin/network', icon: 'pi pi-share-alt', label: 'Réseau', desc: 'Réseaux & sécurité' },
+  { to: '/admin/billing', icon: 'pi pi-wallet', label: 'Facturation', desc: 'Tarification & soldes clients' },
 
   // Clients group — kept on its own
   { to: '/admin/users', icon: 'pi pi-users', label: 'Clients', desc: 'Comptes, projets & usage', divider: true },

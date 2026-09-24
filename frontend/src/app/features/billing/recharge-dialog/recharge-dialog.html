@@ -1,0 +1,39 @@
+<p-dialog
+  [(visible)]="visible"
+  [modal]="true"
+  header="Recharger mon crédit"
+  [style]="{ width: '26rem' }"
+  [dismissableMask]="true"
+  styleClass="recharge-dialog"
+>
+  <p class="dialog-subtitle">Ajoutez du crédit à votre compte (simulation — aucun paiement réel n'est effectué)</p>
+
+  @if (error()) {
+    <p-message severity="error" styleClass="dialog-error">{{ error() }}</p-message>
+  }
+
+  <form [formGroup]="form" (ngSubmit)="submit()" class="dialog-form">
+    <div class="quick-amounts">
+      @for (amount of quickAmounts; track amount) {
+        <button type="button" class="quick-amount-btn" [class.active]="form.value.amount === amount" (click)="setQuickAmount(amount)">
+          {{ amount }} TND
+        </button>
+      }
+    </div>
+
+    <div class="field">
+      <label for="amount">Montant personnalisé (TND)</label>
+      <p-inputnumber inputId="amount" formControlName="amount" [min]="1" mode="currency" currency="TND" locale="fr-TN" [fluid]="true" />
+    </div>
+
+    <div class="dialog-footer">
+      <p-button label="Annuler" severity="secondary" [outlined]="true" type="button" styleClass="footer-btn" (onClick)="close()" />
+      <p-button
+        [label]="loading() ? 'Recharge...' : 'Recharger'"
+        type="submit"
+        [loading]="loading()"
+        styleClass="footer-btn"
+      />
+    </div>
+  </form>
+</p-dialog>

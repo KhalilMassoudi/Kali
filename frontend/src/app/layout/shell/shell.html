@@ -28,6 +28,13 @@
     </ng-template>
 
     <ng-template #end>
+      @if (user()?.role !== 'ADMIN') {
+        <a routerLink="/billing" class="balance-pill" [class.low]="(wallet()?.balance ?? 0) < 5">
+          <i class="pi pi-wallet"></i>
+          {{ wallet()?.balance ?? 0 | number: '1.2-2' }} {{ wallet()?.currency || 'TND' }}
+        </a>
+      }
+
       <div class="status-pill">
         <span class="dot"></span>
         Tous les systèmes opérationnels

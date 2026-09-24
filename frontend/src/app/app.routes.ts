@@ -28,6 +28,7 @@ export const routes: Routes = [
       { path: 'vms', loadComponent: () => import('./features/vms/vms').then((m) => m.Vms) },
       { path: 'vms/:id', loadComponent: () => import('./features/vms/vm-detail/vm-detail').then((m) => m.VmDetail) },
       { path: 'volumes', loadComponent: () => import('./features/volumes/volumes').then((m) => m.Volumes) },
+      { path: 'billing', loadComponent: () => import('./features/billing/billing').then((m) => m.Billing) },
       { path: 'networks', loadComponent: () => import('./features/network-hub/network-hub').then((m) => m.NetworkHub) },
       { path: 'security-groups', redirectTo: 'networks', pathMatch: 'full' },
       { path: 'projects', loadComponent: () => import('./features/projects/projects').then((m) => m.Projects) },
@@ -70,6 +71,11 @@ export const routes: Routes = [
         path: 'admin/network',
         canActivate: [adminGuard],
         loadComponent: () => import('./features/admin/network/network').then((m) => m.AdminNetwork),
+      },
+      {
+        path: 'admin/billing',
+        canActivate: [adminGuard],
+        loadComponent: () => import('./features/admin/billing/billing').then((m) => m.AdminBilling),
       },
       {
         path: 'admin/logs',

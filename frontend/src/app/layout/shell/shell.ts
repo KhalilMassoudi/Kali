@@ -11,6 +11,7 @@ import type { MenuItem } from 'primeng/api';
 import { AuthService } from '../../core/services/auth.service';
 import { SupportService } from '../../core/services/support.service';
 import { AdminService } from '../../core/services/admin.service';
+import { WalletService } from '../../core/services/wallet.service';
 import { NAV_ITEMS, ADMIN_NAV_ITEMS } from '../nav-items';
 import { GlobalSearch } from '../global-search/global-search';
 
@@ -41,6 +42,8 @@ const PAGE_TITLES: Record<string, string> = {
   '/admin/support/new': 'Nouveau ticket (client)',
   '/admin/support/agents': 'Gestion des agents',
   '/admin/images': "Catalogue d'images",
+  '/billing': 'Facturation',
+  '/admin/billing': 'Facturation & tarification',
 };
 
 @Component({
@@ -53,11 +56,13 @@ export class Shell {
   private readonly auth = inject(AuthService);
   private readonly support = inject(SupportService);
   private readonly admin = inject(AdminService);
+  private readonly walletService = inject(WalletService);
   private readonly destroyRef = inject(DestroyRef);
   readonly router = inject(Router);
 
   readonly mobileOpen = signal(false);
   readonly user = this.auth.user;
+  readonly wallet = this.walletService.wallet;
 
   readonly navItems = computed(() => (this.user()?.role === 'ADMIN' ? ADMIN_NAV_ITEMS : NAV_ITEMS));
 
@@ -104,7 +109,10 @@ export class Shell {
 
   constructor() {
     effect(() => {
-      if (this.user()) this.refreshTicketBadge();
+      const u = this.user();
+      if (!u) return;
+      this.refreshTicketBadge();
+      if (u.role !== 'ADMIN') this.walletService.fetchWallet(u.id);
     });
     const intervalId = setInterval(() => this.refreshTicketBadge(), TICKET_BADGE_REFRESH_MS);
     this.destroyRef.onDestroy(() => clearInterval(intervalId));
