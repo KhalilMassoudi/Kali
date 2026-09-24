@@ -12,6 +12,7 @@ export const NAV_ITEMS: NavItem[] = [
   { to: '/vms', icon: 'pi pi-server', label: 'Mes VMs', desc: 'Gérer les serveurs' },
   { to: '/volumes', icon: 'pi pi-database', label: 'Volumes', desc: 'Stockage bloc' },
   { to: '/networks', icon: 'pi pi-share-alt', label: 'Réseau', desc: 'Réseaux, routeurs, sécurité, IP flottantes' },
+  { to: '/domains', icon: 'pi pi-globe', label: 'Domaines', desc: 'Noms de domaine' },
   { to: '/projects', icon: 'pi pi-folder', label: 'Projets', desc: 'Regrouper mes ressources' },
   { to: '/chat', icon: 'pi pi-comments', label: 'Assistant IA', desc: 'Support intelligent' },
   { to: '/support', icon: 'pi pi-ticket', label: 'Support', desc: 'Mes tickets' },

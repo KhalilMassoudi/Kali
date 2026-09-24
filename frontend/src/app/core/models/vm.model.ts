@@ -85,6 +85,28 @@ export interface Volume {
   updatedAt: string;
 }
 
+export type DomainStatus = 'PENDING' | 'ACTIVE' | 'EXPIRED' | 'TRANSFERRED' | 'DELETED';
+
+export interface Domain {
+  id: number;
+  userId: number;
+  name: string;
+  tld: string | null;
+  status: DomainStatus;
+  registeredAt: string | null;
+  expiresAt: string | null;
+  nameserver1: string | null;
+  nameserver2: string | null;
+  createdAt: string;
+}
+
+export interface CreateDomainRequest {
+  userId: number;
+  name: string;
+  nameserver1?: string;
+  nameserver2?: string;
+}
+
 export interface CreateVolumeRequest {
   userId: number;
   name: string;

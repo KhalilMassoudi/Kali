@@ -1,0 +1,63 @@
+@use '../../shared/styles/page-shell' as *;
+
+:host {
+  display: block;
+}
+
+.table-wrap {
+  overflow-x: auto;
+}
+
+::ng-deep .domain-table {
+  .p-datatable-thead > tr > th {
+    padding: 0.625rem 1rem;
+    font-family: var(--font-mono, monospace);
+    font-size: 0.625rem;
+    font-weight: 600;
+    text-transform: uppercase;
+    letter-spacing: 0.06em;
+    color: var(--text-faint);
+    background: transparent;
+    border-color: var(--brand-border);
+  }
+
+  .p-datatable-tbody > tr {
+    background: transparent;
+
+    > td {
+      padding: 0.75rem 1rem;
+      border-color: var(--brand-border-soft);
+      font-size: 0.875rem;
+    }
+
+    &:hover > td {
+      background: rgba(255, 255, 255, 0.015);
+    }
+  }
+}
+
+.dom-name {
+  font-size: 0.875rem;
+  font-weight: 700;
+  color: #fff;
+}
+
+.mono {
+  font-family: var(--font-mono, monospace);
+  font-size: 0.75rem;
+  color: #cbd5e1;
+}
+
+.action-group {
+  display: flex;
+  align-items: center;
+  justify-content: flex-end;
+  gap: 0.375rem;
+}
+
+.empty-row {
+  padding: 2rem;
+  text-align: center;
+  color: var(--text-dim);
+  font-size: 0.875rem;
+}
