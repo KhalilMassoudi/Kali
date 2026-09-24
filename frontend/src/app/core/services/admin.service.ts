@@ -9,7 +9,6 @@ import {
   ApiLogEntry,
   ApiLogFilters,
   CreateAlertRuleRequest,
-  K8sCluster,
   PageResponse,
   SmtpConfig,
   TicketAgent,
@@ -39,7 +38,6 @@ export class AdminService {
 
   private readonly _allVps = signal<Vm[]>([]);
   private readonly _allVolumes = signal<Volume[]>([]);
-  private readonly _allClusters = signal<K8sCluster[]>([]);
   private readonly _allDomains = signal<AdminDomain[]>([]);
   private readonly _allNetworks = signal<VpsNetwork[]>([]);
   private readonly _allRouters = signal<ClientRouter[]>([]);
@@ -67,7 +65,6 @@ export class AdminService {
 
   readonly allVps = this._allVps.asReadonly();
   readonly allVolumes = this._allVolumes.asReadonly();
-  readonly allClusters = this._allClusters.asReadonly();
   readonly allDomains = this._allDomains.asReadonly();
   readonly allNetworks = this._allNetworks.asReadonly();
   readonly allRouters = this._allRouters.asReadonly();
@@ -194,17 +191,6 @@ export class AdminService {
       this._allVolumes.set(Array.isArray(volumes) ? volumes : []);
     } catch (err: any) {
       this._error.set(err?.error?.message || 'Erreur lors du chargement des volumes');
-      throw err;
-    }
-  }
-
-  async loadAllClusters(): Promise<void> {
-    this._error.set(null);
-    try {
-      const clusters = await firstValueFrom(this.http.get<K8sCluster[]>('/api/infrastructure/admin/clusters'));
-      this._allClusters.set(Array.isArray(clusters) ? clusters : []);
-    } catch (err: any) {
-      this._error.set(err?.error?.message || 'Erreur lors du chargement des clusters');
       throw err;
     }
   }

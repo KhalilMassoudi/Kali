@@ -55,9 +55,6 @@
     <button type="button" class="tab-btn" [class.active]="tab() === 'server-groups'" (click)="selectTab('server-groups')">
       <i class="pi pi-objects-column"></i> Groupes de serveurs ({{ serverGroups().length }})
     </button>
-    <button type="button" class="tab-btn" [class.active]="tab() === 'clusters'" (click)="selectTab('clusters')">
-      <i class="pi pi-sitemap"></i> Clusters K8s ({{ clusters().length }})
-    </button>
   </div>
 
   @if (loading()) {
@@ -129,39 +126,6 @@
               <ng-template #emptymessage>
                 <tr>
                   <td colspan="4" class="empty-row">Aucun groupe de serveurs sur la plateforme</td>
-                </tr>
-              </ng-template>
-            </p-table>
-          </div>
-        </div>
-      }
-      @case ('clusters') {
-        <div class="card">
-          <div class="table-wrap">
-            <p-table [value]="clusters()" [rowHover]="true">
-              <ng-template #header>
-                <tr>
-                  <th>Nom</th>
-                  <th>Propriétaire (userId)</th>
-                  <th>Version K8s</th>
-                  <th>Nœuds</th>
-                  <th>Région</th>
-                  <th>Statut</th>
-                </tr>
-              </ng-template>
-              <ng-template #body let-cluster>
-                <tr>
-                  <td>{{ cluster.name }}</td>
-                  <td class="mono">#{{ cluster.userId }}</td>
-                  <td>{{ cluster.kubernetesVersion || '—' }}</td>
-                  <td>{{ cluster.nodeCount ?? '—' }}</td>
-                  <td>{{ cluster.region || '—' }}</td>
-                  <td><p-tag [value]="clusterLabel(cluster.status)" [severity]="clusterSeverity(cluster.status)" [rounded]="true" /></td>
-                </tr>
-              </ng-template>
-              <ng-template #emptymessage>
-                <tr>
-                  <td colspan="6" class="empty-row">Aucun cluster K8s sur la plateforme</td>
                 </tr>
               </ng-template>
             </p-table>

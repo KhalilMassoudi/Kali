@@ -34,23 +34,6 @@ export interface AdminUser {
   createdAt: string | null;
 }
 
-export type ClusterStatus = 'PROVISIONING' | 'RUNNING' | 'SCALING' | 'STOPPED' | 'DELETED' | 'ERROR';
-
-export interface K8sCluster {
-  id: number;
-  userId: number;
-  name: string;
-  kubernetesVersion: string | null;
-  nodeCount: number | null;
-  cpuPerNode: number | null;
-  ramPerNode: number | null;
-  region: string | null;
-  status: ClusterStatus;
-  apiEndpoint: string | null;
-  createdAt: string;
-  updatedAt: string;
-}
-
 export type DomainStatus = 'PENDING' | 'ACTIVE' | 'EXPIRED' | 'TRANSFERRED' | 'DELETED';
 
 export type AlertSeverity = 'INFO' | 'WARNING' | 'CRITICAL';

@@ -6,31 +6,12 @@ import { TableModule } from 'primeng/table';
 import { TagModule } from 'primeng/tag';
 import { AdminService } from '../../../core/services/admin.service';
 import { MetricsService } from '../../../core/services/metrics.service';
-import { ClusterStatus } from '../../../core/models/admin.model';
 import { VmTable } from '../../../shared/vm-table/vm-table';
 import { formatRam } from '../../../shared/utils/vm-status.util';
 import { AdminImages } from '../images/images';
 import { CreateVmDialog } from '../../vms/create-vm-dialog/create-vm-dialog';
 
-type Tab = 'instances' | 'images' | 'keypairs' | 'server-groups' | 'clusters';
-
-const CLUSTER_LABELS: Record<ClusterStatus, string> = {
-  PROVISIONING: 'Provisionnement',
-  RUNNING: 'En marche',
-  SCALING: 'Redimensionnement',
-  STOPPED: 'Arrêté',
-  DELETED: 'Supprimé',
-  ERROR: 'Erreur',
-};
-
-const CLUSTER_SEVERITIES: Record<ClusterStatus, 'success' | 'warn' | 'info' | 'danger' | 'secondary'> = {
-  PROVISIONING: 'info',
-  RUNNING: 'success',
-  SCALING: 'warn',
-  STOPPED: 'secondary',
-  DELETED: 'secondary',
-  ERROR: 'danger',
-};
+type Tab = 'instances' | 'images' | 'keypairs' | 'server-groups';
 
 const POLICY_LABELS: Record<string, string> = {
   AFFINITY: 'Affinité',
@@ -59,12 +40,9 @@ export class AdminCompute {
   readonly instances = this.admin.allVps;
   readonly keypairs = this.admin.allKeypairs;
   readonly serverGroups = this.admin.allServerGroups;
-  readonly clusters = this.admin.allClusters;
   readonly fleetMetrics = this.metricsService.fleetSummary;
 
   readonly formatRam = formatRam;
-  readonly clusterLabel = (status: ClusterStatus) => CLUSTER_LABELS[status] ?? status;
-  readonly clusterSeverity = (status: ClusterStatus) => CLUSTER_SEVERITIES[status] ?? 'info';
   readonly policyLabel = (policy: string) => POLICY_LABELS[policy] ?? policy;
 
   constructor() {
@@ -89,7 +67,6 @@ export class AdminCompute {
         this.admin.loadAllVps(),
         this.admin.loadAllKeypairs(),
         this.admin.loadAllServerGroups(),
-        this.admin.loadAllClusters(),
         this.metricsService.loadFleetSummary(),
       ]);
     } finally {
