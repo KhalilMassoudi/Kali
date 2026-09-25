@@ -38,6 +38,14 @@ public class PricingConfig {
 
     private String currency = "TND";
 
+    // Balance under which the client gets a one-time "solde faible" email. Nullable (added after
+    // the table existed - ddl-auto=update can't backfill a NOT NULL column); null = default.
+    @Column(precision = 10, scale = 2)
+    private BigDecimal lowBalanceThreshold = new BigDecimal("5.00");
+
+    // When true, a client's running VMs are stopped once their balance reaches zero (never admins).
+    private Boolean suspendVmsOnZeroBalance = false;
+
     @UpdateTimestamp
     private LocalDateTime updatedAt;
 }

@@ -1,7 +1,14 @@
 import { Injectable, inject, signal } from '@angular/core';
 import { HttpClient } from '@angular/common/http';
 import { firstValueFrom } from 'rxjs';
-import { AdminAdjustRequest, PricingConfig, Wallet, WalletTransaction } from '../models/billing.model';
+import {
+  AdminAdjustRequest,
+  AlertThreshold,
+  MonthlyInvoiceSummary,
+  PricingConfig,
+  Wallet,
+  WalletTransaction,
+} from '../models/billing.model';
 
 @Injectable({ providedIn: 'root' })
 export class WalletService {
@@ -60,6 +67,29 @@ export class WalletService {
 
   clearError(): void {
     this._error.set(null);
+  }
+
+  async fetchAlertThreshold(): Promise<AlertThreshold> {
+    return firstValueFrom(this.http.get<AlertThreshold>('/api/billing/wallet/alert-threshold'));
+  }
+
+  // ===== Monthly invoices (client: own userId; admin: any client) =====
+
+  async fetchMonthlyInvoices(userId: number): Promise<MonthlyInvoiceSummary[]> {
+    return firstValueFrom(this.http.get<MonthlyInvoiceSummary[]>(`/api/billing/monthly-invoices/user/${userId}`));
+  }
+
+  /** Fetched as a blob through HttpClient so the auth interceptor adds the Bearer token. */
+  async downloadMonthlyInvoice(userId: number, invoice: MonthlyInvoiceSummary): Promise<void> {
+    const blob = await firstValueFrom(
+      this.http.get(`/api/billing/monthly-invoices/user/${userId}/${invoice.month}/pdf`, { responseType: 'blob' }),
+    );
+    const url = window.URL.createObjectURL(blob);
+    const link = document.createElement('a');
+    link.href = url;
+    link.download = `${invoice.invoiceNumber}.pdf`;
+    link.click();
+    window.URL.revokeObjectURL(url);
   }
 
   // ===== Admin =====

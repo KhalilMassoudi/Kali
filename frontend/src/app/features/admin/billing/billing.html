@@ -43,10 +43,24 @@
         <label>Prix / IP flottante / heure (TND)</label>
         <p-inputnumber formControlName="pricePerFloatingIpHour" [min]="0" [minFractionDigits]="4" [maxFractionDigits]="6" [fluid]="true" />
       </div>
+
+      <div class="pricing-section-title">Alertes de solde</div>
+      <div class="pricing-field">
+        <label>Seuil d'alerte solde faible (TND)</label>
+        <p-inputnumber formControlName="lowBalanceThreshold" [min]="0" [minFractionDigits]="2" [maxFractionDigits]="2" [fluid]="true" />
+      </div>
+      <div class="pricing-field pricing-toggle">
+        <p-toggleswitch formControlName="suspendVmsOnZeroBalance" inputId="suspendVmsOnZeroBalance" />
+        <label for="suspendVmsOnZeroBalance">Suspendre les VMs à solde nul</label>
+      </div>
       <p-button label="Enregistrer la tarification" type="submit" icon="pi pi-save" styleClass="pricing-save-btn" />
     </form>
     <p class="pricing-hint">
       Le stockage (disque VM + volumes) et les IP flottantes sont facturés en continu, même si la VM est arrêtée. Le calcul (CPU + RAM) n'est facturé que pour les VM actives — même logique qu'AWS.
+    </p>
+    <p class="pricing-hint">
+      Un client reçoit un email une seule fois lorsque son solde passe sous le seuil, puis un second lorsque son crédit est épuisé (réarmés après recharge).
+      Si la suspension est activée, les VMs en cours d'exécution d'un client à solde nul sont arrêtées — jamais celles des administrateurs.
     </p>
   </div>
 
@@ -65,7 +79,7 @@
         <ng-template #body let-row>
           <tr>
             <td>{{ row.user?.email || ('#' + row.wallet.userId) }}</td>
-            <td class="mono" [class.low]="row.wallet.balance < 5">{{ row.wallet.balance | number: '1.2-2' }} {{ row.wallet.currency }}</td>
+            <td class="mono" [class.low]="row.wallet.balance < lowBalanceThreshold()">{{ row.wallet.balance | number: '1.2-2' }} {{ row.wallet.currency }}</td>
             <td class="mono">{{ row.wallet.updatedAt | date: 'short' }}</td>
             <td>
               @if (rowState(row.wallet).open) {
@@ -90,7 +104,17 @@
                   <p-button [outlined]="true" size="small" icon="pi pi-times" (onClick)="toggleAdjust(row.wallet)" />
                 </div>
               } @else {
-                <p-button [outlined]="true" size="small" icon="pi pi-pencil" label="Ajuster" (onClick)="toggleAdjust(row.wallet)" />
+                <div class="action-group">
+                  <p-button [outlined]="true" size="small" icon="pi pi-pencil" label="Ajuster" (onClick)="toggleAdjust(row.wallet)" />
+                  <p-button
+                    [outlined]="true"
+                    size="small"
+                    severity="secondary"
+                    icon="pi pi-file-pdf"
+                    label="Factures"
+                    (onClick)="openInvoices(row.wallet, row.user?.email || '#' + row.wallet.userId)"
+                  />
+                </div>
               }
             </td>
           </tr>
@@ -103,4 +127,58 @@
       </p-table>
     </div>
   </div>
+
+  <p-dialog
+    [visible]="invoicesClient() !== null"
+    (visibleChange)="!$event && closeInvoices()"
+    [modal]="true"
+    [header]="'Factures — ' + (invoicesClient()?.label ?? '')"
+    [style]="{ width: '44rem', maxWidth: '95vw' }"
+    [dismissableMask]="true"
+  >
+    @if (invoicesError()) {
+      <p-message severity="error" styleClass="pricing-message">{{ invoicesError() }}</p-message>
+    }
+    <div class="table-wrap">
+      <p-table [value]="clientInvoices()" [loading]="invoicesLoading()" [rowHover]="true">
+        <ng-template #header>
+          <tr>
+            <th>Mois</th>
+            <th>N° de facture</th>
+            <th>Consommation</th>
+            <th>Solde de clôture</th>
+            <th></th>
+          </tr>
+        </ng-template>
+        <ng-template #body let-inv>
+          <tr>
+            <td>
+              {{ monthLabel(inv.month) }}
+              @if (inv.current) {
+                <p-tag value="En cours" severity="info" [rounded]="true" styleClass="invoice-current-tag" />
+              }
+            </td>
+            <td class="mono">{{ inv.invoiceNumber }}</td>
+            <td class="mono">{{ inv.usageTotal | number: '1.2-2' }} {{ inv.currency }}</td>
+            <td class="mono">{{ inv.closingBalance | number: '1.2-2' }} {{ inv.currency }}</td>
+            <td class="invoice-action">
+              <p-button
+                [outlined]="true"
+                size="small"
+                icon="pi pi-download"
+                label="PDF"
+                [loading]="downloading() === inv.month"
+                (onClick)="downloadInvoice(inv)"
+              />
+            </td>
+          </tr>
+        </ng-template>
+        <ng-template #emptymessage>
+          <tr>
+            <td colspan="5" class="empty-row">Aucune facture pour ce client</td>
+          </tr>
+        </ng-template>
+      </p-table>
+    </div>
+  </p-dialog>
 </div>

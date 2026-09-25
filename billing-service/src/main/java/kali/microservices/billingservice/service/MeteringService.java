@@ -5,6 +5,7 @@ import kali.microservices.billingservice.client.InfrastructureClient;
 import kali.microservices.billingservice.client.VmSnapshot;
 import kali.microservices.billingservice.client.VolumeSnapshot;
 import kali.microservices.billingservice.entities.PricingConfig;
+import kali.microservices.billingservice.entities.UsageRecord;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.beans.factory.annotation.Value;
@@ -13,6 +14,8 @@ import org.springframework.stereotype.Service;
 
 import java.math.BigDecimal;
 import java.math.RoundingMode;
+import java.util.ArrayList;
+import java.util.EnumMap;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
@@ -33,6 +36,7 @@ public class MeteringService {
     private final InfrastructureClient infrastructureClient;
     private final PricingService pricingService;
     private final WalletService walletService;
+    private final BalanceAlertService balanceAlertService;
 
     @Value("${billing.metering.interval-minutes}")
     private int intervalMinutes;
@@ -46,63 +50,97 @@ public class MeteringService {
         List<VolumeSnapshot> volumes = infrastructureClient.getAllVolumes();
         List<FloatingIpSnapshot> floatingIps = infrastructureClient.getAllFloatingIps();
 
-        Map<Long, BigDecimal> costByUser = new HashMap<>();
+        // Per user, per resource type: [quantity in unit-hours, amount] - becomes the tick's UsageRecords.
+        Map<Long, Map<UsageRecord.UsageType, BigDecimal[]>> usageByUser = new HashMap<>();
         Map<Long, int[]> countsByUser = new HashMap<>(); // [runningVms, billedVms, volumes, floatingIps]
+        Map<Long, List<VmSnapshot>> vmsByUser = new HashMap<>();
 
         for (VmSnapshot vm : vms) {
             if (vm.userId() == null) continue;
+            vmsByUser.computeIfAbsent(vm.userId(), k -> new ArrayList<>()).add(vm);
             int[] counts = countsByUser.computeIfAbsent(vm.userId(), k -> new int[4]);
-            BigDecimal cost = BigDecimal.ZERO;
 
             if (vm.isRunning()) {
-                BigDecimal cpuCost = pricing.getPricePerVcpuHour().multiply(BigDecimal.valueOf(vm.cpu() != null ? vm.cpu() : 0));
+                BigDecimal vcpus = BigDecimal.valueOf(vm.cpu() != null ? vm.cpu() : 0);
                 BigDecimal ramGb = BigDecimal.valueOf(vm.ram() != null ? vm.ram() : 0).divide(BigDecimal.valueOf(1024), 8, RoundingMode.HALF_UP);
-                BigDecimal ramCost = pricing.getPricePerRamGbHour().multiply(ramGb);
-                cost = cost.add(cpuCost).add(ramCost);
+                addUsage(usageByUser, vm.userId(), UsageRecord.UsageType.VCPU, vcpus.multiply(tickHours), pricing.getPricePerVcpuHour());
+                addUsage(usageByUser, vm.userId(), UsageRecord.UsageType.RAM, ramGb.multiply(tickHours), pricing.getPricePerRamGbHour());
                 counts[0]++;
             }
             if (vm.isBillableForStorage()) {
-                BigDecimal storageCost = pricing.getPricePerStorageGbHour().multiply(BigDecimal.valueOf(vm.storage() != null ? vm.storage() : 0));
-                cost = cost.add(storageCost);
+                BigDecimal storageGb = BigDecimal.valueOf(vm.storage() != null ? vm.storage() : 0);
+                addUsage(usageByUser, vm.userId(), UsageRecord.UsageType.VM_STORAGE, storageGb.multiply(tickHours), pricing.getPricePerStorageGbHour());
                 counts[1]++;
             }
-
-            cost = cost.multiply(tickHours);
-            costByUser.merge(vm.userId(), cost, BigDecimal::add);
         }
 
         for (VolumeSnapshot vol : volumes) {
             if (vol.userId() == null || !vol.isBillable()) continue;
             int[] counts = countsByUser.computeIfAbsent(vol.userId(), k -> new int[4]);
-            BigDecimal cost = pricing.getPricePerStorageGbHour()
-                    .multiply(BigDecimal.valueOf(vol.sizeGb() != null ? vol.sizeGb() : 0))
-                    .multiply(tickHours);
-            costByUser.merge(vol.userId(), cost, BigDecimal::add);
+            BigDecimal sizeGb = BigDecimal.valueOf(vol.sizeGb() != null ? vol.sizeGb() : 0);
+            addUsage(usageByUser, vol.userId(), UsageRecord.UsageType.VOLUME, sizeGb.multiply(tickHours), pricing.getPricePerStorageGbHour());
             counts[2]++;
         }
 
         for (FloatingIpSnapshot ip : floatingIps) {
             if (ip.userId() == null) continue;
             int[] counts = countsByUser.computeIfAbsent(ip.userId(), k -> new int[4]);
-            BigDecimal cost = pricing.getPricePerFloatingIpHour().multiply(tickHours);
-            costByUser.merge(ip.userId(), cost, BigDecimal::add);
+            addUsage(usageByUser, ip.userId(), UsageRecord.UsageType.FLOATING_IP, tickHours, pricing.getPricePerFloatingIpHour());
             counts[3]++;
         }
 
         int billedUsers = 0;
-        for (Map.Entry<Long, BigDecimal> entry : costByUser.entrySet()) {
+        for (Map.Entry<Long, Map<UsageRecord.UsageType, BigDecimal[]>> entry : usageByUser.entrySet()) {
             Long userId = entry.getKey();
-            BigDecimal total = entry.getValue().setScale(4, RoundingMode.HALF_UP);
+
+            // Each type's amount is rounded on its own and the ledger entry is their sum - so an
+            // invoice's line items always add up exactly to what was deducted.
+            List<UsageRecord> breakdown = new ArrayList<>();
+            BigDecimal total = BigDecimal.ZERO;
+            for (Map.Entry<UsageRecord.UsageType, BigDecimal[]> usage : entry.getValue().entrySet()) {
+                BigDecimal amount = usage.getValue()[1].setScale(4, RoundingMode.HALF_UP);
+                if (amount.signum() <= 0) continue;
+                UsageRecord record = new UsageRecord();
+                record.setType(usage.getKey());
+                record.setQuantity(usage.getValue()[0].setScale(6, RoundingMode.HALF_UP));
+                record.setUnitPrice(unitPrice(usage.getKey(), pricing));
+                record.setAmount(amount);
+                breakdown.add(record);
+                total = total.add(amount);
+            }
             if (total.compareTo(BigDecimal.ZERO) <= 0) continue;
 
             int[] counts = countsByUser.getOrDefault(userId, new int[4]);
             String description = String.format(
                     "Consommation (%d min): %d VM active(s), %d VM stockée(s), %d volume(s), %d IP flottante(s)",
                     intervalMinutes, counts[0], counts[1], counts[2], counts[3]);
-            walletService.deductForUsage(userId, total, description, "USAGE_TICK", null);
+            walletService.deductForUsage(userId, total, description, "USAGE_TICK", null, breakdown);
             billedUsers++;
+
+            try {
+                balanceAlertService.evaluate(userId, vmsByUser.getOrDefault(userId, List.of()));
+            } catch (Exception e) {
+                log.error("Balance alert check failed for userId={}: {}", userId, e.getMessage());
+            }
         }
 
         log.info("Metering tick complete: {} user(s) billed, interval={} min", billedUsers, intervalMinutes);
+    }
+
+    private static void addUsage(Map<Long, Map<UsageRecord.UsageType, BigDecimal[]>> usageByUser, Long userId,
+                                 UsageRecord.UsageType type, BigDecimal quantity, BigDecimal unitPrice) {
+        BigDecimal[] acc = usageByUser.computeIfAbsent(userId, k -> new EnumMap<>(UsageRecord.UsageType.class))
+                .computeIfAbsent(type, k -> new BigDecimal[]{BigDecimal.ZERO, BigDecimal.ZERO});
+        acc[0] = acc[0].add(quantity);
+        acc[1] = acc[1].add(quantity.multiply(unitPrice));
+    }
+
+    private static BigDecimal unitPrice(UsageRecord.UsageType type, PricingConfig pricing) {
+        return switch (type) {
+            case VCPU -> pricing.getPricePerVcpuHour();
+            case RAM -> pricing.getPricePerRamGbHour();
+            case VM_STORAGE, VOLUME -> pricing.getPricePerStorageGbHour();
+            case FLOATING_IP -> pricing.getPricePerFloatingIpHour();
+        };
     }
 }

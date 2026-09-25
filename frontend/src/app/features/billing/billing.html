@@ -25,17 +25,78 @@
     </div>
   }
 
+  @if (lowBalance()) {
+    <div class="low-balance-banner" [class.exhausted]="creditExhausted()" role="alert">
+      <i class="pi" [class.pi-exclamation-triangle]="!creditExhausted()" [class.pi-ban]="creditExhausted()"></i>
+      <div class="low-balance-text">
+        @if (creditExhausted()) {
+          <strong>Crédit épuisé.</strong>
+          Votre solde est à zéro : rechargez dès maintenant pour éviter l'arrêt de vos machines virtuelles.
+        } @else {
+          <strong>Solde faible.</strong>
+          Votre solde est passé sous le seuil d'alerte de {{ lowBalanceThreshold() | number: '1.2-2' }}
+          {{ wallet()?.currency || 'TND' }} — pensez à recharger pour éviter une interruption de service.
+        }
+      </div>
+      <p-button label="Recharger" icon="pi pi-wallet" size="small" (onClick)="showRechargeDialog.set(true)" />
+    </div>
+  }
+
   <div class="card balance-card">
     <div class="balance-label">Solde actuel</div>
     <div class="balance-value">
       {{ wallet()?.balance ?? 0 | number: '1.2-2' }} <span class="currency">{{ wallet()?.currency || 'TND' }}</span>
     </div>
-    @if ((wallet()?.balance ?? 0) < 5) {
-      <p class="balance-warning">
-        <i class="pi pi-exclamation-triangle"></i>
-        Solde faible — pensez à recharger pour éviter une interruption de service.
-      </p>
+  </div>
+
+  <div class="card invoices-card">
+    <div class="card-header"><div class="card-header-left"><i class="pi pi-file-pdf card-header-icon"></i><span class="card-header-title">Factures</span></div></div>
+    @if (invoicesError()) {
+      <p class="invoices-error">{{ invoicesError() }}</p>
     }
+    <div class="table-wrap">
+      <p-table [value]="invoices()" [rowHover]="true" [loading]="invoicesLoading()">
+        <ng-template #header>
+          <tr>
+            <th>Mois</th>
+            <th>N° de facture</th>
+            <th>Consommation</th>
+            <th>Recharges</th>
+            <th>Solde de clôture</th>
+            <th></th>
+          </tr>
+        </ng-template>
+        <ng-template #body let-inv>
+          <tr>
+            <td>
+              {{ monthLabel(inv.month) }}
+              @if (inv.current) {
+                <p-tag value="En cours" severity="info" [rounded]="true" styleClass="invoice-current-tag" />
+              }
+            </td>
+            <td class="mono">{{ inv.invoiceNumber }}</td>
+            <td class="mono">{{ inv.usageTotal | number: '1.2-2' }} {{ inv.currency }}</td>
+            <td class="mono">{{ inv.rechargeTotal | number: '1.2-2' }} {{ inv.currency }}</td>
+            <td class="mono">{{ inv.closingBalance | number: '1.2-2' }} {{ inv.currency }}</td>
+            <td class="invoice-action">
+              <p-button
+                [outlined]="true"
+                size="small"
+                icon="pi pi-download"
+                label="PDF"
+                [loading]="downloading() === inv.month"
+                (onClick)="downloadInvoice(inv)"
+              />
+            </td>
+          </tr>
+        </ng-template>
+        <ng-template #emptymessage>
+          <tr>
+            <td colspan="6" class="empty-row">Aucune facture pour le moment</td>
+          </tr>
+        </ng-template>
+      </p-table>
+    </div>
   </div>
 
   <div class="card">
