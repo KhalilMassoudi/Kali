@@ -67,6 +67,32 @@ public class InfrastructureClient {
         );
     }
 
+    /**
+     * Action d'alimentation sur un VPS : "start", "stop" ou "restart" (infrastructure-service
+     * n'expose qu'un redémarrage, effectué en HARD côté OpenStack).
+     */
+    public Object powerAction(Long vpsId, String action, String authHeader) {
+        log.info("Action '{}' sur VPS id={}", action, vpsId);
+        ResponseEntity<Object> response = restTemplate.exchange(
+                infrastructureUrl + "/api/infrastructure/vps/" + vpsId + "/" + action,
+                HttpMethod.POST,
+                new HttpEntity<>(headers(authHeader)),
+                Object.class
+        );
+        return response.getBody();
+    }
+
+    public List<?> listVolumes(Long userId, String authHeader) {
+        log.info("Liste volumes pour userId={}", userId);
+        ResponseEntity<List<Map<String, Object>>> response = restTemplate.exchange(
+                infrastructureUrl + "/api/infrastructure/volumes/user/" + userId,
+                HttpMethod.GET,
+                new HttpEntity<>(headers(authHeader)),
+                new ParameterizedTypeReference<>() {}
+        );
+        return response.getBody();
+    }
+
     private HttpHeaders headers(String authHeader) {
         HttpHeaders headers = new HttpHeaders();
         headers.set("Authorization", authHeader);
