@@ -17,11 +17,11 @@ public interface ApiLogRepository extends JpaRepository<ApiLogEntry, Long> {
 
     @Query("SELECT l FROM ApiLogEntry l WHERE " +
             "(:service IS NULL OR l.targetService = :service) AND " +
-            "(:errorsOnly = false OR l.statusCode >= 400) AND " +
+            "(:errorsOnly = FALSE OR l.statusCode >= 400) AND " +
             "(:search IS NULL OR l.path LIKE CONCAT('%', :search, '%')) " +
             "ORDER BY l.timestamp DESC")
     Page<ApiLogEntry> search(@Param("service") String service,
-                              @Param("errorsOnly") boolean errorsOnly,
+                              @Param("errorsOnly") Boolean errorsOnly,
                               @Param("search") String search,
                               Pageable pageable);
 
