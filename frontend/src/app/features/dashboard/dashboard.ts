@@ -12,6 +12,7 @@ import { SecurityGroupService } from '../../core/services/security-group.service
 import { VmTable } from '../../shared/vm-table/vm-table';
 import { AdminOverview } from './admin-overview/admin-overview';
 import { ResourceGauge } from '../../shared/resource-gauge/resource-gauge';
+import { GaugeGroup, gauge } from '../../shared/resource-gauge/gauge-spec';
 
 interface QuickAction {
   icon: string;
@@ -38,6 +39,27 @@ export class Dashboard {
   private readonly router = inject(Router);
 
   readonly quota = this.quotaService.myQuota;
+
+  /** Same grouped used/limit layout as the admin overview, scoped to this client's own quota. */
+  readonly quotaGroups = computed<GaugeGroup[]>(() => {
+    const q = this.quota();
+    if (!q) return [];
+    return [
+      { title: 'Compute', gauges: [
+        gauge('Instances', q.usage.vmCount, q.quota.maxVms),
+        gauge('vCPUs', q.usage.totalVcpu, q.quota.maxVcpu),
+        gauge('RAM', q.usage.totalRamMb, q.quota.maxRamMb, ' GB', 1024),
+      ] },
+      { title: 'Stockage', gauges: [
+        gauge('Volumes', q.usage.volumeCount, q.quota.maxVolumes),
+        gauge('Stockage total', q.usage.totalStorageGb, q.quota.maxStorageGb, ' GB'),
+      ] },
+      { title: 'Réseau', gauges: [
+        gauge('Réseaux', q.usage.networkCount, q.quota.maxNetworks),
+        gauge('Groupes de sécurité', q.usage.securityGroupCount, q.quota.maxSecurityGroups),
+      ] },
+    ];
+  });
   readonly metrics = this.metricsService.mySummary;
 
   readonly isAdmin = computed(() => this.auth.user()?.role === 'ADMIN');

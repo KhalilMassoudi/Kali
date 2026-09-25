@@ -164,7 +164,7 @@
 }
 
 ::ng-deep .user-avatar {
-  background: linear-gradient(135deg, #2e9ee0, #5cc8f7) !important;
+  background: linear-gradient(135deg, #ea580c, #fb923c) !important;
   color: #fff !important;
   font-weight: 700;
   font-size: 0.75rem;
@@ -246,10 +246,10 @@
 
   &.active {
     color: #fff;
-    background: rgba(46, 158, 224, 0.1);
-    border-color: rgba(46, 158, 224, 0.2);
+    background: rgba(249, 115, 22, 0.1);
+    border-color: rgba(249, 115, 22, 0.2);
 
-    .nav-icon { background: rgba(46, 158, 224, 0.2); }
+    .nav-icon { background: rgba(249, 115, 22, 0.2); }
     .nav-icon i { color: var(--brand-primary); }
   }
 }

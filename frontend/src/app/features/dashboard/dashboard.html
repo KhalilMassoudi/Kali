@@ -92,35 +92,17 @@
           <app-vm-table [vms]="recentVms()" (deleted)="refresh()" />
         }
 
-        @if (!loading() && vms().length > 0 && quota()) {
+        @if (!loading() && quota()) {
           <div class="resource-footer">
-            <p class="resource-footer-label">Aperçu des ressources (quota)</p>
-            <div class="gauge-grid">
-              <app-resource-gauge label="VMs" [used]="quota()!.usage.vmCount" [total]="quota()!.quota.maxVms" color="var(--brand-accent)" />
-              <app-resource-gauge label="vCPUs" [used]="quota()!.usage.totalVcpu" [total]="quota()!.quota.maxVcpu" color="var(--brand-warn, #f59e0b)" />
-              <app-resource-gauge
-                label="RAM"
-                [used]="quota()!.usage.totalRamMb"
-                [total]="quota()!.quota.maxRamMb"
-                [displayValue]="ramDisplay() + ' / ' + (quota()!.quota.maxRamMb / 1024) + ' GB'"
-                color="var(--brand-warn, #f59e0b)"
-              />
-              <app-resource-gauge
-                label="Stockage"
-                [used]="quota()!.usage.totalStorageGb"
-                [total]="quota()!.quota.maxStorageGb"
-                [displayValue]="quota()!.usage.totalStorageGb + '/' + quota()!.quota.maxStorageGb + 'GB'"
-                color="var(--brand-good, #22c55e)"
-              />
-              <app-resource-gauge label="Volumes" [used]="quota()!.usage.volumeCount" [total]="quota()!.quota.maxVolumes" color="var(--brand-good, #22c55e)" />
-              <app-resource-gauge label="Réseaux" [used]="quota()!.usage.networkCount" [total]="quota()!.quota.maxNetworks" color="var(--brand-accent)" />
-              <app-resource-gauge
-                label="Groupes de sécurité"
-                [used]="quota()!.usage.securityGroupCount"
-                [total]="quota()!.quota.maxSecurityGroups"
-                color="var(--brand-crit, #ef4444)"
-              />
-            </div>
+            <p class="resource-footer-label">Mes ressources (quota)</p>
+            @for (group of quotaGroups(); track group.title) {
+              <p class="gauge-group-title">{{ group.title }}</p>
+              <div class="gauge-grid">
+                @for (g of group.gauges; track g.label) {
+                  <app-resource-gauge [label]="g.label" [used]="g.used" [total]="g.limit" [displayValue]="g.center" [detail]="g.detail" />
+                }
+              </div>
+            }
           </div>
           <div class="resource-footer">
             <p class="resource-footer-label">Utilisation en temps réel (Gnocchi)</p>

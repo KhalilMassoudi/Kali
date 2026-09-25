@@ -8,7 +8,8 @@ import { AdminService } from '../../../core/services/admin.service';
 import { MetricsService } from '../../../core/services/metrics.service';
 import { TelemetryService } from '../../../core/services/telemetry.service';
 import { MeasurePoint } from '../../../core/models/telemetry.model';
-import { QuotaUsage } from '../../../core/models/vm.model';
+import { QuotaMeter } from '../../../core/models/vm.model';
+import { GaugeGroup, gauge as makeGauge } from '../../../shared/resource-gauge/gauge-spec';
 import { formatRam } from '../../../shared/utils/vm-status.util';
 import { cumulativeCpuToUtilPercent } from '../../../shared/utils/telemetry.util';
 import { TimeseriesChart } from '../../../shared/timeseries-chart/timeseries-chart';
@@ -21,32 +22,8 @@ interface Shortcut {
   count: () => number;
 }
 
-interface GaugeSpec {
-  label: string;
-  used: number;
-  /** null when there's no quota to compare against (unlimited, or DB fallback). */
-  limit: number | null;
-  center: string;
-  detail: string;
-}
-
-interface GaugeGroup {
-  title: string;
-  gauges: GaugeSpec[];
-}
-
-/** Builds one Horizon-style gauge: "3/10" in the ring, "Utilisé 3 sur 10" underneath. */
-function gauge(label: string, q: QuotaUsage | { used: number; limit: null }, unit = '', divisor = 1): GaugeSpec {
-  const used = Math.round(q.used / divisor);
-  const limit = q.limit !== null && q.limit >= 0 ? Math.round(q.limit / divisor) : null;
-  return {
-    label,
-    used,
-    limit,
-    center: limit !== null ? `${used}/${limit}` : `${used}`,
-    detail: limit !== null ? `Utilisé ${used}${unit} sur ${limit}${unit}` : `Utilisé ${used}${unit}`,
-  };
-}
+const gauge = (label: string, q: QuotaMeter | { used: number; limit: null }, unit = '', divisor = 1) =>
+  makeGauge(label, q.used, q.limit, unit, divisor);
 
 @Component({
   selector: 'app-admin-overview',

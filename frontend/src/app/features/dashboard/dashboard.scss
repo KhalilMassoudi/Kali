@@ -9,7 +9,7 @@
   font-size: 0.625rem;
   font-weight: 700;
   color: var(--brand-accent);
-  background: rgba(46, 158, 224, 0.1);
+  background: rgba(249, 115, 22, 0.1);
   padding: 0.125rem 0.5rem;
 }
 
@@ -149,7 +149,7 @@
   }
 
   @media (min-width: 1200px) {
-    grid-template-columns: repeat(7, 1fr);
+    grid-template-columns: repeat(4, 1fr);
   }
 }
 
@@ -273,4 +273,15 @@
 @keyframes pulse {
   0%, 100% { opacity: 1; }
   50% { opacity: 0.5; }
+}
+
+.gauge-group-title {
+  margin: 1rem 0 0.5rem;
+  font-size: 0.6875rem;
+  font-weight: 700;
+  text-transform: uppercase;
+  letter-spacing: 0.04em;
+  color: var(--text-dim);
+
+  &:first-of-type { margin-top: 0; }
 }

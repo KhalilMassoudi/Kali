@@ -43,7 +43,7 @@
   font-weight: 600;
   cursor: pointer;
 
-  &:hover { border-color: rgba(46, 158, 224, 0.5); color: var(--brand-accent); }
+  &:hover { border-color: rgba(249, 115, 22, 0.5); color: var(--brand-accent); }
 }
 
 .conversation-list {
@@ -76,7 +76,7 @@
 
   &.active {
     background: var(--brand-surface2);
-    border-color: rgba(46, 158, 224, 0.4);
+    border-color: rgba(249, 115, 22, 0.4);
     color: var(--brand-accent);
   }
 }
@@ -143,7 +143,7 @@
   p { white-space: pre-wrap; word-break: break-word; }
 
   &.mine {
-    background: linear-gradient(135deg, #2e9ee0, #0284c7);
+    background: linear-gradient(135deg, #ea580c, #c2410c);
     border-color: transparent;
     color: #fff;
   }
@@ -209,8 +209,8 @@
 
   &:focus {
     outline: none;
-    border-color: rgba(46, 158, 224, 0.6);
-    box-shadow: 0 0 0 2px rgba(46, 158, 224, 0.2);
+    border-color: rgba(249, 115, 22, 0.6);
+    box-shadow: 0 0 0 2px rgba(249, 115, 22, 0.2);
   }
 
   &::placeholder { color: var(--text-faint); }

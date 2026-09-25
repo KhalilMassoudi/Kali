@@ -328,7 +328,7 @@ export interface MetricsSummary {
 }
 
 /** Usage vs. project quota; `limit` is -1 when OpenStack reports "unlimited". */
-export interface QuotaUsage {
+export interface QuotaMeter {
   used: number;
   limit: number;
 }
@@ -336,18 +336,18 @@ export interface QuotaUsage {
 /** Live ground-truth usage read directly from OpenStack (same numbers as Horizon's Overview). */
 export interface PlatformTotals {
   runningInstances: number;
-  instances: QuotaUsage;
-  vcpus: QuotaUsage;
-  ramMb: QuotaUsage;
-  volumes: QuotaUsage;
-  volumeGb: QuotaUsage;
-  snapshots: QuotaUsage;
-  floatingIps: QuotaUsage;
-  securityGroups: QuotaUsage;
-  securityGroupRules: QuotaUsage;
-  networks: QuotaUsage;
-  ports: QuotaUsage;
-  routers: QuotaUsage;
+  instances: QuotaMeter;
+  vcpus: QuotaMeter;
+  ramMb: QuotaMeter;
+  volumes: QuotaMeter;
+  volumeGb: QuotaMeter;
+  snapshots: QuotaMeter;
+  floatingIps: QuotaMeter;
+  securityGroups: QuotaMeter;
+  securityGroupRules: QuotaMeter;
+  networks: QuotaMeter;
+  ports: QuotaMeter;
+  routers: QuotaMeter;
 }
 
 export interface ClientFloatingIp {

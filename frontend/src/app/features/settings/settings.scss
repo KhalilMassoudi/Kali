@@ -33,7 +33,7 @@
   font-size: 1.5rem;
   font-weight: 700;
   color: #fff;
-  background: linear-gradient(135deg, #2e9ee0, #5cc8f7);
+  background: linear-gradient(135deg, #ea580c, #fb923c);
 }
 
 h3 { font-size: 1rem; font-weight: 700; color: #fff; }
@@ -149,7 +149,7 @@ h3 { font-size: 1rem; font-weight: 700; color: #fff; }
   border: 1px solid;
 
   &.warn { background: rgba(240, 180, 41, 0.1); border-color: rgba(240, 180, 41, 0.2); i { color: var(--brand-warn); } }
-  &.accent { background: rgba(46, 158, 224, 0.1); border-color: rgba(46, 158, 224, 0.2); i { color: var(--brand-accent); } }
+  &.accent { background: rgba(249, 115, 22, 0.1); border-color: rgba(249, 115, 22, 0.2); i { color: var(--brand-accent); } }
   &.danger { background: rgba(242, 85, 91, 0.1); border-color: rgba(242, 85, 91, 0.25); i { color: var(--brand-crit); } }
 
   i { font-size: 1rem; }

@@ -6,8 +6,8 @@
   --brand-surface2: #1c2634;
   --brand-border: #33455a;
   --brand-border-soft: rgba(51, 69, 90, 0.6);
-  --brand-primary: #2e9ee0;
-  --brand-accent: #5cc8f7;
+  --brand-primary: #f97316;
+  --brand-accent: #fb923c;
   --brand-good: #33d6a6;
   --brand-warn: #f0b429;
   --brand-crit: #f2555b;
@@ -27,7 +27,7 @@ body {
   -moz-osx-font-smoothing: grayscale;
   background-color: var(--brand-bg);
   background-image:
-    radial-gradient(ellipse 90% 55% at 50% -5%, rgba(46, 158, 224, 0.08) 0%, transparent 70%),
+    radial-gradient(ellipse 90% 55% at 50% -5%, rgba(249, 115, 22, 0.08) 0%, transparent 70%),
     radial-gradient(circle at 1px 1px, rgba(51, 69, 90, 0.55) 1px, transparent 0);
   background-size: auto, 36px 36px;
   color: #f1f5f9;

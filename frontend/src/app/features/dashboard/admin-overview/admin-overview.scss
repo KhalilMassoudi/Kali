@@ -132,7 +132,7 @@
   color: var(--text-dim);
   text-decoration: none;
 
-  i { color: var(--brand-accent, #2563eb); }
+  i { color: var(--brand-accent, #f97316); }
 
   &:hover { color: #fff; }
 }
@@ -159,12 +159,12 @@
   transition: border-color 0.15s ease;
 
   &:hover {
-    border-color: var(--brand-primary, #2563eb);
+    border-color: var(--brand-primary, #f97316);
   }
 
   i {
     font-size: 1.5rem;
-    color: var(--brand-primary, #2563eb);
+    color: var(--brand-primary, #f97316);
   }
 }
 
