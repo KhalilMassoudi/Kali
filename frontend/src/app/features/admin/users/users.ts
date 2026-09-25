@@ -109,7 +109,12 @@ export class AdminUsers {
         this.walletService.fetchAllWallets(),
         this.admin.loadUsers(),
         this.admin.loadClientSummaries(),
-        this.admin.loadAllTickets(),
+        // Requires Ticket Agent status, separate from the ADMIN role - not every admin
+        // has it, so a 403 here shouldn't break the rest of this page (wallets, search,
+        // etc). Ticket counts just show as unavailable for that case.
+        this.admin.loadAllTickets().catch(() => {
+          this.admin.clearError();
+        }),
       ]);
       this.wallets.set(wallets);
     } finally {
