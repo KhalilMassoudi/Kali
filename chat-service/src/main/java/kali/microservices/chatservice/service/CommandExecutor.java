@@ -40,19 +40,6 @@ public class CommandExecutor {
                     yield Map.of("message", "VPS supprimé avec succès");
                 }
 
-                // ── DOMAINES ─────────────────────────────────────────────────
-                case "create_domain"  -> infrastructureClient.createDomain(params, userId, authHeader);
-                case "list_domains"   -> infrastructureClient.listDomains(userId, authHeader);
-                case "delete_domain"  -> {
-                    Long domainId = toLong(params.get("domainId"));
-                    infrastructureClient.deleteDomain(domainId, authHeader);
-                    yield Map.of("message", "Domaine supprimé avec succès");
-                }
-
-                // ── KUBERNETES ───────────────────────────────────────────────
-                case "create_cluster" -> infrastructureClient.createCluster(params, userId, authHeader);
-                case "list_clusters"  -> infrastructureClient.listClusters(userId, authHeader);
-
                 // ── SUPPORT ──────────────────────────────────────────────────
                 case "open_ticket"    -> supportClient.createTicket(params, authHeader);
                 case "list_tickets"   -> supportClient.listTickets(userId, authHeader);

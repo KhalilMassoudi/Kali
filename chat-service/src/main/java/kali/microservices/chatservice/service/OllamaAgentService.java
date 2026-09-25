@@ -11,12 +11,16 @@ import org.springframework.http.MediaType;
 import org.springframework.stereotype.Service;
 import org.springframework.web.reactive.function.client.WebClient;
 
+import java.time.Duration;
+import java.time.Instant;
 import java.util.ArrayList;
 import java.util.HashMap;
 import java.util.LinkedHashMap;
 import java.util.List;
 import java.util.Map;
 import java.util.Set;
+import java.util.concurrent.ConcurrentHashMap;
+import java.util.regex.Pattern;
 
 /**
  * Agent conversationnel basé sur un modèle auto-hébergé via Ollama (function calling natif),
@@ -45,23 +49,50 @@ public class OllamaAgentService {
     private static final int MAX_TOOL_ITERATIONS = 6;
 
     private static final Set<String> CONFIRMATION_REQUIRED = Set.of(
-            "create_vps", "delete_vps", "create_domain", "delete_domain", "create_cluster"
+            "create_vps", "delete_vps"
     );
 
-    private static final String SYSTEM_INSTRUCTION = """
-            Tu es l'assistant IA de Kali Cloud, une plateforme d'infrastructure cloud (VPS, domaines,
-            clusters Kubernetes, support). Utilise les outils fournis pour répondre aux demandes des
-            utilisateurs, en français ou en anglais selon leur langue.
+    /** A short, unconditional "yes" to a proposal the model made in its previous turn. */
+    private static final Pattern AFFIRMATIVE = Pattern.compile(
+            "^\\s*(oui|yes|ok|okay|d'accord|vas-y|go|go ahead|confirme|confirm|confirmé|yep|yeah|sure|parfait)\\b.*",
+            Pattern.CASE_INSENSITIVE);
+    private static final int MAX_AFFIRMATIVE_WORDS = 5;
 
-            RÈGLE DE CONFIRMATION : certains outils ont un champ "confirmed" (booléen).
-            - Ne mets confirmed=true QUE si l'utilisateur vient d'exprimer un accord explicite
-              (ex: "oui", "vas-y", "confirme", "yes", "go ahead") en réponse directe à une action
-              que tu viens de proposer dans TON message précédent.
-            - Sinon, mets confirmed=false. L'outil ne fera rien de réel dans ce cas : explique
-              clairement à l'utilisateur ce que tu proposes de faire (avec les paramètres choisis)
-              et demande-lui de confirmer par une simple réponse "oui" ou "non". Ne mentionne JAMAIS
-              le nom technique du champ "confirmed" à l'utilisateur — parle-lui normalement.
-            - Ne dis JAMAIS qu'une action a été effectuée si elle ne l'a pas été.
+    /** The model claiming an action happened. Only allowed when a tool actually ran this turn. */
+    private static final Pattern COMPLETION_CLAIM = Pattern.compile(
+            "(j'ai (bien )?(créé|supprimé|lancé|déployé|ouvert)|a été (créée?|supprimée?|déployée?|assignée?)"
+                    + "|est (maintenant )?(en cours d'exécution|opérationnel)|has been (created|deleted|deployed|assigned)"
+                    + "|i('ve| have) (gone ahead|created|deleted|deployed)|is now (up|running))",
+            Pattern.CASE_INSENSITIVE);
+
+    private static final Duration PENDING_TTL = Duration.ofMinutes(10);
+
+    /**
+     * Last action the model proposed (called with confirmed=false), per user. When the user's
+     * next message is a plain "yes", we execute it ourselves instead of trusting the model to
+     * re-issue the call — local models regularly skip the call and just claim success.
+     */
+    private record PendingAction(String name, Map<String, Object> args, Instant at) {}
+    private final Map<Long, PendingAction> pendingActions = new ConcurrentHashMap<>();
+
+    private static final String SYSTEM_INSTRUCTION = """
+            Tu es l'assistant IA de Safozi Cloud, une plateforme d'infrastructure cloud basée sur
+            OpenStack. Tu peux : créer, lister et supprimer les VPS de l'utilisateur connecté,
+            ouvrir et lister ses tickets de support, et lui indiquer où voir sa facturation.
+            Tu ne gères PAS de noms de domaine ni de clusters Kubernetes (ces services n'existent
+            pas sur la plateforme). Réponds en français ou en anglais selon la langue de l'utilisateur.
+
+            RÈGLES ABSOLUES :
+            - Pour proposer une création ou une suppression, tu DOIS appeler l'outil correspondant
+              avec confirmed=false. Ne propose jamais une telle action uniquement en texte.
+            - Ne mets confirmed=true QUE si l'utilisateur vient d'accepter explicitement (ex: "oui",
+              "vas-y", "yes") l'action que tu as proposée dans TON message précédent.
+            - Ne dis JAMAIS qu'une action a été effectuée si l'outil n'a pas été appelé et n'a pas
+              renvoyé de succès. N'invente JAMAIS de nom, d'identifiant, d'adresse IP ou de statut :
+              utilise uniquement les valeurs renvoyées par les outils.
+            - Tu agis uniquement pour l'utilisateur connecté. Tu ne peux pas créer ni assigner de
+              ressource à un autre client : dis-le honnêtement si on te le demande.
+            - Ne parle pas de régions. Ne mentionne jamais le champ technique "confirmed".
             - Les actions de lecture (lister, afficher) n'ont pas besoin de confirmation.
 
             Sois concis et amical dans tes réponses.
@@ -93,6 +124,21 @@ public class OllamaAgentService {
 
         String lastAction = null;
         Object lastActionData = null;
+        boolean nudged = false;
+
+        PendingAction pending = pendingActions.remove(userId);
+        if (pending != null && isPlainYes(userMessage) && Instant.now().isBefore(pending.at().plus(PENDING_TTL))) {
+            Map<String, Object> args = new HashMap<>(pending.args());
+            args.put("confirmed", true);
+            ToolOutcome outcome = executeTool(pending.name(), args, userId, authHeader);
+            lastAction = pending.name();
+            lastActionData = outcome.data();
+            messages.add(msg("system", "Le système vient d'exécuter l'action confirmée '" + pending.name()
+                    + "'. Résultat réel (JSON) : " + toJson(outcome.data())
+                    + (outcome.isError() ? " — c'est un ÉCHEC : explique l'erreur à l'utilisateur."
+                    : " — informe l'utilisateur en te basant UNIQUEMENT sur ce résultat.")
+                    + " N'appelle aucun outil pour cette même action."));
+        }
 
         for (int i = 0; i < MAX_TOOL_ITERATIONS; i++) {
             Map<String, Object> requestBody = new LinkedHashMap<>();
@@ -107,6 +153,20 @@ public class OllamaAgentService {
             String textOut = message.path("content").asText("");
 
             if (!toolCalls.isArray() || toolCalls.isEmpty()) {
+                if (lastAction == null && COMPLETION_CLAIM.matcher(textOut).find()) {
+                    if (!nudged) {
+                        nudged = true;
+                        log.warn("Agent claimed an action without calling any tool, retrying: {}", textOut);
+                        messages.add(msg("system", "ATTENTION : tu n'as appelé aucun outil, donc RIEN n'a été "
+                                + "exécuté. Appelle l'outil approprié (avec confirmed=false pour proposer), ou "
+                                + "réponds honnêtement sans prétendre avoir agi."));
+                        continue;
+                    }
+                    log.warn("Agent still claims an unexecuted action, replacing reply: {}", textOut);
+                    return new AgentResult("Je n'ai effectué aucune action. Pouvez-vous reformuler votre demande "
+                            + "(par exemple : « crée une VM avec 2 vCPU, 4 Go de RAM et 40 Go de disque ») ?",
+                            null, null);
+                }
                 return new AgentResult(!textOut.isBlank() ? textOut : "D'accord.", lastAction, lastActionData);
             }
 
@@ -123,17 +183,14 @@ public class OllamaAgentService {
                 Map<String, Object> args = objectMapper.convertValue(fn.path("arguments"), new TypeReference<Map<String, Object>>() {});
 
                 ToolOutcome outcome = executeTool(name, args, userId, authHeader);
-                if (!isPendingConfirmation(outcome)) {
+                if (isPendingConfirmation(outcome)) {
+                    pendingActions.put(userId, new PendingAction(name, args, Instant.now()));
+                } else {
                     lastAction = name;
                     lastActionData = outcome.data();
                 }
 
-                String resultJson;
-                try {
-                    resultJson = objectMapper.writeValueAsString(outcome.data());
-                } catch (Exception e) {
-                    resultJson = String.valueOf(outcome.data());
-                }
+                String resultJson = toJson(outcome.data());
                 Map<String, Object> toolTurn = new LinkedHashMap<>();
                 toolTurn.put("role", "tool");
                 toolTurn.put("content", resultJson);
@@ -167,6 +224,19 @@ public class OllamaAgentService {
         Object result = commandExecutor.execute(intent, userId, authHeader);
         boolean isError = result instanceof Map<?, ?> m && m.containsKey("error");
         return new ToolOutcome(result, isError);
+    }
+
+    private static boolean isPlainYes(String text) {
+        return text != null && AFFIRMATIVE.matcher(text).matches()
+                && text.trim().split("\\s+").length <= MAX_AFFIRMATIVE_WORDS;
+    }
+
+    private String toJson(Object data) {
+        try {
+            return objectMapper.writeValueAsString(data);
+        } catch (Exception e) {
+            return String.valueOf(data);
+        }
     }
 
     private boolean isPendingConfirmation(ToolOutcome outcome) {
@@ -242,7 +312,6 @@ public class OllamaAgentService {
                             "ram", prop("integer", "RAM en MB, ex: 2048 pour 2GB"),
                             "cpu", prop("integer", "Nombre de vCPU"),
                             "storage", prop("integer", "Stockage en GB"),
-                            "region", prop("string", "Région, ex: eu-west-1"),
                             "confirmed", CONFIRMED_PROP
                     ),
                     List.of("confirmed")),
@@ -255,34 +324,6 @@ public class OllamaAgentService {
                             "confirmed", CONFIRMED_PROP
                     ),
                     List.of("vpsId", "confirmed")),
-            tool("create_domain",
-                    "Enregistre un nouveau nom de domaine. Coûte des ressources réelles : nécessite confirmation explicite.",
-                    Map.of(
-                            "name", prop("string", "Nom de domaine, ex: monsite.tn"),
-                            "confirmed", CONFIRMED_PROP
-                    ),
-                    List.of("name", "confirmed")),
-            tool("list_domains", "Liste les domaines de l'utilisateur. Lecture seule, aucune confirmation nécessaire.",
-                    Map.of(), List.of()),
-            tool("delete_domain",
-                    "Supprime définitivement un domaine. Action irréversible : nécessite confirmation explicite.",
-                    Map.of(
-                            "domainId", prop("integer", "Identifiant numérique du domaine à supprimer"),
-                            "confirmed", CONFIRMED_PROP
-                    ),
-                    List.of("domainId", "confirmed")),
-            tool("create_cluster",
-                    "Crée un cluster Kubernetes. Coûte des ressources réelles : nécessite confirmation explicite.",
-                    Map.of(
-                            "name", prop("string", "Nom du cluster (optionnel)"),
-                            "nodeCount", prop("integer", "Nombre de nœuds"),
-                            "kubernetesVersion", prop("string", "Version de Kubernetes, ex: 1.28"),
-                            "region", prop("string", "Région"),
-                            "confirmed", CONFIRMED_PROP
-                    ),
-                    List.of("confirmed")),
-            tool("list_clusters", "Liste les clusters Kubernetes de l'utilisateur. Lecture seule, aucune confirmation nécessaire.",
-                    Map.of(), List.of()),
             tool("open_ticket",
                     "Ouvre un ticket de support. Action gratuite et réversible : aucune confirmation nécessaire.",
                     Map.of(
