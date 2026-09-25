@@ -29,6 +29,21 @@
         />
         <p class="field-hint">En tant qu'administrateur, choisissez pour quel client cette VM est créée</p>
       </div>
+      <div class="field">
+        <label for="targetProject">Projet</label>
+        <p-select
+          inputId="targetProject"
+          [options]="projectOptions()"
+          [ngModel]="targetProjectId()"
+          (ngModelChange)="targetProjectId.set($event)"
+          [ngModelOptions]="{ standalone: true }"
+          optionLabel="label"
+          optionValue="value"
+          [disabled]="!targetUserId()"
+          [fluid]="true"
+        />
+        <p class="field-hint">Projet du client dans lequel ranger la VM (facultatif)</p>
+      </div>
     }
 
     <div class="field">

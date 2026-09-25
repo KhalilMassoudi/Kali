@@ -48,4 +48,7 @@ public class CreateVpsRequest {
 
     /** Client-facing ClientServerGroup.id (not the raw OpenStack UUID) — resolved + ownership-checked in VpsService. */
     private Long serverGroupId;
+
+    /** Optional ClientProject.id to file the VM under — must belong to userId (validated in VpsService). */
+    private Long projectId;
 }

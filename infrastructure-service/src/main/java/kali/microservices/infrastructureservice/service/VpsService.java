@@ -45,8 +45,12 @@ public class VpsService {
 
     public VpsServer createVps(CreateVpsRequest request) {
         quotaService.checkVpsCreation(request.getUserId(), request.getCpu(), request.getRam(), request.getStorage());
+        if (request.getProjectId() != null) {
+            clientProjectService.validateAssignable(request.getProjectId(), request.getUserId());
+        }
         VpsServer vps = new VpsServer();
         vps.setUserId(request.getUserId());
+        vps.setProjectId(request.getProjectId());
         vps.setName(request.getName());
         vps.setOs(request.getOs());
         vps.setRam(request.getRam());

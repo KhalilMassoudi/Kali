@@ -33,6 +33,16 @@ export class ProjectService {
     }
   }
 
+  /** Another user's projects (admin pickers) — returned directly, leaves the shared `projects` signal alone. */
+  async listForUser(userId: number): Promise<ClientProject[]> {
+    try {
+      const projects = await firstValueFrom(this.http.get<ClientProject[]>(`/api/infrastructure/projects/user/${userId}`));
+      return Array.isArray(projects) ? projects : [];
+    } catch {
+      return [];
+    }
+  }
+
   async createProject(data: CreateClientProjectRequest): Promise<ClientProject> {
     this._loading.set(true);
     this._error.set(null);

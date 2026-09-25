@@ -17,14 +17,6 @@
     </div>
   }
 
-  @if (filterUserLabel(); as label) {
-    <div class="filter-banner">
-      <i class="pi pi-filter"></i>
-      <p>Filtré pour <strong>{{ label }}</strong></p>
-      <button type="button" (click)="clearUserFilter()">Retirer le filtre</button>
-    </div>
-  }
-
   <div class="card telemetry-strip">
     <div class="tcell">
       <span class="tcell-label">VMs actives</span>
@@ -73,8 +65,40 @@
   } @else {
     @switch (tab()) {
       @case ('instances') {
+        <div class="filter-bar">
+          <p-select
+            [options]="clientFilterOptions()"
+            [ngModel]="filterUserId()"
+            (ngModelChange)="setUserFilter($event)"
+            optionLabel="label"
+            optionValue="value"
+            placeholder="Tous les clients"
+            [showClear]="true"
+            [filter]="true"
+            filterBy="label"
+            styleClass="filter-select"
+          />
+          <p-select
+            [options]="projectFilterOptions()"
+            [ngModel]="filterProjectId()"
+            (ngModelChange)="filterProjectId.set($event)"
+            optionLabel="label"
+            optionValue="value"
+            [placeholder]="filterUserId() ? 'Tous les projets' : 'Choisir un client d\'abord'"
+            [disabled]="!filterUserId()"
+            [showClear]="true"
+            styleClass="filter-select"
+          />
+          <span class="filter-search">
+            <i class="pi pi-search"></i>
+            <input pInputText type="text" placeholder="Adresse IP ou nom" [ngModel]="filterSearch()" (ngModelChange)="filterSearch.set($event)" />
+          </span>
+          @if (hasFilters()) {
+            <p-button [text]="true" size="small" icon="pi pi-times" label="Réinitialiser" (onClick)="clearFilters()" />
+          }
+        </div>
         @if (instances().length === 0) {
-          <div class="card empty-tab"><p>Aucune VM sur la plateforme</p></div>
+          <div class="card empty-tab"><p>{{ hasFilters() ? 'Aucune VM ne correspond aux filtres' : 'Aucune VM sur la plateforme' }}</p></div>
         } @else {
           <app-vm-table [vms]="instances()" [showStorage]="true" />
         }

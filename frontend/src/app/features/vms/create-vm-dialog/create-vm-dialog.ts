@@ -14,6 +14,7 @@ import { VmService } from '../../../core/services/vm.service';
 import { ImageService } from '../../../core/services/image.service';
 import { KeypairService } from '../../../core/services/keypair.service';
 import { ServerGroupService } from '../../../core/services/server-group.service';
+import { ProjectService } from '../../../core/services/project.service';
 import { ImageOption, NetworkOption, SecurityGroupOption } from '../../../core/models/vm.model';
 
 const OS_OPTIONS = [
@@ -61,12 +62,16 @@ export class CreateVmDialog {
   private readonly imageService = inject(ImageService);
   readonly keypairService = inject(KeypairService);
   readonly serverGroupService = inject(ServerGroupService);
+  private readonly projectService = inject(ProjectService);
 
   readonly isAdmin = computed(() => this.auth.user()?.role === 'ADMIN');
   readonly clientOptions = computed(() =>
     this.admin.users().map((u) => ({ label: `${u.email}${u.firstName ? ' — ' + u.firstName : ''}`, value: u.id })),
   );
   readonly targetUserId = signal<number | null>(null);
+  /** Admin only: the chosen client's projects, and which one to file the VM under. */
+  readonly targetProjectId = signal<number | null>(null);
+  readonly projectOptions = signal<{ label: string; value: number | null }[]>([{ label: 'Aucun projet', value: null }]);
 
   readonly visible = model.required<boolean>();
   @Output() readonly created = new EventEmitter<void>();
@@ -132,6 +137,10 @@ export class CreateVmDialog {
     if (this.isAdmin() && this.admin.users().length === 0) {
       this.admin.loadUsers();
     }
+    const initialUser = this.targetUserId();
+    if (this.isAdmin() && initialUser) {
+      this.loadTargetProjects(initialUser);
+    }
   }
 
   private loadKeypairsAndServerGroups(): void {
@@ -143,9 +152,21 @@ export class CreateVmDialog {
 
   onTargetUserChange(userId: number): void {
     this.targetUserId.set(userId);
+    this.loadTargetProjects(userId);
     this.form.controls.keypairId.setValue(null);
     this.form.controls.serverGroupId.setValue(null);
     this.loadKeypairsAndServerGroups();
+  }
+
+  private async loadTargetProjects(userId: number): Promise<void> {
+    this.targetProjectId.set(null);
+    this.projectOptions.set([{ label: 'Aucun projet', value: null }]);
+    const projects = await this.projectService.listForUser(userId);
+    if (this.targetUserId() !== userId) return; // client changed while loading
+    this.projectOptions.set([
+      { label: 'Aucun projet', value: null },
+      ...projects.map((p) => ({ label: p.name, value: p.id })),
+    ]);
   }
 
   private async loadCatalog(): Promise<void> {
@@ -234,6 +255,7 @@ export class CreateVmDialog {
         imageId,
         keypairId: keypairId ?? undefined,
         serverGroupId: serverGroupId ?? undefined,
+        projectId: this.isAdmin() ? (this.targetProjectId() ?? undefined) : undefined,
       });
       this.created.emit();
       this.close();
@@ -249,6 +271,9 @@ export class CreateVmDialog {
         serverGroupId: null,
       });
       this.targetUserId.set(this.auth.user()?.id ?? null);
+      if (this.isAdmin() && this.targetUserId()) {
+        this.loadTargetProjects(this.targetUserId()!);
+      }
       this.source.set('catalog');
       this.selectedBackupId.set(null);
     } catch {

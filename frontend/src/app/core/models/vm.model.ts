@@ -46,6 +46,7 @@ export interface CreateVpsRequest {
   imageId?: string;
   keypairId?: number;
   serverGroupId?: number;
+  projectId?: number;
 }
 
 export interface VmHealth {
