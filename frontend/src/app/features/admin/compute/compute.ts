@@ -10,6 +10,7 @@ import { VmTable } from '../../../shared/vm-table/vm-table';
 import { formatRam } from '../../../shared/utils/vm-status.util';
 import { AdminImages } from '../images/images';
 import { CreateVmDialog } from '../../vms/create-vm-dialog/create-vm-dialog';
+import { CreateKeypairDialog } from '../../keypairs/create-keypair-dialog/create-keypair-dialog';
 
 type Tab = 'instances' | 'images' | 'keypairs' | 'server-groups';
 
@@ -22,7 +23,7 @@ const POLICY_LABELS: Record<string, string> = {
 
 @Component({
   selector: 'app-admin-compute',
-  imports: [CommonModule, ButtonModule, TableModule, TagModule, VmTable, AdminImages, CreateVmDialog],
+  imports: [CommonModule, ButtonModule, TableModule, TagModule, VmTable, AdminImages, CreateVmDialog, CreateKeypairDialog],
   templateUrl: './compute.html',
   styleUrl: './compute.scss',
 })
@@ -34,6 +35,7 @@ export class AdminCompute {
 
   readonly tab = signal<Tab>('instances');
   readonly showCreateVmDialog = signal(false);
+  readonly showCreateKeypairDialog = signal(false);
   readonly loading = signal(true);
   readonly error = this.admin.error;
 

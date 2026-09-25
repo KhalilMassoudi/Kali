@@ -33,6 +33,24 @@
     </div>
 
     <form [formGroup]="form" (ngSubmit)="submit()" class="dialog-form">
+      @if (isAdmin()) {
+        <div class="field">
+          <label for="targetClient">Client</label>
+          <p-select
+            inputId="targetClient"
+            [options]="clientOptions()"
+            [ngModel]="targetUserId()"
+            (ngModelChange)="onTargetUserChange($event)"
+            [ngModelOptions]="{ standalone: true }"
+            optionLabel="label"
+            optionValue="value"
+            placeholder="Choisir un client"
+            [fluid]="true"
+          />
+          <p class="field-hint">En tant qu'administrateur, choisissez pour quel client cette clé est créée</p>
+        </div>
+      }
+
       <div class="field">
         <label for="name">Nom de la paire de clés</label>
         <input id="name" pInputText formControlName="name" placeholder="ma-cle-perso" fluid />

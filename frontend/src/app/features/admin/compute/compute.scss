@@ -92,3 +92,9 @@
     background: color-mix(in srgb, var(--brand-accent) 15%, transparent);
   }
 }
+
+.tab-toolbar {
+  display: flex;
+  justify-content: flex-end;
+  margin-bottom: 0.75rem;
+}

@@ -75,6 +75,9 @@
         <app-admin-images />
       }
       @case ('keypairs') {
+        <div class="tab-toolbar">
+          <p-button size="small" icon="pi pi-plus" label="Créer une clé SSH" (onClick)="showCreateKeypairDialog.set(true)" />
+        </div>
         <div class="card">
           <div class="table-wrap">
             <p-table [value]="keypairs()" [rowHover]="true">
@@ -136,4 +139,5 @@
   }
 
   <app-create-vm-dialog [(visible)]="showCreateVmDialog" (created)="refresh()" />
+  <app-create-keypair-dialog [(visible)]="showCreateKeypairDialog" (created)="refresh()" />
 </div>
