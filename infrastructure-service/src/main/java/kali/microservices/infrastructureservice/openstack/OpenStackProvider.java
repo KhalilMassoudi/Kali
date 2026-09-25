@@ -179,6 +179,32 @@ public class OpenStackProvider implements CloudProvider {
         return authService.ping();
     }
 
+    @Override
+    @Retryable(maxAttempts = 3, backoff = @Backoff(delay = 2000, multiplier = 2))
+    public PlatformTotals getPlatformTotals() {
+        OSClient.OSClientV3 client = authService.getClient();
+        org.openstack4j.model.compute.AbsoluteLimit compute =
+                client.compute().quotaSets().limits().getAbsolute();
+        org.openstack4j.model.storage.block.BlockLimits.Absolute storage =
+                client.blockStorage().getLimits().getAbsolute();
+        int networksCount = client.networking().network().list().size();
+        int routersCount = client.networking().router().list().size();
+        int runningInstances = (int) client.compute().servers().list().stream()
+                .filter(s -> s.getStatus() == Server.Status.ACTIVE)
+                .count();
+        return new PlatformTotals(
+                compute.getTotalInstancesUsed(),
+                runningInstances,
+                compute.getTotalCoresUsed(),
+                compute.getTotalRAMUsed(),
+                storage.getTotalVolumesUsed(),
+                storage.getTotalGigabytesUsed(),
+                compute.getTotalSecurityGroupsUsed(),
+                compute.getTotalFloatingIpsUsed(),
+                networksCount,
+                routersCount);
+    }
+
     // ──────────────────────────── Volumes (Cinder) ─────────────────────────
 
     @Override

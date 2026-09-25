@@ -2,6 +2,8 @@ package kali.microservices.infrastructureservice.service;
 
 import kali.microservices.infrastructureservice.dto.MetricsSummary;
 import kali.microservices.infrastructureservice.entities.VpsServer;
+import kali.microservices.infrastructureservice.openstack.CloudProviderFactory;
+import kali.microservices.infrastructureservice.openstack.PlatformTotals;
 import kali.microservices.infrastructureservice.openstack.telemetry.GnocchiClient;
 import kali.microservices.infrastructureservice.repository.VpsServerRepository;
 import lombok.RequiredArgsConstructor;
@@ -32,22 +34,30 @@ public class MetricsAggregationService {
 
     private final GnocchiClient gnocchiClient;
     private final VpsServerRepository vpsServerRepository;
+    private final CloudProviderFactory cloudProviderFactory;
 
     public MetricsSummary getSummaryForUser(Long userId) {
         List<VpsServer> vms = vpsServerRepository.findByUserId(userId).stream()
                 .filter(v -> v.getStatus() != VpsServer.VpsStatus.DELETED)
                 .toList();
-        return summarize(vms);
+        return summarize(vms, null);
     }
 
     public MetricsSummary getFleetSummary() {
         List<VpsServer> vms = vpsServerRepository.findAll().stream()
                 .filter(v -> v.getStatus() != VpsServer.VpsStatus.DELETED)
                 .toList();
-        return summarize(vms);
+        PlatformTotals platform;
+        try {
+            platform = cloudProviderFactory.getProvider().getPlatformTotals();
+        } catch (Exception e) {
+            log.warn("Could not read live platform totals from OpenStack: {}", e.getMessage());
+            platform = null;
+        }
+        return summarize(vms, platform);
     }
 
-    private MetricsSummary summarize(List<VpsServer> vms) {
+    private MetricsSummary summarize(List<VpsServer> vms, PlatformTotals platform) {
         int vmCount = vms.size();
         int runningCount = (int) vms.stream().filter(v -> v.getStatus() == VpsServer.VpsStatus.RUNNING).count();
         int totalVcpu = vms.stream().mapToInt(v -> v.getCpu() != null ? v.getCpu() : 0).sum();
@@ -55,7 +65,7 @@ public class MetricsAggregationService {
         int totalStorageGb = vms.stream().mapToInt(v -> v.getStorage() != null ? v.getStorage() : 0).sum();
 
         if (!gnocchiClient.isConfigured()) {
-            return new MetricsSummary(vmCount, runningCount, totalVcpu, totalRamMb, totalStorageGb, null, false);
+            return new MetricsSummary(vmCount, runningCount, totalVcpu, totalRamMb, totalStorageGb, null, false, platform);
         }
 
         double sum = 0;
@@ -71,13 +81,13 @@ public class MetricsAggregationService {
                     samples++;
                 }
             } catch (Exception e) {
-                log.debug("No Gnocchi data for VM {}: {}", vm.getExternalId(), e.getMessage());
+                log.warn("No Gnocchi data for VM {}: {}", vm.getExternalId(), e.getMessage());
             }
         }
 
         boolean dataAvailable = samples > 0;
         Double avgCpuUtil = dataAvailable ? sum / samples : null;
-        return new MetricsSummary(vmCount, runningCount, totalVcpu, totalRamMb, totalStorageGb, avgCpuUtil, dataAvailable);
+        return new MetricsSummary(vmCount, runningCount, totalVcpu, totalRamMb, totalStorageGb, avgCpuUtil, dataAvailable, platform);
     }
 
     /**

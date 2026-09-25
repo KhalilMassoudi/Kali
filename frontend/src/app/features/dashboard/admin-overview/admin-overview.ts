@@ -32,6 +32,7 @@ export class AdminOverview {
   private readonly telemetryService = inject(TelemetryService);
 
   readonly fleetMetrics = this.metricsService.fleetSummary;
+  readonly platform = () => this.fleetMetrics()?.platform ?? null;
   readonly formatRam = formatRam;
 
   readonly chartVmId = signal<number | null>(null);

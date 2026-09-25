@@ -16,6 +16,7 @@ public interface CloudProvider {
     void startVPS(String externalId);
     Map<String, Double> getDiagnostics(String externalId);
     boolean ping();
+    PlatformTotals getPlatformTotals();
 
     // Volumes (Cinder)
     VolumeDetails createVolume(String name, int sizeGb, String region);

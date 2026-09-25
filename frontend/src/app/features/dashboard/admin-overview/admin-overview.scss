@@ -69,8 +69,17 @@
   }
 
   @media (min-width: 1200px) {
-    grid-template-columns: repeat(7, 1fr);
+    grid-template-columns: repeat(9, 1fr);
   }
+}
+
+.platform-warning {
+  display: flex;
+  align-items: center;
+  gap: 0.5rem;
+  font-size: 0.75rem;
+  color: var(--brand-warn, #f59e0b);
+  margin-bottom: 0.75rem;
 }
 
 .chart-card {

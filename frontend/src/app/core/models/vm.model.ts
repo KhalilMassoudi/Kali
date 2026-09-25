@@ -325,6 +325,21 @@ export interface MetricsSummary {
   totalStorageGb: number;
   avgCpuUtil: number | null;
   dataAvailable: boolean;
+  /** Live ground-truth totals read directly from OpenStack — only set on the admin fleet summary. */
+  platform: PlatformTotals | null;
+}
+
+export interface PlatformTotals {
+  instancesUsed: number;
+  runningInstances: number;
+  vcpusUsed: number;
+  ramMbUsed: number;
+  volumesUsed: number;
+  volumeGbUsed: number;
+  securityGroupsUsed: number;
+  floatingIpsUsed: number;
+  networksCount: number;
+  routersCount: number;
 }
 
 export interface ClientFloatingIp {
