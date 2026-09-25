@@ -15,7 +15,7 @@
 }
 
 .gauge-track {
-  stroke: var(--brand-border, rgba(255, 255, 255, 0.08));
+  stroke: var(--brand-border, rgba(var(--overlay-rgb), 0.08));
   stroke-width: 9;
 }
 
@@ -28,7 +28,7 @@
 .gauge-text {
   font-size: 0.9375rem;
   font-weight: 700;
-  fill: #fff;
+  fill: var(--text-strong);
 }
 
 .gauge-label {

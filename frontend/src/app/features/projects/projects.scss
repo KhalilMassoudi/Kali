@@ -11,7 +11,7 @@
 .proj-name {
   font-size: 0.875rem;
   font-weight: 700;
-  color: #fff;
+  color: var(--text-strong);
 }
 
 .proj-desc {
@@ -22,7 +22,7 @@
 .mono {
   font-family: var(--font-mono, monospace);
   font-size: 0.75rem;
-  color: #cbd5e1;
+  color: var(--text-body);
 }
 
 .action-group {

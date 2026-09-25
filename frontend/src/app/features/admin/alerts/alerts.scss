@@ -18,7 +18,7 @@
   text-align: center;
 
   i { font-size: 2rem; color: var(--brand-good, #22c55e); }
-  h3 { font-size: 0.9375rem; font-weight: 700; color: #fff; }
+  h3 { font-size: 0.9375rem; font-weight: 700; color: var(--text-strong); }
   p { font-size: 0.8125rem; color: var(--text-dim); max-width: 32rem; }
 }
 
@@ -49,7 +49,7 @@
 .alert-message {
   font-size: 0.8125rem;
   font-weight: 600;
-  color: #fff;
+  color: var(--text-strong);
 }
 
 .alert-meta {
@@ -61,7 +61,7 @@
 .section-title {
   margin-top: 0.5rem;
 
-  h3 { font-size: 1rem; font-weight: 700; color: #fff; }
+  h3 { font-size: 1rem; font-weight: 700; color: var(--text-strong); }
   .subtitle { margin-top: 0.125rem; font-size: 0.75rem; color: var(--text-dim); }
 }
 
@@ -148,7 +148,7 @@
 
 .mono {
   font-family: var(--font-mono, monospace);
-  color: #94a3b8;
+  color: var(--text-muted);
 }
 
 .empty-row {

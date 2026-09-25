@@ -36,7 +36,7 @@
   background: linear-gradient(135deg, #ea580c, #fb923c);
 }
 
-h3 { font-size: 1rem; font-weight: 700; color: #fff; }
+h3 { font-size: 1rem; font-weight: 700; color: var(--text-strong); }
 
 .email { margin-top: 0.125rem; font-size: 0.75rem; color: var(--text-dim); }
 
@@ -69,7 +69,7 @@ h3 { font-size: 1rem; font-weight: 700; color: #fff; }
     margin-bottom: 0.5rem;
     font-size: 0.8125rem;
     font-weight: 600;
-    color: #cbd5e1;
+    color: var(--text-body);
   }
 }
 
@@ -170,7 +170,7 @@ h3 { font-size: 1rem; font-weight: 700; color: #fff; }
 .api-key-value {
   font-family: var(--font-mono, monospace);
   font-size: 0.8125rem;
-  color: #94a3b8;
+  color: var(--text-muted);
   overflow-wrap: anywhere;
 }
 
@@ -193,7 +193,7 @@ h3 { font-size: 1rem; font-weight: 700; color: #fff; }
 
   p {
     font-size: 0.75rem;
-    color: #cbd5e1;
+    color: var(--text-body);
     margin-bottom: 0.75rem;
   }
 }
@@ -301,7 +301,7 @@ h3 { font-size: 1rem; font-weight: 700; color: #fff; }
   margin-bottom: 0.75rem;
   font-size: 0.75rem;
   font-weight: 700;
-  color: #fff;
+  color: var(--text-strong);
 }
 
 .session-row {
@@ -316,7 +316,7 @@ h3 { font-size: 1rem; font-weight: 700; color: #fff; }
 .session-val {
   font-family: var(--font-mono, monospace);
   font-weight: 600;
-  color: #94a3b8;
+  color: var(--text-muted);
 
   &.good { color: var(--brand-good); }
   &.info { color: var(--brand-primary); }

@@ -12,6 +12,7 @@ import { AuthService } from '../../core/services/auth.service';
 import { SupportService } from '../../core/services/support.service';
 import { AdminService } from '../../core/services/admin.service';
 import { WalletService } from '../../core/services/wallet.service';
+import { ThemeService } from '../../core/services/theme.service';
 import { NAV_ITEMS, ADMIN_NAV_ITEMS } from '../nav-items';
 import { GlobalSearch } from '../global-search/global-search';
 
@@ -57,6 +58,7 @@ export class Shell {
   private readonly support = inject(SupportService);
   private readonly admin = inject(AdminService);
   private readonly walletService = inject(WalletService);
+  readonly themeService = inject(ThemeService);
   private readonly destroyRef = inject(DestroyRef);
   readonly router = inject(Router);
 

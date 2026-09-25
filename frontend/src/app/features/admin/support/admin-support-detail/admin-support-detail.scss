@@ -40,7 +40,7 @@
 .description-card {
   padding: 1rem;
   font-size: 0.8125rem;
-  color: #cbd5e1;
+  color: var(--text-body);
   white-space: pre-wrap;
 }
 
@@ -66,13 +66,13 @@
   justify-content: space-between;
   margin-bottom: 0.375rem;
 
-  .author { font-size: 0.75rem; font-weight: 700; color: #fff; }
+  .author { font-size: 0.75rem; font-weight: 700; color: var(--text-strong); }
   .date { font-size: 0.6875rem; color: var(--text-dim); }
 }
 
 .comment-content {
   font-size: 0.8125rem;
-  color: #cbd5e1;
+  color: var(--text-body);
   white-space: pre-wrap;
 }
 

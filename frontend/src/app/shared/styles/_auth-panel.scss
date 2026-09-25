@@ -19,6 +19,12 @@
   overflow: hidden;
   border-right: 1px solid var(--brand-border-soft);
   background: linear-gradient(180deg, #09172a 0%, #071020 100%);
+  // Always-dark brand panel: pin the dark text tokens so light mode doesn't
+  // render dark-on-dark headings here.
+  --text-strong: #ffffff;
+  --text-body: #cbd5e1;
+  --text-muted: #94a3b8;
+  --text-dim: #7a8ca3;
   padding: 0 3rem;
 
   @media (min-width: 1024px) {
@@ -58,7 +64,7 @@
 
 .logo-badge {
   align-self: flex-start;
-  border: 1px solid rgba(255, 255, 255, 0.2);
+  border: 1px solid rgba(var(--overlay-rgb), 0.2);
   background: rgba(255, 255, 255, 0.97);
   padding: 0.625rem 1.375rem;
 
@@ -92,7 +98,7 @@
     font-size: 2.25rem;
     font-weight: 800;
     line-height: 1.1;
-    color: #fff;
+    color: var(--text-strong);
 
     .accent { color: var(--brand-accent); }
   }
@@ -133,7 +139,7 @@
   margin-bottom: 0.125rem;
   font-size: 0.8125rem;
   font-weight: 700;
-  color: #e2e8f0;
+  color: var(--text-strong);
 }
 
 .feature-text {
@@ -175,7 +181,7 @@
 .mobile-logo {
   display: inline-block;
   margin-bottom: 2.5rem;
-  border: 1px solid rgba(255, 255, 255, 0.15);
+  border: 1px solid rgba(var(--overlay-rgb), 0.15);
   background: rgba(255, 255, 255, 0.97);
   padding: 0.625rem 1.375rem;
 
@@ -209,7 +215,7 @@
     font-size: 1.875rem;
     font-weight: 800;
     line-height: 1.2;
-    color: #fff;
+    color: var(--text-strong);
   }
 
   .subtitle {
@@ -245,7 +251,7 @@
     margin-bottom: 0.5rem;
     font-size: 0.875rem;
     font-weight: 600;
-    color: #cbd5e1;
+    color: var(--text-body);
   }
 }
 

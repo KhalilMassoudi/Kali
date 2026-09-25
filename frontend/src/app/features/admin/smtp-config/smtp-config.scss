@@ -28,7 +28,7 @@
     margin-bottom: 0.5rem;
     font-size: 0.8125rem;
     font-weight: 600;
-    color: #cbd5e1;
+    color: var(--text-body);
   }
 }
 
@@ -58,7 +58,7 @@
 }
 
 .field-row-text {
-  p:first-child { font-size: 0.8125rem; font-weight: 600; color: #cbd5e1; }
+  p:first-child { font-size: 0.8125rem; font-weight: 600; color: var(--text-body); }
   p:last-child { margin-top: 0.125rem; font-size: 0.6875rem; color: var(--text-faint); }
 }
 
@@ -91,7 +91,7 @@
   padding: 1.5rem;
   border-bottom: 1px solid var(--brand-border);
 
-  h3 { font-size: 0.875rem; font-weight: 700; color: #fff; }
+  h3 { font-size: 0.875rem; font-weight: 700; color: var(--text-strong); }
   p { margin-top: 0.125rem; font-size: 0.625rem; color: var(--text-dim); }
 }
 

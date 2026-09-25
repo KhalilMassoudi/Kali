@@ -11,7 +11,7 @@
 .grant-title {
   font-size: 0.8125rem;
   font-weight: 700;
-  color: #fff;
+  color: var(--text-strong);
   margin-bottom: 0.75rem;
 }
 
@@ -55,7 +55,7 @@
 .agent-email {
   display: block;
   font-weight: 600;
-  color: #fff;
+  color: var(--text-strong);
 }
 
 .agent-name {

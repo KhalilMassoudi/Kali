@@ -28,7 +28,7 @@
   gap: 0.75rem;
   padding: 0.5rem 0.75rem;
   border-radius: 0.5rem;
-  background: rgba(255, 255, 255, 0.03);
+  background: rgba(var(--overlay-rgb), 0.03);
 }
 
 .snapshot-info {
@@ -39,7 +39,7 @@
 .snapshot-name {
   font-size: 0.8125rem;
   font-weight: 600;
-  color: #fff;
+  color: var(--text-strong);
 }
 
 .snapshot-meta {

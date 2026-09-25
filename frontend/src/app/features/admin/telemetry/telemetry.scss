@@ -11,7 +11,7 @@
 .mono {
   font-family: var(--font-mono, monospace);
   font-size: 0.75rem;
-  color: #94a3b8;
+  color: var(--text-muted);
 }
 
 .empty-row {
@@ -30,7 +30,7 @@
   text-align: center;
 
   i { font-size: 2rem; color: var(--brand-accent); }
-  h3 { font-size: 0.9375rem; font-weight: 700; color: #fff; }
+  h3 { font-size: 0.9375rem; font-weight: 700; color: var(--text-strong); }
   p { font-size: 0.8125rem; color: var(--text-dim); max-width: 32rem; }
   code { color: var(--brand-accent); font-family: var(--font-mono, monospace); }
 }
@@ -51,10 +51,10 @@
   border: 1px solid var(--brand-border);
   cursor: pointer;
 
-  &:hover { color: #fff; }
+  &:hover { color: var(--text-strong); }
 
   &.active {
-    color: #fff;
+    color: var(--text-strong);
     border-color: var(--brand-accent);
     background: color-mix(in srgb, var(--brand-accent) 15%, transparent);
   }
@@ -67,14 +67,14 @@
 
 .res-name {
   font-weight: 600;
-  color: #fff;
+  color: var(--text-strong);
   font-size: 0.8125rem;
 }
 
 .metric-panel {
   padding: 1.25rem;
 
-  h3 { font-size: 0.9375rem; font-weight: 700; color: #fff; margin-bottom: 0.125rem; }
+  h3 { font-size: 0.9375rem; font-weight: 700; color: var(--text-strong); margin-bottom: 0.125rem; }
 }
 
 tr[class] {
@@ -121,10 +121,10 @@ tr[class] {
   border: 1px solid var(--brand-border);
   cursor: pointer;
 
-  &:hover { color: #fff; }
+  &:hover { color: var(--text-strong); }
 
   &.active {
-    color: #fff;
+    color: var(--text-strong);
     border-color: var(--brand-accent);
     background: color-mix(in srgb, var(--brand-accent) 15%, transparent);
   }

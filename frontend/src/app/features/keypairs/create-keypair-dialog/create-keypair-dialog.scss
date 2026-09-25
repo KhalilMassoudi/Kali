@@ -50,7 +50,7 @@
     margin-bottom: 0.5rem;
     font-size: 0.8125rem;
     font-weight: 600;
-    color: #cbd5e1;
+    color: var(--text-body);
   }
 }
 
@@ -68,7 +68,7 @@
   border-radius: 0.5rem;
   border: 1px solid var(--border-subtle, #2a2f3a);
   background: rgba(0, 0, 0, 0.3);
-  color: #e2e8f0;
+  color: var(--text-strong);
   resize: vertical;
   margin-bottom: 1.25rem;
 }

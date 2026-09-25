@@ -12,8 +12,8 @@
   gap: 0.5rem;
   padding: 0.5rem 0.75rem;
   border-radius: 0.5rem;
-  border: 1px solid var(--brand-border, rgba(255, 255, 255, 0.1));
-  background: var(--brand-surface2, rgba(255, 255, 255, 0.03));
+  border: 1px solid var(--brand-border, rgba(var(--overlay-rgb), 0.1));
+  background: var(--brand-surface2, rgba(var(--overlay-rgb), 0.03));
 
   i.pi-search {
     color: var(--text-faint);
@@ -26,7 +26,7 @@
     border: none;
     outline: none;
     background: transparent;
-    color: #fff;
+    color: var(--text-strong);
     font-size: 0.8125rem;
 
     &::placeholder {
@@ -43,7 +43,7 @@
   display: flex;
   align-items: center;
 
-  &:hover { color: #fff; }
+  &:hover { color: var(--text-strong); }
 }
 
 .search-results {
@@ -115,7 +115,7 @@
 .result-label {
   font-size: 0.8125rem;
   font-weight: 600;
-  color: #fff;
+  color: var(--text-strong);
   white-space: nowrap;
   overflow: hidden;
   text-overflow: ellipsis;

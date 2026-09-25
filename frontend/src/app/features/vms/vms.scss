@@ -21,12 +21,12 @@
   background: var(--brand-surface);
   font-size: 0.75rem;
   font-weight: 700;
-  color: #94a3b8;
+  color: var(--text-muted);
   cursor: pointer;
   transition: all 0.15s;
   font-family: inherit;
 
-  &:hover { color: #fff; }
+  &:hover { color: var(--text-strong); }
 
   &.active {
     color: #fff;

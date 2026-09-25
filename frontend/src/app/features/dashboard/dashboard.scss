@@ -72,7 +72,7 @@
   font-weight: 800;
   line-height: 1;
   letter-spacing: -0.02em;
-  color: #fff;
+  color: var(--text-strong);
   font-variant-numeric: tabular-nums;
 
   small {
@@ -161,7 +161,7 @@
   font-size: 0.625rem;
   color: var(--text-dim);
 
-  .mono { font-family: var(--font-mono, monospace); font-size: 0.75rem; font-weight: 700; color: #fff; }
+  .mono { font-family: var(--font-mono, monospace); font-size: 0.75rem; font-weight: 700; color: var(--text-strong); }
 }
 
 .bar {
@@ -245,7 +245,7 @@
   font-family: inherit;
 
   &.no-border { border-top: none; }
-  &:hover { background: rgba(255, 255, 255, 0.02); }
+  &:hover { background: rgba(var(--overlay-rgb), 0.02); }
 }
 
 .action-icon {
@@ -266,7 +266,7 @@
   min-width: 0;
 }
 
-.action-title { font-size: 0.75rem; font-weight: 700; color: #fff; }
+.action-title { font-size: 0.75rem; font-weight: 700; color: var(--text-strong); }
 .action-desc { margin-top: 0.125rem; font-size: 0.625rem; color: var(--text-faint); }
 .action-arrow { flex-shrink: 0; font-size: 0.75rem; color: var(--text-faint); }
 

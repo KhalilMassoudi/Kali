@@ -37,7 +37,7 @@
   margin: 0.25rem 0 0;
   font-size: 1.5rem;
   font-weight: 700;
-  color: #fff;
+  color: var(--text-strong);
 
   small {
     font-size: 0.875rem;
@@ -49,7 +49,7 @@
 .mono {
   font-family: var(--font-mono, monospace);
   font-size: 0.75rem;
-  color: #94a3b8;
+  color: var(--text-muted);
 }
 
 .empty-row {
@@ -84,10 +84,10 @@
   border: 1px solid var(--brand-border);
   cursor: pointer;
 
-  &:hover { color: #fff; }
+  &:hover { color: var(--text-strong); }
 
   &.active {
-    color: #fff;
+    color: var(--text-strong);
     border-color: var(--brand-accent);
     background: color-mix(in srgb, var(--brand-accent) 15%, transparent);
   }

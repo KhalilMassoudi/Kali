@@ -40,6 +40,16 @@
         Tous les systèmes opérationnels
       </div>
 
+      <button
+        type="button"
+        class="theme-toggle"
+        (click)="themeService.toggle()"
+        [attr.aria-label]="themeService.theme() === 'dark' ? 'Passer en mode clair' : 'Passer en mode sombre'"
+        [title]="themeService.theme() === 'dark' ? 'Mode clair' : 'Mode sombre'"
+      >
+        <i [class]="themeService.theme() === 'dark' ? 'pi pi-sun' : 'pi pi-moon'"></i>
+      </button>
+
       <button type="button" class="user-trigger" (click)="userMenu.toggle($event)">
         <p-avatar [label]="initials()" shape="circle" size="normal" styleClass="user-avatar" />
         <span class="user-name">{{ displayName() }}</span>

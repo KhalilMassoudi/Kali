@@ -24,13 +24,13 @@
 }
 
 .topology-edge {
-  stroke: var(--brand-border, rgba(255, 255, 255, 0.2));
+  stroke: var(--brand-border, rgba(var(--overlay-rgb), 0.2));
   stroke-width: 2;
 }
 
 .topology-node {
-  fill: var(--brand-surface2, rgba(255, 255, 255, 0.04));
-  stroke: var(--brand-border, rgba(255, 255, 255, 0.15));
+  fill: var(--brand-surface2, rgba(var(--overlay-rgb), 0.04));
+  stroke: var(--brand-border, rgba(var(--overlay-rgb), 0.15));
   stroke-width: 1;
 }
 
@@ -56,5 +56,5 @@
 .topology-node-label {
   font-size: 12px;
   font-weight: 600;
-  fill: #fff;
+  fill: var(--text-strong);
 }

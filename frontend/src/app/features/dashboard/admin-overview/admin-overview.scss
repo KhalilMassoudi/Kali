@@ -39,7 +39,7 @@
   margin: 0.25rem 0 0;
   font-size: 1.5rem;
   font-weight: 700;
-  color: #fff;
+  color: var(--text-strong);
 
   small {
     font-size: 0.875rem;
@@ -54,7 +54,7 @@
   h3 {
     font-size: 0.9375rem;
     font-weight: 700;
-    color: #fff;
+    color: var(--text-strong);
     margin-bottom: 1rem;
   }
 }
@@ -113,7 +113,7 @@
   h3 {
     font-size: 0.9375rem;
     font-weight: 700;
-    color: #fff;
+    color: var(--text-strong);
   }
 }
 
@@ -134,7 +134,7 @@
 
   i { color: var(--brand-accent, #f97316); }
 
-  &:hover { color: #fff; }
+  &:hover { color: var(--text-strong); }
 }
 
 .shortcut-grid {
@@ -154,7 +154,7 @@
   padding: 1.25rem;
   border-radius: 0.75rem;
   border: 1px solid var(--brand-border);
-  background: var(--card-bg, rgba(255, 255, 255, 0.02));
+  background: var(--card-bg, rgba(var(--overlay-rgb), 0.02));
   text-decoration: none;
   transition: border-color 0.15s ease;
 
@@ -171,7 +171,7 @@
 .shortcut-count {
   font-size: 1.25rem;
   font-weight: 700;
-  color: #fff;
+  color: var(--text-strong);
 }
 
 .shortcut-label {

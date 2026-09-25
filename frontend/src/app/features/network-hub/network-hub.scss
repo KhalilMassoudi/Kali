@@ -23,10 +23,10 @@
   border: 1px solid var(--brand-border);
   cursor: pointer;
 
-  &:hover { color: #fff; }
+  &:hover { color: var(--text-strong); }
 
   &.active {
-    color: #fff;
+    color: var(--text-strong);
     border-color: var(--brand-accent);
     background: color-mix(in srgb, var(--brand-accent) 15%, transparent);
   }
@@ -50,13 +50,13 @@
 .row-name {
   font-size: 0.875rem;
   font-weight: 700;
-  color: #fff;
+  color: var(--text-strong);
 }
 
 .mono {
   font-family: var(--font-mono, monospace);
   font-size: 0.75rem;
-  color: #cbd5e1;
+  color: var(--text-body);
 }
 
 .action-group {

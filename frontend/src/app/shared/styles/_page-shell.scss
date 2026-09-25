@@ -16,7 +16,7 @@
   gap: 1rem;
   flex-wrap: wrap;
 
-  h2 { font-size: 1.25rem; font-weight: 700; color: #fff; }
+  h2 { font-size: 1.25rem; font-weight: 700; color: var(--text-strong); }
 
   .subtitle { margin-top: 0.25rem; font-size: 0.75rem; color: var(--text-dim); }
 }
@@ -56,7 +56,7 @@
 .card-header-title {
   font-size: 0.75rem;
   font-weight: 700;
-  color: #fff;
+  color: var(--text-strong);
 }
 
 .card-header-link {
@@ -94,7 +94,7 @@
   i { font-size: 2rem; color: #475569; }
 }
 
-.empty-title { font-size: 0.875rem; font-weight: 700; color: #cbd5e1; }
+.empty-title { font-size: 0.875rem; font-weight: 700; color: var(--text-body); }
 .empty-text { margin-top: 0.25rem; font-size: 0.75rem; color: #64748b; }
 
 .loading-state {
@@ -156,9 +156,9 @@
 
   i { font-size: 1rem; color: var(--brand-accent); flex-shrink: 0; }
 
-  p { flex: 1; font-size: 0.75rem; color: #cbd5e1; }
+  p { flex: 1; font-size: 0.75rem; color: var(--text-body); }
 
-  strong { font-weight: 700; color: #fff; }
+  strong { font-weight: 700; color: var(--text-strong); }
 
   button {
     flex-shrink: 0;
