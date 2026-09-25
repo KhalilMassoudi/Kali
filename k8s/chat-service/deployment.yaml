@@ -28,6 +28,8 @@ spec:
               value: "http://discovery-service:8761/eureka/"
             - name: OLLAMA_API_URL
               value: "http://ollama-tunnel:11434"
+            - name: OLLAMA_MODEL
+              value: "hermes3:70b"
             - name: SERVICES_INFRASTRUCTURE_URL
               value: "http://infrastructure-service:8083"
             - name: SERVICES_SUPPORT_URL
