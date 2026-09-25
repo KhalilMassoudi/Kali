@@ -1,4 +1,4 @@
-import { Component, inject, signal } from '@angular/core';
+import { Component, computed, inject, signal } from '@angular/core';
 import { CommonModule } from '@angular/common';
 import { ActivatedRoute, Router } from '@angular/router';
 import { ButtonModule } from 'primeng/button';
@@ -39,8 +39,22 @@ export class AdminCompute {
   readonly loading = signal(true);
   readonly error = this.admin.error;
 
-  readonly instances = this.admin.allVps;
-  readonly keypairs = this.admin.allKeypairs;
+  readonly filterUserId = signal<number | null>(null);
+  readonly filterUserLabel = computed(() => {
+    const uid = this.filterUserId();
+    if (!uid) return null;
+    const user = this.admin.users().find((u) => u.id === uid);
+    return user ? user.email : `#${uid}`;
+  });
+
+  readonly instances = computed(() => {
+    const uid = this.filterUserId();
+    return uid ? this.admin.allVps().filter((v) => v.userId === uid) : this.admin.allVps();
+  });
+  readonly keypairs = computed(() => {
+    const uid = this.filterUserId();
+    return uid ? this.admin.allKeypairs().filter((k) => k.userId === uid) : this.admin.allKeypairs();
+  });
   readonly serverGroups = this.admin.allServerGroups;
   readonly fleetMetrics = this.metricsService.fleetSummary;
 
@@ -50,7 +64,14 @@ export class AdminCompute {
   constructor() {
     const initial = this.route.snapshot.queryParamMap.get('tab') as Tab | null;
     if (initial) this.tab.set(initial);
+    const userId = this.route.snapshot.queryParamMap.get('userId');
+    if (userId) this.filterUserId.set(Number(userId));
     this.load();
+  }
+
+  clearUserFilter(): void {
+    this.filterUserId.set(null);
+    this.router.navigate([], { relativeTo: this.route, queryParams: { userId: null }, queryParamsHandling: 'merge' });
   }
 
   selectTab(tab: Tab): void {
@@ -70,6 +91,7 @@ export class AdminCompute {
         this.admin.loadAllKeypairs(),
         this.admin.loadAllServerGroups(),
         this.metricsService.loadFleetSummary(),
+        this.admin.users().length === 0 ? this.admin.loadUsers() : Promise.resolve(),
       ]);
     } finally {
       this.loading.set(false);

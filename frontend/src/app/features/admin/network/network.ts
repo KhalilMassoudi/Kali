@@ -45,10 +45,30 @@ export class AdminNetwork {
   readonly loading = signal(true);
   readonly error = this.admin.error;
 
-  readonly networks = this.admin.allNetworks;
-  readonly securityGroups = this.admin.allSecurityGroups;
-  readonly routers = this.admin.allRouters;
-  readonly floatingIps = this.admin.allFloatingIps;
+  readonly filterUserId = signal<number | null>(null);
+  readonly filterUserLabel = computed(() => {
+    const uid = this.filterUserId();
+    if (!uid) return null;
+    const user = this.admin.users().find((u) => u.id === uid);
+    return user ? user.email : `#${uid}`;
+  });
+
+  readonly networks = computed(() => {
+    const uid = this.filterUserId();
+    return uid ? this.admin.allNetworks().filter((n) => n.userId === uid) : this.admin.allNetworks();
+  });
+  readonly securityGroups = computed(() => {
+    const uid = this.filterUserId();
+    return uid ? this.admin.allSecurityGroups().filter((g) => g.userId === uid) : this.admin.allSecurityGroups();
+  });
+  readonly routers = computed(() => {
+    const uid = this.filterUserId();
+    return uid ? this.admin.allRouters().filter((r) => r.userId === uid) : this.admin.allRouters();
+  });
+  readonly floatingIps = computed(() => {
+    const uid = this.filterUserId();
+    return uid ? this.admin.allFloatingIps().filter((f) => f.userId === uid) : this.admin.allFloatingIps();
+  });
   readonly externalNetworks = signal<NetworkOption[]>([]);
   readonly pools = signal<string[]>([]);
 
@@ -65,8 +85,15 @@ export class AdminNetwork {
   constructor() {
     const initial = this.route.snapshot.queryParamMap.get('tab') as Tab | null;
     if (initial) this.tab.set(initial);
+    const userId = this.route.snapshot.queryParamMap.get('userId');
+    if (userId) this.filterUserId.set(Number(userId));
     if (this.admin.users().length === 0) this.admin.loadUsers();
     this.load();
+  }
+
+  clearUserFilter(): void {
+    this.filterUserId.set(null);
+    this.router.navigate([], { relativeTo: this.route, queryParams: { userId: null }, queryParamsHandling: 'merge' });
   }
 
   openCreateNetwork(): void {

@@ -38,6 +38,14 @@
     </div>
   }
 
+  @if (filterUserLabel(); as label) {
+    <div class="filter-banner">
+      <i class="pi pi-filter"></i>
+      <p>Filtré pour <strong>{{ label }}</strong></p>
+      <button type="button" (click)="clearUserFilter()">Retirer le filtre</button>
+    </div>
+  }
+
   <div class="tab-bar">
     <button type="button" class="tab-btn" [class.active]="tab() === 'networks'" (click)="selectTab('networks')">
       <i class="pi pi-share-alt"></i> Réseaux ({{ networks().length }})

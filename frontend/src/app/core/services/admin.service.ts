@@ -317,6 +317,17 @@ export class AdminService {
     }
   }
 
+  /**
+   * Fetches recent API log entries for one specific user without touching the shared
+   * _logs signal (that one backs the standalone Logs page and would collide if multiple
+   * client rows tried to preview activity at the same time on the Clients page).
+   */
+  async getRecentActivityForUser(email: string, size = 5): Promise<ApiLogEntry[]> {
+    const params = new HttpParams().set('page', '0').set('size', String(size)).set('search', email);
+    const result = await firstValueFrom(this.http.get<PageResponse<ApiLogEntry>>('/api/monitoring/logs', { params }));
+    return result.content ?? [];
+  }
+
   async loadLogServices(): Promise<void> {
     try {
       const services = await firstValueFrom(this.http.get<string[]>('/api/monitoring/logs/services'));

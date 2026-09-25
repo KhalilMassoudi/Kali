@@ -64,6 +64,13 @@ export class WalletService {
 
   // ===== Admin =====
 
+  /** Unlike fetchTransactions, doesn't touch the shared _transactions signal (that one
+   * backs the client's own Billing page) - safe to call for any user without colliding
+   * if an admin expands multiple client rows in quick succession. */
+  async fetchTransactionsForAdmin(userId: number): Promise<WalletTransaction[]> {
+    return firstValueFrom(this.http.get<WalletTransaction[]>(`/api/billing/wallet/user/${userId}/transactions`));
+  }
+
   async fetchAllWallets(): Promise<Wallet[]> {
     return firstValueFrom(this.http.get<Wallet[]>('/api/billing/admin/wallets'));
   }

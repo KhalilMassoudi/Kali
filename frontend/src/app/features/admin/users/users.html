@@ -2,7 +2,7 @@
   <div class="page-head">
     <div>
       <h2>Gestion des clients</h2>
-      <p class="subtitle">{{ users().length }} compte{{ users().length !== 1 ? 's' : '' }} enregistré{{ users().length !== 1 ? 's' : '' }}</p>
+      <p class="subtitle">{{ filteredUsers().length }} / {{ users().length }} compte{{ users().length !== 1 ? 's' : '' }}</p>
     </div>
   </div>
 
@@ -14,6 +14,19 @@
     </div>
   }
 
+  <div class="filters-bar">
+    <input
+      type="text"
+      pInputText
+      class="search-input"
+      placeholder="Rechercher par nom ou email..."
+      [ngModel]="searchQuery()"
+      (ngModelChange)="searchQuery.set($event)"
+    />
+    <p-select [options]="roleFilterOptions" [ngModel]="roleFilter()" (ngModelChange)="roleFilter.set($event)" optionLabel="label" optionValue="value" />
+    <p-select [options]="statusFilterOptions" [ngModel]="statusFilter()" (ngModelChange)="statusFilter.set($event)" optionLabel="label" optionValue="value" />
+  </div>
+
   @if (loading()) {
     <div class="loading-state">
       <i class="pi pi-spin pi-spinner"></i>
@@ -23,7 +36,7 @@
     <div class="card">
       <div class="table-wrap">
         <p-table
-          [value]="users()"
+          [value]="filteredUsers()"
           styleClass="users-table"
           [rowHover]="true"
           dataKey="id"
@@ -37,6 +50,8 @@
               <th>Utilisateur</th>
               <th>Rôle</th>
               <th>Statut</th>
+              <th>Solde</th>
+              <th>Tickets</th>
               <th>Inscrit le</th>
               <th></th>
             </tr>
@@ -63,6 +78,19 @@
                   icon="pi pi-circle-fill"
                 />
               </td>
+              <td class="mono balance-cell" [class.low]="(walletFor(user)?.balance ?? 0) < 5">
+                {{ walletFor(user)?.balance ?? 0 | number: '1.2-2' }} {{ walletFor(user)?.currency || 'TND' }}
+              </td>
+              <td>
+                @if (ticketCountFor(user) > 0) {
+                  <span class="ticket-count" [class.has-open]="openTicketCountFor(user) > 0">
+                    {{ ticketCountFor(user) }}
+                    @if (openTicketCountFor(user) > 0) { <small>({{ openTicketCountFor(user) }} ouvert{{ openTicketCountFor(user) !== 1 ? 's' : '' }})</small> }
+                  </span>
+                } @else {
+                  <span class="ticket-count-zero">—</span>
+                }
+              </td>
               <td class="mono">{{ user.createdAt | date: 'mediumDate' }}</td>
               <td>
                 @if (isSelf(user)) {
@@ -81,6 +109,33 @@
                   </div>
                 } @else {
                   <div class="action-group">
+                    <p-button
+                      [outlined]="true"
+                      size="small"
+                      severity="secondary"
+                      icon="pi pi-server"
+                      pTooltip="Voir ses VMs"
+                      tooltipPosition="top"
+                      (onClick)="viewResources(user, 'compute')"
+                    />
+                    <p-button
+                      [outlined]="true"
+                      size="small"
+                      severity="secondary"
+                      icon="pi pi-database"
+                      pTooltip="Voir ses volumes"
+                      tooltipPosition="top"
+                      (onClick)="viewResources(user, 'volumes')"
+                    />
+                    <p-button
+                      [outlined]="true"
+                      size="small"
+                      severity="secondary"
+                      icon="pi pi-share-alt"
+                      pTooltip="Voir ses réseaux"
+                      tooltipPosition="top"
+                      (onClick)="viewResources(user, 'network')"
+                    />
                     <p-button
                       [outlined]="true"
                       size="small"
@@ -128,7 +183,7 @@
           <ng-template #expandedrow let-user>
             <tr>
               <td></td>
-              <td colspan="5" class="expanded-cell">
+              <td colspan="7" class="expanded-cell">
                 @let summary = clientSummaryFor(user);
                 @if (!summary || (summary.projects.length === 0 && summary.unassigned.vps === 0 && summary.unassigned.volumes === 0 && summary.unassigned.networks === 0 && summary.unassigned.securityGroups === 0)) {
                   <p class="expanded-empty">Aucune ressource pour ce client</p>
@@ -158,12 +213,51 @@
                     }
                   </div>
                 }
+
+                <div class="activity-columns">
+                  <div class="activity-col">
+                    <p class="activity-col-title"><i class="pi pi-wallet"></i> Dernières transactions</p>
+                    @if (activityFor(user).loading) {
+                      <p class="expanded-empty">Chargement...</p>
+                    } @else if (activityFor(user).transactions.length === 0) {
+                      <p class="expanded-empty">Aucune transaction</p>
+                    } @else {
+                      @for (tx of activityFor(user).transactions; track tx.id) {
+                        <div class="activity-mini-row">
+                          <span class="mono" [class.positive]="tx.amount > 0" [class.negative]="tx.amount < 0">
+                            {{ tx.amount > 0 ? '+' : '' }}{{ tx.amount | number: '1.2-4' }}
+                          </span>
+                          <span class="activity-mini-desc">{{ tx.description || tx.type }}</span>
+                          <span class="activity-mini-time">{{ tx.createdAt | date: 'short' }}</span>
+                        </div>
+                      }
+                      <button type="button" class="see-all-link" (click)="viewBilling()">Voir la facturation complète</button>
+                    }
+                  </div>
+
+                  <div class="activity-col">
+                    <p class="activity-col-title"><i class="pi pi-history"></i> Activité API récente</p>
+                    @if (activityFor(user).loading) {
+                      <p class="expanded-empty">Chargement...</p>
+                    } @else if (activityFor(user).entries.length === 0) {
+                      <p class="expanded-empty">Aucune activité récente</p>
+                    } @else {
+                      @for (entry of activityFor(user).entries; track entry.id) {
+                        <div class="activity-mini-row">
+                          <span class="mono">{{ entry.method }}</span>
+                          <span class="activity-mini-desc">{{ entry.path }}</span>
+                          <span class="activity-mini-time">{{ entry.timestamp | date: 'short' }}</span>
+                        </div>
+                      }
+                    }
+                  </div>
+                </div>
               </td>
             </tr>
           </ng-template>
           <ng-template #emptymessage>
             <tr>
-              <td colspan="6" class="empty-row">Aucun utilisateur</td>
+              <td colspan="8" class="empty-row">Aucun utilisateur ne correspond à ces filtres</td>
             </tr>
           </ng-template>
         </p-table>

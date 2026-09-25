@@ -28,7 +28,18 @@ export class AdminVolumes {
   readonly loading = signal(true);
   readonly error = this.admin.error;
 
-  readonly volumes = this.admin.allVolumes;
+  readonly filterUserId = signal<number | null>(null);
+  readonly filterUserLabel = computed(() => {
+    const uid = this.filterUserId();
+    if (!uid) return null;
+    const user = this.admin.users().find((u) => u.id === uid);
+    return user ? user.email : `#${uid}`;
+  });
+
+  readonly volumes = computed(() => {
+    const uid = this.filterUserId();
+    return uid ? this.admin.allVolumes().filter((v) => v.userId === uid) : this.admin.allVolumes();
+  });
   readonly snapshots = this.admin.allVolumeSnapshots;
   readonly groupsSupported = this.volumeGroupService.supported;
 
@@ -41,8 +52,15 @@ export class AdminVolumes {
   constructor() {
     const initial = this.route.snapshot.queryParamMap.get('tab') as Tab | null;
     if (initial) this.tab.set(initial);
+    const userId = this.route.snapshot.queryParamMap.get('userId');
+    if (userId) this.filterUserId.set(Number(userId));
     if (this.admin.users().length === 0) this.admin.loadUsers();
     this.load();
+  }
+
+  clearUserFilter(): void {
+    this.filterUserId.set(null);
+    this.router.navigate([], { relativeTo: this.route, queryParams: { userId: null }, queryParamsHandling: 'merge' });
   }
 
   selectTab(tab: Tab): void {

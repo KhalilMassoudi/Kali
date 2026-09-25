@@ -17,6 +17,14 @@
     </div>
   }
 
+  @if (filterUserLabel(); as label) {
+    <div class="filter-banner">
+      <i class="pi pi-filter"></i>
+      <p>Filtré pour <strong>{{ label }}</strong></p>
+      <button type="button" (click)="clearUserFilter()">Retirer le filtre</button>
+    </div>
+  }
+
   <div class="card telemetry-strip">
     <div class="tcell">
       <span class="tcell-label">VMs actives</span>
