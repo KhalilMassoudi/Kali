@@ -536,10 +536,19 @@ public class VpsService {
         if (openStackStatus == null) return fallback;
         return switch (openStackStatus.toUpperCase()) {
             case "ACTIVE" -> VpsServer.VpsStatus.RUNNING;
-            case "SHUTOFF", "STOPPED", "SUSPENDED", "PAUSED" -> VpsServer.VpsStatus.STOPPED;
+            case "SHUTOFF", "STOPPED" -> VpsServer.VpsStatus.STOPPED;
+            // Distinct states the UI labels on their own - collapsing them into STOPPED showed a
+            // paused/suspended VM as "Arrêtée" and offered the wrong action (start vs. resume).
+            case "SUSPENDED" -> VpsServer.VpsStatus.SUSPENDED;
+            case "PAUSED" -> VpsServer.VpsStatus.PAUSED;
+            case "SHELVED" -> VpsServer.VpsStatus.SHELVED;
+            case "SHELVED_OFFLOADED" -> VpsServer.VpsStatus.SHELVED_OFFLOADED;
+            case "RESCUE" -> VpsServer.VpsStatus.RESCUE;
+            case "RESIZE" -> VpsServer.VpsStatus.RESIZING;
+            case "VERIFY_RESIZE" -> VpsServer.VpsStatus.VERIFY_RESIZE;
             case "ERROR" -> VpsServer.VpsStatus.ERROR;
             case "DELETED" -> VpsServer.VpsStatus.DELETED;
-            default -> fallback; // BUILD, REBOOT, RESIZE, MIGRATING, UNKNOWN... leave as-is
+            default -> fallback; // BUILD, REBOOT, MIGRATING, UNKNOWN... leave as-is
         };
     }
 }
