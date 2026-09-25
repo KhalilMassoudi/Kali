@@ -325,21 +325,29 @@ export interface MetricsSummary {
   totalStorageGb: number;
   avgCpuUtil: number | null;
   dataAvailable: boolean;
-  /** Live ground-truth totals read directly from OpenStack — only set on the admin fleet summary. */
-  platform: PlatformTotals | null;
 }
 
+/** Usage vs. project quota; `limit` is -1 when OpenStack reports "unlimited". */
+export interface QuotaUsage {
+  used: number;
+  limit: number;
+}
+
+/** Live ground-truth usage read directly from OpenStack (same numbers as Horizon's Overview). */
 export interface PlatformTotals {
-  instancesUsed: number;
   runningInstances: number;
-  vcpusUsed: number;
-  ramMbUsed: number;
-  volumesUsed: number;
-  volumeGbUsed: number;
-  securityGroupsUsed: number;
-  floatingIpsUsed: number;
-  networksCount: number;
-  routersCount: number;
+  instances: QuotaUsage;
+  vcpus: QuotaUsage;
+  ramMb: QuotaUsage;
+  volumes: QuotaUsage;
+  volumeGb: QuotaUsage;
+  snapshots: QuotaUsage;
+  floatingIps: QuotaUsage;
+  securityGroups: QuotaUsage;
+  securityGroupRules: QuotaUsage;
+  networks: QuotaUsage;
+  ports: QuotaUsage;
+  routers: QuotaUsage;
 }
 
 export interface ClientFloatingIp {

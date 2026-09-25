@@ -183,26 +183,39 @@ public class OpenStackProvider implements CloudProvider {
     @Retryable(maxAttempts = 3, backoff = @Backoff(delay = 2000, multiplier = 2))
     public PlatformTotals getPlatformTotals() {
         OSClient.OSClientV3 client = authService.getClient();
+        String projectId = client.getToken().getProject().getId();
         org.openstack4j.model.compute.AbsoluteLimit compute =
                 client.compute().quotaSets().limits().getAbsolute();
         org.openstack4j.model.storage.block.BlockLimits.Absolute storage =
                 client.blockStorage().getLimits().getAbsolute();
-        int networksCount = client.networking().network().list().size();
-        int routersCount = client.networking().router().list().size();
+        // Nova's floating-IP/security-group limits are deprecated proxies — Horizon reads the
+        // network side from Neutron, so we do too. Lists are filtered to our project because
+        // an admin-role token sees every project's resources.
+        org.openstack4j.model.network.NetQuota netQuota = client.networking().quotas().get(projectId);
+        var net = client.networking();
+        int networks = (int) net.network().list().stream().filter(n -> projectId.equals(n.getTenantId())).count();
+        int ports = (int) net.port().list().stream().filter(p -> projectId.equals(p.getTenantId())).count();
+        int routers = (int) net.router().list().stream().filter(r -> projectId.equals(r.getTenantId())).count();
+        int floatingIps = (int) net.floatingip().list().stream().filter(f -> projectId.equals(f.getTenantId())).count();
+        int securityGroups = (int) net.securitygroup().list().stream().filter(s -> projectId.equals(s.getTenantId())).count();
+        int securityGroupRules = (int) net.securityrule().list().stream().filter(r -> projectId.equals(r.getTenantId())).count();
         int runningInstances = (int) client.compute().servers().list().stream()
                 .filter(s -> s.getStatus() == Server.Status.ACTIVE)
                 .count();
         return new PlatformTotals(
-                compute.getTotalInstancesUsed(),
                 runningInstances,
-                compute.getTotalCoresUsed(),
-                compute.getTotalRAMUsed(),
-                storage.getTotalVolumesUsed(),
-                storage.getTotalGigabytesUsed(),
-                compute.getTotalSecurityGroupsUsed(),
-                compute.getTotalFloatingIpsUsed(),
-                networksCount,
-                routersCount);
+                new PlatformTotals.Quota(compute.getTotalInstancesUsed(), compute.getMaxTotalInstances()),
+                new PlatformTotals.Quota(compute.getTotalCoresUsed(), compute.getMaxTotalCores()),
+                new PlatformTotals.Quota(compute.getTotalRAMUsed(), compute.getMaxTotalRAMSize()),
+                new PlatformTotals.Quota(storage.getTotalVolumesUsed(), storage.getMaxTotalVolumes()),
+                new PlatformTotals.Quota(storage.getTotalGigabytesUsed(), storage.getMaxTotalVolumeGigabytes()),
+                new PlatformTotals.Quota(storage.getTotalSnapshotsUsed(), storage.getMaxTotalSnapshots()),
+                new PlatformTotals.Quota(floatingIps, netQuota.getFloatingIP()),
+                new PlatformTotals.Quota(securityGroups, netQuota.getSecurityGroup()),
+                new PlatformTotals.Quota(securityGroupRules, netQuota.getSecurityGroupRule()),
+                new PlatformTotals.Quota(networks, netQuota.getNetwork()),
+                new PlatformTotals.Quota(ports, netQuota.getPort()),
+                new PlatformTotals.Quota(routers, netQuota.getRouter()));
     }
 
     // ──────────────────────────── Volumes (Cinder) ─────────────────────────

@@ -13,7 +13,7 @@
       [attr.r]="radius"
       class="gauge-fill"
       fill="none"
-      [style.stroke]="color()"
+      [style.stroke]="strokeColor()"
       [attr.stroke-dasharray]="circumference"
       [attr.stroke-dashoffset]="dashOffset()"
       [attr.transform]="'rotate(-90 ' + size / 2 + ' ' + size / 2 + ')'"
@@ -21,4 +21,7 @@
     <text [attr.x]="size / 2" [attr.y]="size / 2 + 4" class="gauge-text" text-anchor="middle">{{ centerText() }}</text>
   </svg>
   <p class="gauge-label">{{ label() }}</p>
+  @if (detail()) {
+    <p class="gauge-detail">{{ detail() }}</p>
+  }
 </div>

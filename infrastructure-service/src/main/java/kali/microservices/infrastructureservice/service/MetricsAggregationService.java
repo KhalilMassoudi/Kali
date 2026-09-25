@@ -10,6 +10,8 @@ import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.stereotype.Service;
 
+import java.time.Duration;
+import java.time.Instant;
 import java.util.List;
 
 /**
@@ -36,28 +38,43 @@ public class MetricsAggregationService {
     private final VpsServerRepository vpsServerRepository;
     private final CloudProviderFactory cloudProviderFactory;
 
+    private static final Duration PLATFORM_CACHE_TTL = Duration.ofSeconds(30);
+    private PlatformTotals cachedPlatform;
+    private Instant cachedPlatformAt = Instant.EPOCH;
+
     public MetricsSummary getSummaryForUser(Long userId) {
         List<VpsServer> vms = vpsServerRepository.findByUserId(userId).stream()
                 .filter(v -> v.getStatus() != VpsServer.VpsStatus.DELETED)
                 .toList();
-        return summarize(vms, null);
+        return summarize(vms);
     }
 
     public MetricsSummary getFleetSummary() {
         List<VpsServer> vms = vpsServerRepository.findAll().stream()
                 .filter(v -> v.getStatus() != VpsServer.VpsStatus.DELETED)
                 .toList();
-        PlatformTotals platform;
-        try {
-            platform = cloudProviderFactory.getProvider().getPlatformTotals();
-        } catch (Exception e) {
-            log.warn("Could not read live platform totals from OpenStack: {}", e.getMessage());
-            platform = null;
-        }
-        return summarize(vms, platform);
+        return summarize(vms);
     }
 
-    private MetricsSummary summarize(List<VpsServer> vms, PlatformTotals platform) {
+    /**
+     * Cached for a short window so reloading the dashboard doesn't fan out ~10 OpenStack calls
+     * each time. If OpenStack is momentarily unreachable (e.g. right after a restart), the last
+     * good value is served instead of nothing; null only when we've never succeeded.
+     */
+    public synchronized PlatformTotals getPlatformTotals() {
+        if (cachedPlatform != null && Instant.now().isBefore(cachedPlatformAt.plus(PLATFORM_CACHE_TTL))) {
+            return cachedPlatform;
+        }
+        try {
+            cachedPlatform = cloudProviderFactory.getProvider().getPlatformTotals();
+            cachedPlatformAt = Instant.now();
+        } catch (Exception e) {
+            log.warn("Could not read live platform totals from OpenStack: {}", e.getMessage());
+        }
+        return cachedPlatform;
+    }
+
+    private MetricsSummary summarize(List<VpsServer> vms) {
         int vmCount = vms.size();
         int runningCount = (int) vms.stream().filter(v -> v.getStatus() == VpsServer.VpsStatus.RUNNING).count();
         int totalVcpu = vms.stream().mapToInt(v -> v.getCpu() != null ? v.getCpu() : 0).sum();
@@ -65,7 +82,7 @@ public class MetricsAggregationService {
         int totalStorageGb = vms.stream().mapToInt(v -> v.getStorage() != null ? v.getStorage() : 0).sum();
 
         if (!gnocchiClient.isConfigured()) {
-            return new MetricsSummary(vmCount, runningCount, totalVcpu, totalRamMb, totalStorageGb, null, false, platform);
+            return new MetricsSummary(vmCount, runningCount, totalVcpu, totalRamMb, totalStorageGb, null, false);
         }
 
         double sum = 0;
@@ -87,7 +104,7 @@ public class MetricsAggregationService {
 
         boolean dataAvailable = samples > 0;
         Double avgCpuUtil = dataAvailable ? sum / samples : null;
-        return new MetricsSummary(vmCount, runningCount, totalVcpu, totalRamMb, totalStorageGb, avgCpuUtil, dataAvailable, platform);
+        return new MetricsSummary(vmCount, runningCount, totalVcpu, totalRamMb, totalStorageGb, avgCpuUtil, dataAvailable);
     }
 
     /**

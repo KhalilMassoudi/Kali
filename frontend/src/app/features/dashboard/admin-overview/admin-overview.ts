@@ -1,4 +1,4 @@
-import { Component, inject, signal } from '@angular/core';
+import { Component, computed, inject, signal } from '@angular/core';
 import { CommonModule } from '@angular/common';
 import { FormsModule } from '@angular/forms';
 import { RouterLink } from '@angular/router';
@@ -8,6 +8,7 @@ import { AdminService } from '../../../core/services/admin.service';
 import { MetricsService } from '../../../core/services/metrics.service';
 import { TelemetryService } from '../../../core/services/telemetry.service';
 import { MeasurePoint } from '../../../core/models/telemetry.model';
+import { QuotaUsage } from '../../../core/models/vm.model';
 import { formatRam } from '../../../shared/utils/vm-status.util';
 import { cumulativeCpuToUtilPercent } from '../../../shared/utils/telemetry.util';
 import { TimeseriesChart } from '../../../shared/timeseries-chart/timeseries-chart';
@@ -18,6 +19,33 @@ interface Shortcut {
   icon: string;
   label: string;
   count: () => number;
+}
+
+interface GaugeSpec {
+  label: string;
+  used: number;
+  /** null when there's no quota to compare against (unlimited, or DB fallback). */
+  limit: number | null;
+  center: string;
+  detail: string;
+}
+
+interface GaugeGroup {
+  title: string;
+  gauges: GaugeSpec[];
+}
+
+/** Builds one Horizon-style gauge: "3/10" in the ring, "Utilisé 3 sur 10" underneath. */
+function gauge(label: string, q: QuotaUsage | { used: number; limit: null }, unit = '', divisor = 1): GaugeSpec {
+  const used = Math.round(q.used / divisor);
+  const limit = q.limit !== null && q.limit >= 0 ? Math.round(q.limit / divisor) : null;
+  return {
+    label,
+    used,
+    limit,
+    center: limit !== null ? `${used}/${limit}` : `${used}`,
+    detail: limit !== null ? `Utilisé ${used}${unit} sur ${limit}${unit}` : `Utilisé ${used}${unit}`,
+  };
 }
 
 @Component({
@@ -32,7 +60,53 @@ export class AdminOverview {
   private readonly telemetryService = inject(TelemetryService);
 
   readonly fleetMetrics = this.metricsService.fleetSummary;
-  readonly platform = () => this.fleetMetrics()?.platform ?? null;
+  readonly platform = this.metricsService.platformTotals;
+  readonly platformLoading = this.metricsService.platformLoading;
+
+  /** Same layout as Horizon's "Limit Summary": usage vs. project quota, grouped by service. */
+  readonly platformGroups = computed<GaugeGroup[]>(() => {
+    const p = this.platform();
+    if (p) {
+      return [
+        { title: 'Compute', gauges: [
+          gauge('Instances', p.instances),
+          gauge('vCPUs', p.vcpus),
+          gauge('RAM', p.ramMb, ' GB', 1024),
+        ] },
+        { title: 'Volume', gauges: [
+          gauge('Volumes', p.volumes),
+          gauge('Snapshots', p.snapshots),
+          gauge('Stockage volumes', p.volumeGb, ' GB'),
+        ] },
+        { title: 'Réseau', gauges: [
+          gauge('IP flottantes', p.floatingIps),
+          gauge('Groupes de sécurité', p.securityGroups),
+          gauge('Règles de sécurité', p.securityGroupRules),
+          gauge('Réseaux', p.networks),
+          gauge('Ports', p.ports),
+          gauge('Routeurs', p.routers),
+        ] },
+      ];
+    }
+    // OpenStack unreachable: fall back to our own tracking tables (no quotas known).
+    const m = this.fleetMetrics();
+    const count = (used: number) => ({ used, limit: null });
+    return [
+      { title: 'Compute', gauges: [
+        gauge('Instances', count(this.admin.allVps().length)),
+        gauge('vCPUs', count(m?.totalVcpu ?? 0)),
+        gauge('RAM', count(m?.totalRamMb ?? 0), ' GB', 1024),
+      ] },
+      { title: 'Volume', gauges: [
+        gauge('Volumes', count(this.admin.allVolumes().length)),
+        gauge('Stockage VMs', count(m?.totalStorageGb ?? 0), ' GB'),
+      ] },
+      { title: 'Réseau', gauges: [
+        gauge('Réseaux', count(this.admin.allNetworks().length)),
+        gauge('Groupes de sécurité', count(this.admin.allSecurityGroups().length)),
+      ] },
+    ];
+  });
   readonly formatRam = formatRam;
 
   readonly chartVmId = signal<number | null>(null);
@@ -76,7 +150,13 @@ export class AdminOverview {
       this.admin.loadAllNetworks(),
       this.admin.loadAllSecurityGroups(),
       this.metricsService.loadFleetSummary(),
+      this.metricsService.loadPlatformTotals(),
     ]);
+    // Right after an infrastructure-service restart the first OpenStack call can fail;
+    // retry once quietly instead of leaving the fallback warning up until a manual refresh.
+    if (!this.platform()) {
+      setTimeout(() => this.metricsService.loadPlatformTotals(), 5000);
+    }
     if (this.chartVmId() === null) {
       const first = this.chartVmOptions()[0];
       if (first) {

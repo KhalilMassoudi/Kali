@@ -69,8 +69,26 @@
   }
 
   @media (min-width: 1200px) {
-    grid-template-columns: repeat(9, 1fr);
+    grid-template-columns: repeat(6, 1fr);
   }
+}
+
+.gauge-group-title {
+  font-size: 0.75rem;
+  font-weight: 700;
+  text-transform: uppercase;
+  letter-spacing: 0.04em;
+  color: var(--text-dim);
+  margin: 1.25rem 0 0.75rem;
+
+  &:first-of-type { margin-top: 0; }
+}
+
+.gauge-loading {
+  padding: 2rem 0;
+  text-align: center;
+  font-size: 0.8125rem;
+  color: var(--text-dim);
 }
 
 .platform-warning {

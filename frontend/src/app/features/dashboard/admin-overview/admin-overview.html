@@ -10,15 +10,15 @@
   <div class="card telemetry-strip">
     <div class="tcell">
       <span class="tcell-label">VMs actives</span>
-      <p class="tcell-value">{{ platform()?.runningInstances ?? fleetMetrics()?.runningCount ?? '—' }}<small>/{{ platform()?.instancesUsed ?? fleetMetrics()?.vmCount ?? 0 }}</small></p>
+      <p class="tcell-value">{{ platform()?.runningInstances ?? fleetMetrics()?.runningCount ?? '—' }}<small>/{{ platform()?.instances?.used ?? fleetMetrics()?.vmCount ?? 0 }}</small></p>
     </div>
     <div class="tcell">
       <span class="tcell-label">vCPUs alloués</span>
-      <p class="tcell-value">{{ platform()?.vcpusUsed ?? fleetMetrics()?.totalVcpu ?? '—' }}</p>
+      <p class="tcell-value">{{ platform()?.vcpus?.used ?? fleetMetrics()?.totalVcpu ?? '—' }}</p>
     </div>
     <div class="tcell">
       <span class="tcell-label">RAM allouée</span>
-      <p class="tcell-value">{{ formatRam(platform()?.ramMbUsed ?? fleetMetrics()?.totalRamMb ?? 0) }}</p>
+      <p class="tcell-value">{{ formatRam(platform()?.ramMb?.used ?? fleetMetrics()?.totalRamMb ?? 0) }}</p>
     </div>
     <div class="tcell">
       <span class="tcell-label">CPU moyen (Gnocchi)</span>
@@ -34,32 +34,21 @@
 
   <div class="card gauge-card">
     <h3>Ressources de la plateforme</h3>
-    @if (!platform()) {
-      <p class="platform-warning"><i class="pi pi-exclamation-triangle"></i> Totaux OpenStack indisponibles — valeurs issues du suivi interne uniquement (peuvent différer de la réalité si des ressources ont été créées hors plateforme).</p>
+    @if (!platform() && platformLoading()) {
+      <p class="gauge-loading"><i class="pi pi-spin pi-spinner"></i> Chargement des totaux OpenStack...</p>
+    } @else {
+      @if (!platform()) {
+        <p class="platform-warning"><i class="pi pi-exclamation-triangle"></i> Totaux OpenStack indisponibles — valeurs issues du suivi interne uniquement (peuvent différer de la réalité si des ressources ont été créées hors plateforme).</p>
+      }
+      @for (group of platformGroups(); track group.title) {
+        <h4 class="gauge-group-title">{{ group.title }}</h4>
+        <div class="gauge-grid">
+          @for (g of group.gauges; track g.label) {
+            <app-resource-gauge [label]="g.label" [used]="g.used" [total]="g.limit" [displayValue]="g.center" [detail]="g.detail" />
+          }
+        </div>
+      }
     }
-    <div class="gauge-grid">
-      <app-resource-gauge label="VMs" [used]="platform()?.instancesUsed ?? admin.allVps().length" [total]="null" color="var(--brand-accent)" />
-      <app-resource-gauge label="vCPUs" [used]="platform()?.vcpusUsed ?? fleetMetrics()?.totalVcpu ?? 0" [total]="null" color="var(--brand-warn, #f59e0b)" />
-      <app-resource-gauge
-        label="RAM"
-        [used]="platform()?.ramMbUsed ?? fleetMetrics()?.totalRamMb ?? 0"
-        [total]="null"
-        [displayValue]="formatRam(platform()?.ramMbUsed ?? fleetMetrics()?.totalRamMb ?? 0)"
-        color="var(--brand-warn, #f59e0b)"
-      />
-      <app-resource-gauge
-        label="Stockage"
-        [used]="platform()?.volumeGbUsed ?? fleetMetrics()?.totalStorageGb ?? 0"
-        [total]="null"
-        [displayValue]="(platform()?.volumeGbUsed ?? fleetMetrics()?.totalStorageGb ?? 0) + 'GB'"
-        color="var(--brand-good, #22c55e)"
-      />
-      <app-resource-gauge label="Volumes" [used]="platform()?.volumesUsed ?? admin.allVolumes().length" [total]="null" color="var(--brand-good, #22c55e)" />
-      <app-resource-gauge label="Réseaux" [used]="platform()?.networksCount ?? admin.allNetworks().length" [total]="null" color="var(--brand-accent)" />
-      <app-resource-gauge label="Groupes de sécurité" [used]="platform()?.securityGroupsUsed ?? admin.allSecurityGroups().length" [total]="null" color="var(--brand-crit, #ef4444)" />
-      <app-resource-gauge label="IP flottantes" [used]="platform()?.floatingIpsUsed ?? 0" [total]="null" color="var(--brand-accent)" />
-      <app-resource-gauge label="Routeurs" [used]="platform()?.routersCount ?? 0" [total]="null" color="var(--brand-accent)" />
-    </div>
   </div>
 
   <div class="card chart-card">

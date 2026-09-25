@@ -1,6 +1,7 @@
 package kali.microservices.infrastructureservice.controller;
 
 import kali.microservices.infrastructureservice.dto.MetricsSummary;
+import kali.microservices.infrastructureservice.openstack.PlatformTotals;
 import kali.microservices.infrastructureservice.security.AuthContext;
 import kali.microservices.infrastructureservice.security.AuthenticatedUser;
 import kali.microservices.infrastructureservice.service.MetricsAggregationService;
@@ -29,5 +30,16 @@ public class MetricsController {
     public ResponseEntity<MetricsSummary> getFleetSummary(@RequestHeader("Authorization") String authHeader) {
         authContext.requireAdmin(authHeader);
         return ResponseEntity.ok(metricsAggregationService.getFleetSummary());
+    }
+
+    /**
+     * Separate from the summary so the admin gauges don't wait on the per-VM Gnocchi loop.
+     * 204 means OpenStack couldn't be reached and nothing was cached yet.
+     */
+    @GetMapping("/admin/metrics/platform")
+    public ResponseEntity<PlatformTotals> getPlatformTotals(@RequestHeader("Authorization") String authHeader) {
+        authContext.requireAdmin(authHeader);
+        PlatformTotals totals = metricsAggregationService.getPlatformTotals();
+        return totals != null ? ResponseEntity.ok(totals) : ResponseEntity.noContent().build();
     }
 }

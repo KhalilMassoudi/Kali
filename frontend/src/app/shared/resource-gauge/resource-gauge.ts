@@ -18,7 +18,10 @@ export class ResourceGauge {
   readonly total = input<number | null>(null);
   /** Free-text override for the center value (defaults to "used/total" or just "used"). */
   readonly displayValue = input<string | null>(null);
-  readonly color = input<string>('var(--brand-accent, #2563eb)');
+  /** Fixed stroke color; when omitted the color follows usage (orange → red as it fills up). */
+  readonly color = input<string | null>(null);
+  /** Optional caption under the label, e.g. "Utilisé 3 sur 10". */
+  readonly detail = input<string | null>(null);
 
   readonly size = SIZE;
   readonly radius = RADIUS;
@@ -28,6 +31,15 @@ export class ResourceGauge {
     const total = this.total();
     if (!total || total <= 0) return 0;
     return Math.min(100, Math.max(0, (this.used() / total) * 100));
+  });
+
+  readonly strokeColor = computed(() => {
+    const fixed = this.color();
+    if (fixed) return fixed;
+    const pct = this.pct();
+    if (pct >= 90) return '#dc2626';
+    if (pct >= 70) return '#ef4444';
+    return '#f97316';
   });
 
   readonly dashOffset = computed(() => CIRCUMFERENCE - (this.pct() / 100) * CIRCUMFERENCE);
