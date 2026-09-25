@@ -179,43 +179,66 @@ public class OpenStackProvider implements CloudProvider {
         return authService.ping();
     }
 
+    /**
+     * Every sub-call is isolated: one service being unreachable or forbidding a call (e.g.
+     * Neutron's quota API, which some policies restrict to admins) degrades only that gauge
+     * — used=0 / limit=-1 — instead of failing the whole card. No @Retryable here: the
+     * caller caches the result, and retrying 3x with backoff only delayed the dashboard.
+     */
     @Override
-    @Retryable(maxAttempts = 3, backoff = @Backoff(delay = 2000, multiplier = 2))
     public PlatformTotals getPlatformTotals() {
         OSClient.OSClientV3 client = authService.getClient();
-        String projectId = client.getToken().getProject().getId();
-        org.openstack4j.model.compute.AbsoluteLimit compute =
-                client.compute().quotaSets().limits().getAbsolute();
-        org.openstack4j.model.storage.block.BlockLimits.Absolute storage =
-                client.blockStorage().getLimits().getAbsolute();
+        String projectId = client.getToken().getProject() != null ? client.getToken().getProject().getId() : null;
+        // Filtered to our project because an admin-role token sees every project's resources;
+        // resources with no owner field reported are kept rather than silently dropped.
+        java.util.function.Predicate<String> ours = owner -> projectId == null || owner == null || projectId.equals(owner);
+
+        var compute = safe("nova limits", () -> client.compute().quotaSets().limits().getAbsolute());
+        var storage = safe("cinder limits", () -> client.blockStorage().getLimits().getAbsolute());
         // Nova's floating-IP/security-group limits are deprecated proxies — Horizon reads the
-        // network side from Neutron, so we do too. Lists are filtered to our project because
-        // an admin-role token sees every project's resources.
-        org.openstack4j.model.network.NetQuota netQuota = client.networking().quotas().get(projectId);
+        // network side from Neutron, so we do too.
+        var netQuota = projectId == null ? null : safe("neutron quotas", () -> client.networking().quotas().get(projectId));
         var net = client.networking();
-        int networks = (int) net.network().list().stream().filter(n -> projectId.equals(n.getTenantId())).count();
-        int ports = (int) net.port().list().stream().filter(p -> projectId.equals(p.getTenantId())).count();
-        int routers = (int) net.router().list().stream().filter(r -> projectId.equals(r.getTenantId())).count();
-        int floatingIps = (int) net.floatingip().list().stream().filter(f -> projectId.equals(f.getTenantId())).count();
-        int securityGroups = (int) net.securitygroup().list().stream().filter(s -> projectId.equals(s.getTenantId())).count();
-        int securityGroupRules = (int) net.securityrule().list().stream().filter(r -> projectId.equals(r.getTenantId())).count();
-        int runningInstances = (int) client.compute().servers().list().stream()
+        int networks = count("networks", () -> net.network().list().stream().filter(n -> ours.test(n.getTenantId())).count());
+        int ports = count("ports", () -> net.port().list().stream().filter(p -> ours.test(p.getTenantId())).count());
+        int routers = count("routers", () -> net.router().list().stream().filter(r -> ours.test(r.getTenantId())).count());
+        int floatingIps = count("floating IPs", () -> net.floatingip().list().stream().filter(f -> ours.test(f.getTenantId())).count());
+        int securityGroups = count("security groups", () -> net.securitygroup().list().stream().filter(g -> ours.test(g.getTenantId())).count());
+        int securityGroupRules = count("security group rules", () -> net.securityrule().list().stream().filter(r -> ours.test(r.getTenantId())).count());
+        int runningInstances = count("servers", () -> client.compute().servers().list().stream()
                 .filter(s -> s.getStatus() == Server.Status.ACTIVE)
-                .count();
+                .count());
+
         return new PlatformTotals(
                 runningInstances,
-                new PlatformTotals.Quota(compute.getTotalInstancesUsed(), compute.getMaxTotalInstances()),
-                new PlatformTotals.Quota(compute.getTotalCoresUsed(), compute.getMaxTotalCores()),
-                new PlatformTotals.Quota(compute.getTotalRAMUsed(), compute.getMaxTotalRAMSize()),
-                new PlatformTotals.Quota(storage.getTotalVolumesUsed(), storage.getMaxTotalVolumes()),
-                new PlatformTotals.Quota(storage.getTotalGigabytesUsed(), storage.getMaxTotalVolumeGigabytes()),
-                new PlatformTotals.Quota(storage.getTotalSnapshotsUsed(), storage.getMaxTotalSnapshots()),
-                new PlatformTotals.Quota(floatingIps, netQuota.getFloatingIP()),
-                new PlatformTotals.Quota(securityGroups, netQuota.getSecurityGroup()),
-                new PlatformTotals.Quota(securityGroupRules, netQuota.getSecurityGroupRule()),
-                new PlatformTotals.Quota(networks, netQuota.getNetwork()),
-                new PlatformTotals.Quota(ports, netQuota.getPort()),
-                new PlatformTotals.Quota(routers, netQuota.getRouter()));
+                compute == null ? UNKNOWN : new PlatformTotals.Quota(compute.getTotalInstancesUsed(), compute.getMaxTotalInstances()),
+                compute == null ? UNKNOWN : new PlatformTotals.Quota(compute.getTotalCoresUsed(), compute.getMaxTotalCores()),
+                compute == null ? UNKNOWN : new PlatformTotals.Quota(compute.getTotalRAMUsed(), compute.getMaxTotalRAMSize()),
+                storage == null ? UNKNOWN : new PlatformTotals.Quota(storage.getTotalVolumesUsed(), storage.getMaxTotalVolumes()),
+                storage == null ? UNKNOWN : new PlatformTotals.Quota(storage.getTotalGigabytesUsed(), storage.getMaxTotalVolumeGigabytes()),
+                storage == null ? UNKNOWN : new PlatformTotals.Quota(storage.getTotalSnapshotsUsed(), storage.getMaxTotalSnapshots()),
+                new PlatformTotals.Quota(floatingIps, netQuota == null ? -1 : netQuota.getFloatingIP()),
+                new PlatformTotals.Quota(securityGroups, netQuota == null ? -1 : netQuota.getSecurityGroup()),
+                new PlatformTotals.Quota(securityGroupRules, netQuota == null ? -1 : netQuota.getSecurityGroupRule()),
+                new PlatformTotals.Quota(networks, netQuota == null ? -1 : netQuota.getNetwork()),
+                new PlatformTotals.Quota(ports, netQuota == null ? -1 : netQuota.getPort()),
+                new PlatformTotals.Quota(routers, netQuota == null ? -1 : netQuota.getRouter()));
+    }
+
+    private static final PlatformTotals.Quota UNKNOWN = new PlatformTotals.Quota(0, -1);
+
+    private <T> T safe(String what, java.util.function.Supplier<T> call) {
+        try {
+            return call.get();
+        } catch (Exception e) {
+            log.warn("Platform totals: could not read {}: {}", what, e.getMessage());
+            return null;
+        }
+    }
+
+    private int count(String what, java.util.function.Supplier<Long> call) {
+        Long n = safe(what, call);
+        return n == null ? 0 : n.intValue();
     }
 
     // ──────────────────────────── Volumes (Cinder) ─────────────────────────
