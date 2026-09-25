@@ -28,6 +28,11 @@ public class Wallet {
 
     private String currency = "TND";
 
+    // One-shot alert flags (nullable: added after the table existed). Set once the matching email
+    // went out, cleared by WalletService when a credit brings the balance back above the level.
+    private Boolean lowBalanceAlertSent;
+    private Boolean exhaustedAlertSent;
+
     @UpdateTimestamp
     private LocalDateTime updatedAt;
 }

@@ -5,6 +5,7 @@ import kali.microservices.billingservice.dto.AdminAdjustRequest;
 import kali.microservices.billingservice.entities.PricingConfig;
 import kali.microservices.billingservice.entities.Wallet;
 import kali.microservices.billingservice.security.AuthContext;
+import kali.microservices.billingservice.service.BalanceAlertService;
 import kali.microservices.billingservice.service.PricingService;
 import kali.microservices.billingservice.service.WalletService;
 import lombok.RequiredArgsConstructor;
@@ -20,6 +21,7 @@ public class AdminBillingController {
 
     private final WalletService walletService;
     private final PricingService pricingService;
+    private final BalanceAlertService balanceAlertService;
     private final AuthContext authContext;
 
     @GetMapping("/wallets")
@@ -33,7 +35,13 @@ public class AdminBillingController {
                                                 @PathVariable Long userId,
                                                 @Valid @RequestBody AdminAdjustRequest request) {
         authContext.requireAdmin(authHeader);
-        return ResponseEntity.ok(walletService.adminAdjust(userId, request.getAmount(), request.getDescription()));
+        Wallet wallet = walletService.adminAdjust(userId, request.getAmount(), request.getDescription());
+        if (request.getAmount().signum() < 0) {
+            // A manual debit can cross an alert level just like a metering tick.
+            balanceAlertService.evaluate(userId, null);
+            wallet = walletService.getOrCreateWallet(userId);
+        }
+        return ResponseEntity.ok(wallet);
     }
 
     @GetMapping("/pricing")

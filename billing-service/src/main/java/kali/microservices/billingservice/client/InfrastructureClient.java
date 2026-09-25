@@ -61,4 +61,16 @@ public class InfrastructureClient {
             return List.of();
         }
     }
+
+    /** Zero-balance suspension - same stop endpoint the client's own "Arrêter" button uses. */
+    public boolean stopVm(Long vmId) {
+        try {
+            restTemplate.exchange(baseUrl + "/api/infrastructure/vps/" + vmId + "/stop", HttpMethod.POST,
+                    authenticatedEntity(), Void.class);
+            return true;
+        } catch (Exception e) {
+            log.error("Suspension: failed to stop VM {} via infrastructure-service: {}", vmId, e.getMessage());
+            return false;
+        }
+    }
 }
