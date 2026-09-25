@@ -37,8 +37,10 @@ public class ApiLogService {
 
     public Page<ApiLogEntry> search(String service, boolean errorsOnly, String search, int page, int size) {
         int safeSize = Math.min(Math.max(size, 1), 200);
+        String searchTerm = blankToNull(search);
+        String searchPattern = searchTerm == null ? null : "%" + searchTerm + "%";
         return apiLogRepository.search(
-                blankToNull(service), errorsOnly, blankToNull(search), PageRequest.of(Math.max(page, 0), safeSize));
+                blankToNull(service), errorsOnly, searchPattern, PageRequest.of(Math.max(page, 0), safeSize));
     }
 
     public List<String> distinctServices() {
