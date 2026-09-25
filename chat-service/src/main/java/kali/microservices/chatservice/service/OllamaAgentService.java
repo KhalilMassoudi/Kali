@@ -177,6 +177,8 @@ public class OllamaAgentService {
             assistantTurn.put("tool_calls", objectMapper.convertValue(toolCalls, new TypeReference<List<Map<String, Object>>>() {}));
             messages.add(assistantTurn);
 
+            boolean onlyVpsListing = true;
+            Object vpsListing = null;
             for (JsonNode call : toolCalls) {
                 JsonNode fn = call.path("function");
                 String name = fn.path("name").asText();
@@ -190,12 +192,24 @@ public class OllamaAgentService {
                     lastActionData = outcome.data();
                 }
 
+                if ("list_vps".equals(name) && !outcome.isError() && outcome.data() instanceof List<?>) {
+                    vpsListing = outcome.data();
+                } else {
+                    onlyVpsListing = false;
+                }
+
                 String resultJson = toJson(outcome.data());
                 Map<String, Object> toolTurn = new LinkedHashMap<>();
                 toolTurn.put("role", "tool");
                 toolTurn.put("content", resultJson);
                 toolTurn.put("tool_name", name);
                 messages.add(toolTurn);
+            }
+
+            // A listing is answered straight from the data: letting the model paraphrase it,
+            // it silently dropped VMs in testing.
+            if (onlyVpsListing && vpsListing != null) {
+                return new AgentResult(formatVpsList((List<?>) vpsListing), "list_vps", vpsListing);
             }
         }
 
@@ -224,6 +238,28 @@ public class OllamaAgentService {
         Object result = commandExecutor.execute(intent, userId, authHeader);
         boolean isError = result instanceof Map<?, ?> m && m.containsKey("error");
         return new ToolOutcome(result, isError);
+    }
+
+    private static String formatVpsList(List<?> vms) {
+        List<Map<?, ?>> active = vms.stream()
+                .filter(v -> v instanceof Map<?, ?> m && !"DELETED".equals(String.valueOf(m.get("status"))))
+                .<Map<?, ?>>map(v -> (Map<?, ?>) v)
+                .toList();
+        if (active.isEmpty()) {
+            return "Vous n'avez aucune VM pour le moment.";
+        }
+        StringBuilder sb = new StringBuilder("Vous avez " + active.size() + " VM" + (active.size() > 1 ? "s" : "") + " :\n");
+        for (Map<?, ?> vm : active) {
+            Object ram = vm.get("ram");
+            String ramGb = ram instanceof Number n ? (n.intValue() / 1024) + " Go" : "?";
+            Object ip = vm.get("floatingIp") != null ? vm.get("floatingIp") : vm.get("ipAddress");
+            sb.append("\n• ").append(vm.get("name"))
+                    .append(" (ID ").append(vm.get("id")).append(") — ").append(vm.get("status"))
+                    .append(" — ").append(vm.get("cpu")).append(" vCPU, ").append(ramGb)
+                    .append(", ").append(vm.get("storage")).append(" Go, ").append(vm.get("os"))
+                    .append(ip != null ? ", IP " + ip : "");
+        }
+        return sb.toString();
     }
 
     private static boolean isPlainYes(String text) {
