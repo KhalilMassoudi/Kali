@@ -16,6 +16,7 @@ public class CommandExecutor {
 
     private final InfrastructureClient infrastructureClient;
     private final SupportClient supportClient;
+    private final BillingClient billingClient;
 
     /**
      * Exécute l'action et retourne un résultat brut (serialisé en JSON par le ChatService).
@@ -39,15 +40,19 @@ public class CommandExecutor {
                     infrastructureClient.deleteVps(vpsId, authHeader);
                     yield Map.of("message", "VPS supprimé avec succès");
                 }
+                case "start_vps"      -> infrastructureClient.powerAction(toLong(params.get("vpsId")), "start", authHeader);
+                case "stop_vps"       -> infrastructureClient.powerAction(toLong(params.get("vpsId")), "stop", authHeader);
+                case "reboot_vps"     -> infrastructureClient.powerAction(toLong(params.get("vpsId")), "restart", authHeader);
+
+                // ── STOCKAGE ─────────────────────────────────────────────────
+                case "list_volumes"   -> infrastructureClient.listVolumes(userId, authHeader);
 
                 // ── SUPPORT ──────────────────────────────────────────────────
                 case "open_ticket"    -> supportClient.createTicket(params, authHeader);
                 case "list_tickets"   -> supportClient.listTickets(userId, authHeader);
 
-                // ── AUTRES ───────────────────────────────────────────────────
-                case "show_billing"   -> Map.of(
-                        "message", "Accédez à la facturation via /api/billing/invoices/user/" + userId
-                );
+                // ── FACTURATION ──────────────────────────────────────────────
+                case "show_billing"   -> billingClient.getBalanceSummary(userId, authHeader);
                 default -> Map.of("message", "Action non reconnue: " + action);
             };
         } catch (Exception e) {

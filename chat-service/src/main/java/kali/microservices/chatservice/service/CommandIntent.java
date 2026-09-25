@@ -13,8 +13,7 @@ import java.util.Map;
 public class CommandIntent {
 
     /** Action détectée: create_vps | list_vps | delete_vps |
-     *  create_domain | list_domains | delete_domain |
-     *  create_cluster | list_clusters |
+     *  start_vps | stop_vps | reboot_vps | list_volumes |
      *  open_ticket | list_tickets |
      *  show_billing |
      *  clarify | none */
