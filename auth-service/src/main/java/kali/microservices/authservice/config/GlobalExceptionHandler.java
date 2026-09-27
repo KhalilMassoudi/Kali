@@ -22,6 +22,14 @@ public class GlobalExceptionHandler {
                 .body(new ErrorResponse("VALIDATION_ERROR", message, 400));
     }
 
+    /** Explicit statuses (e.g. InternalController's 403/404) win over the message-based guess below. */
+    @ExceptionHandler(org.springframework.web.server.ResponseStatusException.class)
+    public ResponseEntity<ErrorResponse> handleResponseStatus(org.springframework.web.server.ResponseStatusException ex) {
+        HttpStatus status = HttpStatus.valueOf(ex.getStatusCode().value());
+        String msg = ex.getReason() != null ? ex.getReason() : status.getReasonPhrase();
+        return ResponseEntity.status(status).body(new ErrorResponse(toCode(status), msg, status.value()));
+    }
+
     @ExceptionHandler(RuntimeException.class)
     public ResponseEntity<ErrorResponse> handleRuntime(RuntimeException ex) {
         String msg = ex.getMessage() != null ? ex.getMessage() : "Erreur inattendue";

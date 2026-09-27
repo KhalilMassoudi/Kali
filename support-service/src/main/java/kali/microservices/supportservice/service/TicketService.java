@@ -52,7 +52,7 @@ public class TicketService {
 
         Ticket saved = ticketRepository.save(ticket);
 
-        authNotificationClient.notifyUser(authHeader, saved.getUserId(),
+        authNotificationClient.notifyUser(saved.getUserId(),
                 "Un ticket a été ouvert pour vous - Safozi",
                 "Un ticket \"" + saved.getTitle() + "\" a été ouvert par notre équipe support. "
                         + "Consultez-le ici : " + frontendUrl + "/support/" + saved.getId());
@@ -114,7 +114,7 @@ public class TicketService {
                 ticket.setStatus(Ticket.TicketStatus.WAITING_RESPONSE);
                 ticketRepository.save(ticket);
             }
-            authNotificationClient.notifyUser(authHeader, ticket.getUserId(),
+            authNotificationClient.notifyUser(ticket.getUserId(),
                     "Nouvelle réponse sur votre ticket #" + ticket.getId() + " - Safozi",
                     "Un agent a répondu à votre ticket \"" + ticket.getTitle() + "\". "
                             + "Consultez-le ici : " + frontendUrl + "/support/" + ticket.getId());

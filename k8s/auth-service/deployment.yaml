@@ -1,3 +1,5 @@
+# Shared secret for auth-service's /internal/** endpoints (also mounted in billing/support):
+#   kubectl create secret generic internal-api-secret --from-literal=secret="$(openssl rand -hex 32)"
 apiVersion: apps/v1
 kind: Deployment
 metadata:
@@ -26,6 +28,12 @@ spec:
               value: "optional:configserver:http://config-server:8888"
             - name: EUREKA_CLIENT_SERVICE-URL_DEFAULTZONE
               value: "http://discovery-service:8761/eureka/"
+            - name: INTERNAL_API_SECRET
+              valueFrom:
+                secretKeyRef:
+                  name: internal-api-secret
+                  key: secret
+                  optional: true
 ---
 apiVersion: v1
 kind: Service

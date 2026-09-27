@@ -26,6 +26,8 @@ public class SecurityConfig {
                 .authorizeHttpRequests(auth -> auth
                         .requestMatchers("/api/auth/**").permitAll()
                         .requestMatchers("/actuator/**").permitAll()
+                        // Shared-secret checked in InternalController; not routed by the gateway.
+                        .requestMatchers("/internal/**").permitAll()
                         .anyRequest().authenticated()
                 );
 

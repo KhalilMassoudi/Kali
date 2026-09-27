@@ -26,6 +26,14 @@ spec:
               value: "optional:configserver:http://config-server:8888"
             - name: EUREKA_CLIENT_SERVICE-URL_DEFAULTZONE
               value: "http://discovery-service:8761/eureka/"
+            - name: SERVICES_AUTH_URL
+              value: "http://auth-service:8081"
+            - name: INTERNAL_API_SECRET
+              valueFrom:
+                secretKeyRef:
+                  name: internal-api-secret
+                  key: secret
+                  optional: true
 ---
 apiVersion: v1
 kind: Service

@@ -1,6 +1,5 @@
 package kali.microservices.billingservice.client;
 
-import kali.microservices.billingservice.security.ServiceTokenProvider;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.beans.factory.annotation.Value;
@@ -17,9 +16,11 @@ import java.util.Optional;
 
 /**
  * Calls into auth-service, which owns user identities and the platform's SMTP config/sending.
- * Emails go through auth-service's existing admin notify endpoint (same one support-service uses):
- * it resolves the userId to an email and sends with the admin-configured SMTP settings - so there's
- * no second SMTP config in billing-service. Never throws: callers get an empty/false result instead.
+ * Background calls (metering job, no user session) use auth-service's /internal endpoints with the
+ * shared INTERNAL_API_SECRET - auth-service rejects our minted service JWT on its admin endpoints,
+ * since its subject isn't a real user. Emails are resolved and sent by auth-service with the
+ * admin-configured SMTP settings, so there's no second SMTP config here. Never throws: callers get
+ * an empty/false result instead.
  */
 @Slf4j
 @Component
@@ -27,10 +28,18 @@ import java.util.Optional;
 public class AuthClient {
 
     private final RestTemplate restTemplate;
-    private final ServiceTokenProvider tokenProvider;
 
     @Value("${services.auth.url}")
     private String baseUrl;
+
+    @Value("${internal.api.secret:}")
+    private String internalSecret;
+
+    private HttpHeaders internalHeaders() {
+        HttpHeaders headers = new HttpHeaders();
+        headers.set("X-Internal-Secret", internalSecret);
+        return headers;
+    }
 
     private HttpHeaders headers(String authHeader) {
         HttpHeaders headers = new HttpHeaders();
@@ -38,17 +47,13 @@ public class AuthClient {
         return headers;
     }
 
-    private String serviceAuthHeader() {
-        return "Bearer " + tokenProvider.mintServiceAdminToken();
-    }
-
-    /** Background use (metering job) - no user session, so this uses the internal service token. */
+    /** Background use (metering job) - no user session, so this goes through the internal endpoint. */
     public boolean notifyUser(Long userId, String subject, String body) {
         try {
-            HttpHeaders headers = headers(serviceAuthHeader());
+            HttpHeaders headers = internalHeaders();
             headers.setContentType(MediaType.APPLICATION_JSON);
             Map<String, Object> payload = Map.of("userId", userId, "subject", subject, "body", body);
-            restTemplate.postForEntity(baseUrl + "/api/auth/admin/notify", new HttpEntity<>(payload, headers), Void.class);
+            restTemplate.postForEntity(baseUrl + "/internal/notify", new HttpEntity<>(payload, headers), Void.class);
             return true;
         } catch (Exception e) {
             log.warn("Failed to notify userId={} via auth-service: {}", userId, e.getMessage());
@@ -56,9 +61,16 @@ public class AuthClient {
         }
     }
 
-    /** Background use (metering job) - looks a user up in the admin user list, with the internal service token. */
+    /** Background use (metering job) - looks a user up through the internal endpoint. */
     public Optional<UserSnapshot> findUser(Long userId) {
-        return findUser(serviceAuthHeader(), userId);
+        try {
+            var response = restTemplate.exchange(baseUrl + "/internal/users/" + userId, HttpMethod.GET,
+                    new HttpEntity<>(internalHeaders()), UserSnapshot.class);
+            return Optional.ofNullable(response.getBody());
+        } catch (Exception e) {
+            log.warn("Failed to look up userId={} in auth-service: {}", userId, e.getMessage());
+            return Optional.empty();
+        }
     }
 
     /** Looks a user up in the admin user list, on behalf of the given (admin) caller. */

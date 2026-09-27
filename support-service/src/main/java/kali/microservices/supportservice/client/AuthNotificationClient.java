@@ -2,6 +2,7 @@ package kali.microservices.supportservice.client;
 
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
+import org.springframework.beans.factory.annotation.Value;
 import org.springframework.http.HttpEntity;
 import org.springframework.http.HttpHeaders;
 import org.springframework.http.MediaType;
@@ -12,8 +13,9 @@ import org.springframework.web.client.RestTemplate;
 import java.util.Map;
 
 /**
- * Fire-and-forget notification shipper — calls auth-service's admin notify endpoint, which
- * resolves the target userId to an email and sends it (a no-op if SMTP isn't configured).
+ * Fire-and-forget notification shipper — calls auth-service's internal notify endpoint (shared
+ * INTERNAL_API_SECRET), which resolves the target userId to an email and sends it. Not the admin
+ * endpoint with the caller's token: ticket agents aren't necessarily ADMIN, so that was rejected.
  * Runs async and swallows failures: a slow/down auth-service must never fail a ticket action.
  */
 @Slf4j
@@ -21,20 +23,24 @@ import java.util.Map;
 @RequiredArgsConstructor
 public class AuthNotificationClient {
 
-    private static final String NOTIFY_URL = "http://localhost:8081/api/auth/admin/notify";
-
     private final RestTemplate restTemplate;
 
+    @Value("${services.auth.url:http://localhost:8081}")
+    private String authUrl;
+
+    @Value("${internal.api.secret:}")
+    private String internalSecret;
+
     @Async
-    public void notifyUser(String authHeader, Long userId, String subject, String body) {
+    public void notifyUser(Long userId, String subject, String body) {
         try {
             HttpHeaders headers = new HttpHeaders();
-            headers.set("Authorization", authHeader);
+            headers.set("X-Internal-Secret", internalSecret);
             headers.setContentType(MediaType.APPLICATION_JSON);
             Map<String, Object> payload = Map.of("userId", userId, "subject", subject, "body", body);
-            restTemplate.postForEntity(NOTIFY_URL, new HttpEntity<>(payload, headers), Void.class);
+            restTemplate.postForEntity(authUrl + "/internal/notify", new HttpEntity<>(payload, headers), Void.class);
         } catch (Exception e) {
-            log.debug("Failed to notify userId={} via auth-service: {}", userId, e.getMessage());
+            log.warn("Failed to notify userId={} via auth-service: {}", userId, e.getMessage());
         }
     }
 }
