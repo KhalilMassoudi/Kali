@@ -60,3 +60,27 @@ export interface AdminAdjustRequest {
   amount: number;
   description?: string;
 }
+
+/** GET /api/billing/wallet/user/{id}/usage — amounts are costs (positive), keyed by resource type. */
+export interface UsageSummary {
+  from: string; // yyyy-MM-dd
+  to: string;
+  currency: string;
+  total: number;
+  averagePerDay: number;
+  hourlyRate: number;
+  projectedMonth: number;
+  balance: number;
+  runwayHours: number | null;
+  byType: Record<string, number>;
+  daily: { date: string; total: number; byType: Record<string, number> }[];
+}
+
+export const USAGE_TYPE_LABELS: Record<string, string> = {
+  VCPU: 'Calcul (vCPU)',
+  RAM: 'Mémoire (RAM)',
+  VM_STORAGE: 'Disque des VMs',
+  VOLUME: 'Volumes',
+  FLOATING_IP: 'IP flottantes',
+  OTHER: 'Autre',
+};

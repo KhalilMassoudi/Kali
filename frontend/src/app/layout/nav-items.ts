@@ -5,13 +5,24 @@ export interface NavItem {
   desc: string;
   /** Insert a section divider above this item (visually separates nav groups). */
   divider?: boolean;
+  /** Renders the item as a collapsible group (dropdown) of sub-pages. */
+  children?: NavItem[];
 }
 
 export const NAV_ITEMS: NavItem[] = [
   { to: '/dashboard', icon: 'pi pi-th-large', label: 'Dashboard', desc: 'Vue générale' },
   { to: '/vms', icon: 'pi pi-server', label: 'Mes VMs', desc: 'Gérer les serveurs' },
   { to: '/volumes', icon: 'pi pi-database', label: 'Volumes', desc: 'Stockage bloc' },
-  { to: '/billing', icon: 'pi pi-wallet', label: 'Facturation', desc: 'Crédit & consommation' },
+  {
+    to: '/billing',
+    icon: 'pi pi-wallet',
+    label: 'Facturation',
+    desc: 'Consommation & paiements',
+    children: [
+      { to: '/billing/usage', icon: 'pi pi-chart-bar', label: 'Consommation', desc: '' },
+      { to: '/billing/payments', icon: 'pi pi-credit-card', label: 'Paiements', desc: '' },
+    ],
+  },
   { to: '/networks', icon: 'pi pi-share-alt', label: 'Réseau', desc: 'Réseaux, routeurs, sécurité, IP flottantes' },
   { to: '/projects', icon: 'pi pi-folder', label: 'Projets', desc: 'Regrouper mes ressources' },
   { to: '/chat', icon: 'pi pi-comments', label: 'Assistant IA', desc: 'Support intelligent' },

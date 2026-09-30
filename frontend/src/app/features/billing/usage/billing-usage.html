@@ -1,0 +1,125 @@
+<div class="page">
+  <div class="page-head">
+    <div>
+      <h2>Consommation</h2>
+      <p class="subtitle">Ce que vous avez consommé et ce que cela a coûté @if (periodLabel()) { — {{ periodLabel() }} }</p>
+    </div>
+    <div class="head-actions">
+      <div class="segmented">
+        <button type="button" [class.active]="days() === 7" (click)="setDays(7)">7j</button>
+        <button type="button" [class.active]="days() === 30" (click)="setDays(30)">30j</button>
+      </div>
+      <p-button label="Exporter CSV" icon="pi pi-download" [outlined]="true" size="small" [disabled]="!summary()" (onClick)="exportCsv()" />
+    </div>
+  </div>
+
+  @if (error()) {
+    <div class="error-banner">
+      <span class="dot"></span>
+      <p>{{ error() }}</p>
+    </div>
+  }
+
+  <div class="stat-grid">
+    <div class="stat-card">
+      <span class="stat-label"><i class="pi pi-chart-line"></i> Dépense · {{ days() }}j</span>
+      <p class="stat-value">{{ summary()?.total ?? 0 | number: '1.2-2' }} <small>{{ currency() }}</small></p>
+    </div>
+    <div class="stat-card">
+      <span class="stat-label"><i class="pi pi-calendar"></i> Moyenne par jour</span>
+      <p class="stat-value">{{ summary()?.averagePerDay ?? 0 | number: '1.2-2' }} <small>{{ currency() }}</small></p>
+    </div>
+    <div class="stat-card">
+      <span class="stat-label"><i class="pi pi-bolt"></i> Coût horaire actuel</span>
+      <p class="stat-value">{{ summary()?.hourlyRate ?? 0 | number: '1.2-4' }} <small>{{ currency() }}/h</small></p>
+    </div>
+    <div class="stat-card">
+      <span class="stat-label"><i class="pi pi-arrow-up-right"></i> Projection 30 jours</span>
+      <p class="stat-value">{{ summary()?.projectedMonth ?? 0 | number: '1.2-2' }} <small>{{ currency() }}</small></p>
+    </div>
+  </div>
+
+  <section>
+    <div class="section-head">
+      <h3>Dépenses dans le temps</h3>
+      <div class="segmented segmented-sm">
+        <button type="button" [class.active]="granularity() === 'day'" (click)="granularity.set('day')">Par jour</button>
+        <button type="button" [class.active]="granularity() === 'week'" (click)="granularity.set('week')">Par semaine</button>
+      </div>
+    </div>
+    <div class="chips">
+      <button type="button" class="chip" [class.active]="typeFilter() === 'ALL'" (click)="typeFilter.set('ALL')">
+        Tout <span>{{ summary()?.total ?? 0 | number: '1.2-2' }}</span>
+      </button>
+      @for (t of types(); track t.type) {
+        <button type="button" class="chip" [class.active]="typeFilter() === t.type" (click)="typeFilter.set(t.type)">
+          {{ typeLabel(t.type) }} <span>{{ t.amount | number: '1.2-2' }}</span>
+        </button>
+      }
+    </div>
+    <div class="card chart-card">
+      @if (loading() && !summary()) {
+        <p class="empty"><i class="pi pi-spin pi-spinner"></i> Chargement...</p>
+      } @else if (maxBucket() === 0) {
+        <p class="empty">Aucune consommation sur cette période</p>
+      } @else {
+        <div class="bars">
+          @for (b of buckets(); track b.key; let i = $index) {
+            <div class="bar-col" [title]="b.label + ' : ' + (b.total | number: '1.2-2') + ' ' + currency()">
+              <div class="bar-track">
+                <div class="bar" [style.height.%]="barHeight(b)"></div>
+              </div>
+              <span class="bar-label">{{ showLabel(i) ? b.label : '' }}</span>
+            </div>
+          }
+        </div>
+      }
+    </div>
+  </section>
+
+  <section>
+    <div class="section-head"><h3>Par service</h3></div>
+    <div class="card service-card">
+      @for (s of byService(); track s.type) {
+        <div class="service-row">
+          <span class="service-name">{{ typeLabel(s.type) }}</span>
+          <div class="service-track"><div class="service-fill" [style.width.%]="s.pct"></div></div>
+          <span class="service-pct">{{ s.pct | number: '1.1-1' }}%</span>
+          <span class="service-amount">{{ s.amount | number: '1.2-2' }} {{ currency() }}</span>
+        </div>
+      } @empty {
+        <p class="empty">Aucune consommation sur cette période</p>
+      }
+    </div>
+  </section>
+
+  <section>
+    <div class="section-head"><h3>Détail</h3></div>
+    <div class="card table-card">
+      <div class="table-wrap">
+        <table class="breakdown">
+          <thead>
+            <tr>
+              <th>Période</th>
+              <th class="num">Total</th>
+              @for (t of types(); track t.type) {
+                <th class="num">{{ typeLabel(t.type) }}</th>
+              }
+            </tr>
+          </thead>
+          <tbody>
+            @for (b of breakdown(); track b.key) {
+              <tr>
+                <td>{{ b.label }}</td>
+                <td class="num strong">{{ rowTotal(b) > 0 ? (rowTotal(b) | number: '1.2-2') : '—' }}</td>
+                @for (t of types(); track t.type) {
+                  <td class="num">{{ b.byType[t.type] ? (b.byType[t.type] | number: '1.2-2') : '—' }}</td>
+                }
+              </tr>
+            }
+          </tbody>
+        </table>
+      </div>
+    </div>
+  </section>
+</div>

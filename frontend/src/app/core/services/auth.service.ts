@@ -34,7 +34,10 @@ export class AuthService {
 
   constructor() {
     if (this._token()) {
-      this.getMe();
+      // Deferred: the HTTP interceptor injects AuthService, which isn't constructed yet at this
+      // point - calling getMe() synchronously failed before the request was even sent, and the
+      // catch then logged the user out on every page reload.
+      queueMicrotask(() => this.getMe());
     }
   }
 

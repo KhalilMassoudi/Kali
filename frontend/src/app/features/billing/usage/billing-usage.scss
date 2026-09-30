@@ -1,0 +1,225 @@
+@use '../../../shared/styles/page-shell' as *;
+
+:host {
+  display: block;
+}
+
+section {
+  display: flex;
+  flex-direction: column;
+  gap: 0.75rem;
+}
+
+.section-head {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+
+  h3 { font-size: 0.9375rem; font-weight: 700; color: var(--text-strong); }
+}
+
+.segmented {
+  display: inline-flex;
+  padding: 0.1875rem;
+  border: 1px solid var(--brand-border);
+  background: var(--brand-surface);
+
+  button {
+    padding: 0.375rem 0.75rem;
+    border: none;
+    background: transparent;
+    font-family: var(--font-mono, monospace);
+    font-size: 0.75rem;
+    font-weight: 600;
+    color: var(--text-dim);
+    cursor: pointer;
+
+    &.active { color: var(--text-strong); background: var(--brand-surface2); }
+  }
+
+  &.segmented-sm button { padding: 0.25rem 0.625rem; font-size: 0.6875rem; }
+}
+
+.stat-grid {
+  display: grid;
+  grid-template-columns: repeat(2, 1fr);
+  gap: 1rem;
+
+  @media (min-width: 900px) { grid-template-columns: repeat(4, 1fr); }
+}
+
+.stat-card {
+  padding: 1rem 1.25rem;
+  border: 1px solid var(--brand-border);
+  background: var(--brand-surface);
+}
+
+.stat-label {
+  display: inline-flex;
+  align-items: center;
+  gap: 0.375rem;
+  font-size: 0.6875rem;
+  color: var(--text-dim);
+
+  i { font-size: 0.6875rem; }
+}
+
+.stat-value {
+  margin-top: 0.625rem;
+  font-family: var(--font-mono, monospace);
+  font-size: 1.5rem;
+  font-weight: 700;
+  color: var(--text-strong);
+
+  small { font-size: 0.75rem; font-weight: 600; color: var(--text-dim); }
+}
+
+.chips {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 0.5rem;
+}
+
+.chip {
+  display: inline-flex;
+  align-items: center;
+  gap: 0.5rem;
+  padding: 0.375rem 0.875rem;
+  border: 1px solid var(--brand-border);
+  border-radius: 999px;
+  background: var(--brand-surface);
+  font-size: 0.75rem;
+  font-weight: 600;
+  color: var(--text-body);
+  cursor: pointer;
+
+  span { font-family: var(--font-mono, monospace); font-size: 0.6875rem; color: var(--text-dim); }
+
+  &.active {
+    border-color: var(--brand-primary);
+    background: var(--brand-primary);
+    color: #fff;
+
+    span { color: rgba(255, 255, 255, 0.85); }
+  }
+}
+
+.chart-card {
+  padding: 1rem 1rem 0.5rem;
+}
+
+.bars {
+  display: flex;
+  align-items: stretch;
+  gap: 3px;
+  height: 11rem;
+}
+
+.bar-col {
+  display: flex;
+  flex: 1;
+  flex-direction: column;
+  min-width: 0;
+}
+
+.bar-track {
+  display: flex;
+  flex: 1;
+  align-items: flex-end;
+}
+
+.bar {
+  width: 100%;
+  background: linear-gradient(180deg, var(--brand-accent), color-mix(in srgb, var(--brand-primary) 55%, transparent));
+  transition: height 0.3s ease;
+}
+
+.bar-label {
+  height: 1.25rem;
+  padding-top: 0.375rem;
+  font-size: 0.625rem;
+  color: var(--text-dim);
+  text-align: center;
+  white-space: nowrap;
+  overflow: visible;
+}
+
+.service-card {
+  padding: 0.25rem 1rem;
+}
+
+.service-row {
+  display: grid;
+  grid-template-columns: 9rem 1fr 4rem 7rem;
+  align-items: center;
+  gap: 1rem;
+  padding: 0.75rem 0;
+  border-bottom: 1px solid var(--brand-border);
+
+  &:last-child { border-bottom: none; }
+}
+
+.service-name { font-size: 0.8125rem; color: var(--text-body); }
+
+.service-track {
+  height: 0.375rem;
+  border-radius: 999px;
+  background: var(--brand-surface2);
+  overflow: hidden;
+}
+
+.service-fill {
+  height: 100%;
+  border-radius: 999px;
+  background: var(--brand-primary);
+}
+
+.service-pct,
+.service-amount {
+  font-family: var(--font-mono, monospace);
+  font-size: 0.75rem;
+  text-align: right;
+}
+
+.service-pct { color: var(--text-dim); }
+.service-amount { font-weight: 700; color: var(--text-strong); }
+
+.table-card { overflow: hidden; }
+
+.table-wrap { overflow-x: auto; }
+
+.breakdown {
+  width: 100%;
+  border-collapse: collapse;
+
+  th {
+    padding: 0.75rem 1rem;
+    font-family: var(--font-mono, monospace);
+    font-size: 0.625rem;
+    font-weight: 600;
+    letter-spacing: 0.06em;
+    text-transform: uppercase;
+    color: var(--text-dim);
+    text-align: left;
+    border-bottom: 1px solid var(--brand-border);
+  }
+
+  td {
+    padding: 0.625rem 1rem;
+    font-size: 0.8125rem;
+    color: var(--text-body);
+    border-bottom: 1px solid var(--brand-border);
+  }
+
+  tr:last-child td { border-bottom: none; }
+
+  .num { text-align: right; font-family: var(--font-mono, monospace); }
+  .strong { font-weight: 700; color: var(--text-strong); }
+}
+
+.empty {
+  padding: 2rem 0;
+  text-align: center;
+  font-size: 0.8125rem;
+  color: var(--text-dim);
+}

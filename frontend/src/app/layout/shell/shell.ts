@@ -13,7 +13,7 @@ import { SupportService } from '../../core/services/support.service';
 import { AdminService } from '../../core/services/admin.service';
 import { WalletService } from '../../core/services/wallet.service';
 import { ThemeService } from '../../core/services/theme.service';
-import { NAV_ITEMS, ADMIN_NAV_ITEMS } from '../nav-items';
+import { NAV_ITEMS, ADMIN_NAV_ITEMS, NavItem } from '../nav-items';
 import { GlobalSearch } from '../global-search/global-search';
 
 const TICKET_BADGE_ROUTES = new Set(['/support', '/admin/support']);
@@ -44,6 +44,8 @@ const PAGE_TITLES: Record<string, string> = {
   '/admin/support/agents': 'Gestion des agents',
   '/admin/images': "Catalogue d'images",
   '/billing': 'Facturation',
+  '/billing/usage': 'Consommation',
+  '/billing/payments': 'Paiements',
   '/admin/billing': 'Facturation & tarification',
 };
 
@@ -84,6 +86,22 @@ export class Shell {
     ),
     { initialValue: this.router.url },
   );
+
+  /** Explicit open/closed choice per group; absent means "open while one of its pages is shown". */
+  private readonly groupToggles = signal<Record<string, boolean>>({});
+
+  isInGroup(item: NavItem): boolean {
+    return this.currentUrl().startsWith(item.to + '/') || this.currentUrl() === item.to;
+  }
+
+  isGroupOpen(item: NavItem): boolean {
+    return this.groupToggles()[item.to] ?? this.isInGroup(item);
+  }
+
+  toggleGroup(item: NavItem): void {
+    const open = this.isGroupOpen(item);
+    this.groupToggles.update((t) => ({ ...t, [item.to]: !open }));
+  }
 
   readonly pageTitle = computed(() => PAGE_TITLES[this.currentUrl()] ?? 'Safozi Cloud');
 

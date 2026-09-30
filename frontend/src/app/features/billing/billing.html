@@ -1,8 +1,8 @@
 <div class="page">
   <div class="page-head">
     <div>
-      <h2>Facturation</h2>
-      <p class="subtitle">Crédit, recharges et historique de consommation</p>
+      <h2>Paiements</h2>
+      <p class="subtitle">Solde, recharges, factures et transactions</p>
     </div>
     <div class="head-actions">
       <p-button
@@ -10,10 +10,10 @@
         [icon]="loading() ? 'pi pi-spin pi-spinner' : 'pi pi-refresh'"
         severity="secondary"
         [outlined]="true"
+        size="small"
         [disabled]="loading()"
         (onClick)="refresh()"
       />
-      <p-button label="Recharger" icon="pi pi-wallet" (onClick)="showRechargeDialog.set(true)" />
     </div>
   </div>
 
@@ -25,36 +25,81 @@
     </div>
   }
 
-  @if (lowBalance()) {
-    <div class="low-balance-banner" [class.exhausted]="creditExhausted()" role="alert">
-      <i class="pi" [class.pi-exclamation-triangle]="!creditExhausted()" [class.pi-ban]="creditExhausted()"></i>
-      <div class="low-balance-text">
-        @if (creditExhausted()) {
-          <strong>Crédit épuisé.</strong>
-          Votre solde est à zéro : rechargez dès maintenant pour éviter l'arrêt de vos machines virtuelles.
-        } @else {
-          <strong>Solde faible.</strong>
-          Votre solde est passé sous le seuil d'alerte de {{ lowBalanceThreshold() | number: '1.2-2' }}
-          {{ wallet()?.currency || 'TND' }} — pensez à recharger pour éviter une interruption de service.
-        }
-      </div>
-      <p-button label="Recharger" icon="pi pi-wallet" size="small" (onClick)="showRechargeDialog.set(true)" />
-    </div>
-  }
-
   <div class="card balance-card">
-    <div class="balance-label">Solde actuel</div>
-    <div class="balance-value">
-      {{ wallet()?.balance ?? 0 | number: '1.2-2' }} <span class="currency">{{ wallet()?.currency || 'TND' }}</span>
+    <div>
+      <span class="stat-label"><i class="pi pi-wallet"></i> Solde du compte</span>
+      <p class="balance-value">{{ balance() | number: '1.2-2' }} <small>{{ currency() }}</small></p>
+    </div>
+    <div class="balance-stats">
+      <div>
+        <span class="stat-label"><i class="pi pi-bolt"></i> Coût horaire actuel</span>
+        <p class="mini-value">{{ usage()?.hourlyRate ?? 0 | number: '1.2-4' }}<small>/h</small></p>
+      </div>
+      <div>
+        <span class="stat-label"><i class="pi pi-clock"></i> Autonomie estimée</span>
+        <p class="mini-value">{{ runwayLabel() }}</p>
+      </div>
+      <div>
+        <span class="stat-label">Projection du mois</span>
+        <p class="mini-value">{{ usage()?.projectedMonth ?? 0 | number: '1.2-2' }}</p>
+      </div>
     </div>
   </div>
 
-  <div class="card invoices-card">
-    <div class="card-header"><div class="card-header-left"><i class="pi pi-file-pdf card-header-icon"></i><span class="card-header-title">Factures</span></div></div>
+  @if (lowBalance()) {
+    <div class="low-balance-banner" [class.exhausted]="creditExhausted()" role="alert">
+      <i class="pi" [class.pi-info-circle]="!creditExhausted()" [class.pi-ban]="creditExhausted()"></i>
+      @if (creditExhausted()) {
+        <span>Crédit épuisé : rechargez dès maintenant pour éviter l'arrêt de vos machines virtuelles.</span>
+      } @else {
+        <span>Votre solde est bas (sous {{ lowBalanceThreshold() | number: '1.2-2' }} {{ currency() }}). Rechargez avant de lancer de nouvelles ressources.</span>
+      }
+    </div>
+  }
+
+  <section>
+    <h3 class="section-title">Ajouter des fonds</h3>
+    <div class="add-funds">
+      <div class="amounts">
+        @for (amount of quickAmounts; track amount) {
+          <button type="button" class="chip" [class.active]="selectedAmount() === amount" (click)="selectQuick(amount)">
+            {{ amount }} {{ currency() }}
+          </button>
+        }
+        <p-inputnumber
+          [ngModel]="otherAmount()"
+          (ngModelChange)="onOtherAmount($event)"
+          [min]="1"
+          placeholder="Autre"
+          styleClass="other-amount"
+          [inputStyleClass]="selectedAmount() === null && otherAmount() ? 'other-active' : ''"
+        />
+      </div>
+      <div class="add-action">
+        <span class="new-balance">Nouveau solde {{ newBalance() | number: '1.2-2' }} {{ currency() }}</span>
+        <p-button
+          icon="pi pi-plus"
+          [label]="'Ajouter ' + (addAmount() | number: '1.2-2') + ' ' + currency()"
+          [loading]="recharging()"
+          [disabled]="addAmount() <= 0"
+          (onClick)="addFunds()"
+        />
+      </div>
+    </div>
+    <p class="hint">
+      @if (rechargeDone()) {
+        <i class="pi pi-check-circle ok"></i> Crédit ajouté.
+      }
+      Simulation : aucun paiement réel n'est effectué.
+    </p>
+  </section>
+
+  <section>
+    <h3 class="section-title">Factures</h3>
     @if (invoicesError()) {
       <p class="invoices-error">{{ invoicesError() }}</p>
     }
-    <div class="table-wrap">
+    <div class="card table-wrap">
       <p-table [value]="invoices()" [rowHover]="true" [loading]="invoicesLoading()">
         <ng-template #header>
           <tr>
@@ -97,30 +142,30 @@
         </ng-template>
       </p-table>
     </div>
-  </div>
+  </section>
 
-  <div class="card">
-    <div class="card-header"><div class="card-header-left"><i class="pi pi-history card-header-icon"></i><span class="card-header-title">Historique</span></div></div>
-    <div class="table-wrap">
-      <p-table [value]="transactions()" [rowHover]="true">
+  <section>
+    <h3 class="section-title">Transactions</h3>
+    <div class="card table-wrap">
+      <p-table [value]="transactions()" [rowHover]="true" [paginator]="transactions().length > 20" [rows]="20">
         <ng-template #header>
           <tr>
-            <th>Type</th>
-            <th>Description</th>
-            <th>Montant</th>
-            <th>Solde après</th>
             <th>Date</th>
+            <th>Description</th>
+            <th>Type</th>
+            <th class="num">Montant</th>
+            <th class="num">Solde après</th>
           </tr>
         </ng-template>
         <ng-template #body let-tx>
           <tr>
-            <td><p-tag [value]="typeLabel(tx.type)" [severity]="typeSeverity(tx.type)" [rounded]="true" /></td>
+            <td class="mono">{{ tx.createdAt | date: 'short' }}</td>
             <td class="tx-desc">{{ tx.description || '—' }}</td>
-            <td class="mono" [class.positive]="tx.amount > 0" [class.negative]="tx.amount < 0">
+            <td><p-tag [value]="typeLabel(tx.type)" [severity]="typeSeverity(tx.type)" [rounded]="true" /></td>
+            <td class="mono num" [class.positive]="tx.amount > 0" [class.negative]="tx.amount < 0">
               {{ tx.amount > 0 ? '+' : '' }}{{ tx.amount | number: '1.2-4' }}
             </td>
-            <td class="mono">{{ tx.balanceAfter | number: '1.2-2' }}</td>
-            <td class="mono">{{ tx.createdAt | date: 'short' }}</td>
+            <td class="mono num">{{ tx.balanceAfter | number: '1.2-2' }}</td>
           </tr>
         </ng-template>
         <ng-template #emptymessage>
@@ -130,7 +175,5 @@
         </ng-template>
       </p-table>
     </div>
-  </div>
-
-  <app-recharge-dialog [(visible)]="showRechargeDialog" (recharged)="refresh()" />
+  </section>
 </div>

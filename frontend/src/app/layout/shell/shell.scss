@@ -254,6 +254,55 @@
   }
 }
 
+// Collapsible group (e.g. Facturation → Consommation / Paiements)
+.nav-group {
+  width: 100%;
+  background: transparent;
+  cursor: pointer;
+  font-family: inherit;
+  text-align: left;
+}
+
+.nav-chevron {
+  margin-left: auto;
+  font-size: 0.6875rem;
+  color: var(--text-faint);
+}
+
+.nav-sub {
+  display: flex;
+  flex-direction: column;
+  gap: 0.125rem;
+  margin: -0.125rem 0 0.5rem 1.625rem;
+  padding-left: 0.75rem;
+  border-left: 1px solid var(--brand-border);
+}
+
+.nav-subitem {
+  display: flex;
+  align-items: center;
+  gap: 0.625rem;
+  padding: 0.5625rem 0.75rem;
+  font-size: 0.75rem;
+  font-weight: 600;
+  color: var(--text-muted);
+  text-decoration: none;
+  border: 1px solid transparent;
+  transition: all 0.15s;
+
+  i { font-size: 0.8125rem; color: var(--text-faint); }
+
+  &:hover { color: var(--text-strong); background: rgba(var(--overlay-rgb), 0.05); }
+
+  &.active {
+    color: var(--text-strong);
+    background: rgba(249, 115, 22, 0.1);
+    border-color: rgba(249, 115, 22, 0.2);
+
+    i { color: var(--brand-primary); }
+  }
+}
+
 .nav-icon {
   display: flex;
   align-items: center;

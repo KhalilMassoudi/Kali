@@ -2,11 +2,13 @@ package kali.microservices.billingservice.controller;
 
 import jakarta.validation.Valid;
 import kali.microservices.billingservice.dto.RechargeRequest;
+import kali.microservices.billingservice.dto.UsageSummary;
 import kali.microservices.billingservice.entities.PricingConfig;
 import kali.microservices.billingservice.entities.Wallet;
 import kali.microservices.billingservice.entities.WalletTransaction;
 import kali.microservices.billingservice.security.AuthContext;
 import kali.microservices.billingservice.service.PricingService;
+import kali.microservices.billingservice.service.UsageSummaryService;
 import kali.microservices.billingservice.service.WalletService;
 import lombok.RequiredArgsConstructor;
 import org.springframework.http.ResponseEntity;
@@ -22,6 +24,7 @@ public class WalletController {
 
     private final WalletService walletService;
     private final PricingService pricingService;
+    private final UsageSummaryService usageSummaryService;
     private final AuthContext authContext;
 
     /** The admin-set low-balance alert level, for the client billing page's warning banner. */
@@ -44,6 +47,15 @@ public class WalletController {
                                                                      @PathVariable Long userId) {
         authContext.requireOwnerOrAdmin(authHeader, userId);
         return ResponseEntity.ok(walletService.getTransactions(userId));
+    }
+
+    /** Spend over the last `days` days (7 or 30), per day and per resource type. */
+    @GetMapping("/user/{userId}/usage")
+    public ResponseEntity<UsageSummary> getUsage(@RequestHeader("Authorization") String authHeader,
+                                                 @PathVariable Long userId,
+                                                 @RequestParam(defaultValue = "30") int days) {
+        authContext.requireOwnerOrAdmin(authHeader, userId);
+        return ResponseEntity.ok(usageSummaryService.summarize(userId, days == 7 ? 7 : 30));
     }
 
     @PostMapping("/user/{userId}/recharge")

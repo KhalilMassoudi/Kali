@@ -6,6 +6,7 @@ import {
   AlertThreshold,
   MonthlyInvoiceSummary,
   PricingConfig,
+  UsageSummary,
   Wallet,
   WalletTransaction,
 } from '../models/billing.model';
@@ -67,6 +68,10 @@ export class WalletService {
 
   clearError(): void {
     this._error.set(null);
+  }
+
+  async fetchUsage(userId: number, days: 7 | 30): Promise<UsageSummary> {
+    return firstValueFrom(this.http.get<UsageSummary>(`/api/billing/wallet/user/${userId}/usage?days=${days}`));
   }
 
   async fetchAlertThreshold(): Promise<AlertThreshold> {

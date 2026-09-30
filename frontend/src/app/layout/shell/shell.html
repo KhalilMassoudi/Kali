@@ -29,7 +29,7 @@
 
     <ng-template #end>
       @if (user()?.role !== 'ADMIN') {
-        <a routerLink="/billing" class="balance-pill" [class.low]="(wallet()?.balance ?? 0) < 5">
+        <a routerLink="/billing/payments" class="balance-pill" [class.low]="(wallet()?.balance ?? 0) < 5">
           <i class="pi pi-wallet"></i>
           {{ wallet()?.balance ?? 0 | number: '1.2-2' }} {{ wallet()?.currency || 'TND' }}
         </a>
@@ -68,16 +68,43 @@
         @if (item.divider) {
           <div class="nav-divider"></div>
         }
-        <a [routerLink]="item.to" routerLinkActive="active" (click)="closeMobile()" class="nav-item">
-          <span class="nav-icon"><i [class]="item.icon"></i></span>
-          <span class="nav-text">
-            <span class="nav-title">{{ item.label }}</span>
-            <span class="nav-desc">{{ item.desc }}</span>
-          </span>
-          @if (isTicketBadgeRoute(item.to) && ticketBadgeCount() > 0) {
-            <span class="nav-badge">{{ ticketBadgeCount() }}</span>
+        @if (item.children) {
+          <button
+            type="button"
+            class="nav-item nav-group"
+            [class.active]="isInGroup(item)"
+            [attr.aria-expanded]="isGroupOpen(item)"
+            (click)="toggleGroup(item)"
+          >
+            <span class="nav-icon"><i [class]="item.icon"></i></span>
+            <span class="nav-text">
+              <span class="nav-title">{{ item.label }}</span>
+              <span class="nav-desc">{{ item.desc }}</span>
+            </span>
+            <i class="pi nav-chevron" [class.pi-chevron-down]="isGroupOpen(item)" [class.pi-chevron-right]="!isGroupOpen(item)"></i>
+          </button>
+          @if (isGroupOpen(item)) {
+            <div class="nav-sub">
+              @for (child of item.children; track child.to) {
+                <a [routerLink]="child.to" routerLinkActive="active" (click)="closeMobile()" class="nav-subitem">
+                  <i [class]="child.icon"></i>
+                  <span>{{ child.label }}</span>
+                </a>
+              }
+            </div>
           }
-        </a>
+        } @else {
+          <a [routerLink]="item.to" routerLinkActive="active" (click)="closeMobile()" class="nav-item">
+            <span class="nav-icon"><i [class]="item.icon"></i></span>
+            <span class="nav-text">
+              <span class="nav-title">{{ item.label }}</span>
+              <span class="nav-desc">{{ item.desc }}</span>
+            </span>
+            @if (isTicketBadgeRoute(item.to) && ticketBadgeCount() > 0) {
+              <span class="nav-badge">{{ ticketBadgeCount() }}</span>
+            }
+          </a>
+        }
       }
     </nav>
 
