@@ -9,6 +9,7 @@ import { Vm } from '../../core/models/vm.model';
 import { VmService } from '../../core/services/vm.service';
 import { PreferencesService } from '../../core/services/preferences.service';
 import { VmHealthDialog } from '../vm-health-dialog/vm-health-dialog';
+import { VmUsageDialog } from '../vm-usage-dialog/vm-usage-dialog';
 import { formatRam, vmStatusLabel, vmStatusSeverity } from '../utils/vm-status.util';
 
 interface RowState {
@@ -18,7 +19,7 @@ interface RowState {
 
 @Component({
   selector: 'app-vm-table',
-  imports: [CommonModule, RouterLink, TableModule, ButtonModule, TagModule, TooltipModule, VmHealthDialog],
+  imports: [CommonModule, RouterLink, TableModule, ButtonModule, TagModule, TooltipModule, VmHealthDialog, VmUsageDialog],
   templateUrl: './vm-table.html',
   styleUrl: './vm-table.scss',
 })
@@ -35,6 +36,8 @@ export class VmTable {
 
   readonly healthVm = signal<Vm | null>(null);
   readonly healthVisible = signal(false);
+  readonly usageVm = signal<Vm | null>(null);
+  readonly usageVisible = signal(false);
 
   readonly formatRam = formatRam;
   readonly statusLabel = vmStatusLabel;
@@ -101,6 +104,11 @@ export class VmTable {
     } finally {
       this.patchRow(vm.id, { actionLoading: null });
     }
+  }
+
+  openUsage(vm: Vm): void {
+    this.usageVm.set(vm);
+    this.usageVisible.set(true);
   }
 
   openHealth(vm: Vm): void {

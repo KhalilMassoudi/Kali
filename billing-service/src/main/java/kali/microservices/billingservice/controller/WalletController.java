@@ -3,6 +3,7 @@ package kali.microservices.billingservice.controller;
 import jakarta.validation.Valid;
 import kali.microservices.billingservice.dto.RechargeRequest;
 import kali.microservices.billingservice.dto.UsageSummary;
+import kali.microservices.billingservice.dto.VmUsage;
 import kali.microservices.billingservice.entities.PricingConfig;
 import kali.microservices.billingservice.entities.Wallet;
 import kali.microservices.billingservice.entities.WalletTransaction;
@@ -56,6 +57,14 @@ public class WalletController {
                                                  @RequestParam(defaultValue = "30") int days) {
         authContext.requireOwnerOrAdmin(authHeader, userId);
         return ResponseEntity.ok(usageSummaryService.summarize(userId, days == 7 ? 7 : 30));
+    }
+
+    /** One VM's charges, tick by tick, with the wallet balance around each deduction. */
+    @GetMapping("/user/{userId}/usage/vm/{vmId}")
+    public ResponseEntity<VmUsage> getVmUsage(@RequestHeader("Authorization") String authHeader,
+                                              @PathVariable Long userId, @PathVariable Long vmId) {
+        authContext.requireOwnerOrAdmin(authHeader, userId);
+        return ResponseEntity.ok(usageSummaryService.vmUsage(userId, vmId));
     }
 
     @PostMapping("/user/{userId}/recharge")

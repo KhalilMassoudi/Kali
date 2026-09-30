@@ -84,3 +84,22 @@ export const USAGE_TYPE_LABELS: Record<string, string> = {
   FLOATING_IP: 'IP flottantes',
   OTHER: 'Autre',
 };
+
+/** GET /api/billing/wallet/user/{id}/usage/vm/{vmId} — one VM's charges, latest first. */
+export interface VmUsage {
+  vmId: number;
+  vmName: string | null;
+  currency: string;
+  total: number;
+  hourlyRate: number;
+  firstChargeAt: string | null;
+  lastChargeAt: string | null;
+  entries: {
+    from: string;
+    to: string;
+    amount: number;
+    byType: Record<string, number>;
+    walletBefore: number | null;
+    walletAfter: number | null;
+  }[];
+}

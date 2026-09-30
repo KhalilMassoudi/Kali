@@ -95,7 +95,13 @@
           }
         } @else {
           <a [routerLink]="item.to" routerLinkActive="active" (click)="closeMobile()" class="nav-item">
-            <span class="nav-icon"><i [class]="item.icon"></i></span>
+            <span class="nav-icon">
+              @if (item.bot) {
+                <app-bot-icon [size]="15" />
+              } @else {
+                <i [class]="item.icon"></i>
+              }
+            </span>
             <span class="nav-text">
               <span class="nav-title">{{ item.label }}</span>
               <span class="nav-desc">{{ item.desc }}</span>
@@ -128,3 +134,5 @@
     <router-outlet></router-outlet>
   </main>
 </div>
+
+<app-assistant-widget />

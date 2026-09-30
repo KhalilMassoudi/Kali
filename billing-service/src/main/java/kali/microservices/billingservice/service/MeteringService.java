@@ -15,8 +15,8 @@ import org.springframework.stereotype.Service;
 import java.math.BigDecimal;
 import java.math.RoundingMode;
 import java.util.ArrayList;
-import java.util.EnumMap;
 import java.util.HashMap;
+import java.util.LinkedHashMap;
 import java.util.List;
 import java.util.Map;
 
@@ -50,8 +50,8 @@ public class MeteringService {
         List<VolumeSnapshot> volumes = infrastructureClient.getAllVolumes();
         List<FloatingIpSnapshot> floatingIps = infrastructureClient.getAllFloatingIps();
 
-        // Per user, per resource type: [quantity in unit-hours, amount] - becomes the tick's UsageRecords.
-        Map<Long, Map<UsageRecord.UsageType, BigDecimal[]>> usageByUser = new HashMap<>();
+        // Per user, one line per (resource, type): quantity in unit-hours and amount - becomes the tick's UsageRecords.
+        Map<Long, Map<String, Line>> usageByUser = new HashMap<>();
         Map<Long, int[]> countsByUser = new HashMap<>(); // [runningVms, billedVms, volumes, floatingIps]
         Map<Long, List<VmSnapshot>> vmsByUser = new HashMap<>();
 
@@ -63,13 +63,13 @@ public class MeteringService {
             if (vm.isRunning()) {
                 BigDecimal vcpus = BigDecimal.valueOf(vm.cpu() != null ? vm.cpu() : 0);
                 BigDecimal ramGb = BigDecimal.valueOf(vm.ram() != null ? vm.ram() : 0).divide(BigDecimal.valueOf(1024), 8, RoundingMode.HALF_UP);
-                addUsage(usageByUser, vm.userId(), UsageRecord.UsageType.VCPU, vcpus.multiply(tickHours), pricing.getPricePerVcpuHour());
-                addUsage(usageByUser, vm.userId(), UsageRecord.UsageType.RAM, ramGb.multiply(tickHours), pricing.getPricePerRamGbHour());
+                addUsage(usageByUser, vm.userId(), UsageRecord.UsageType.VCPU, vm.id(), vm.name(), vcpus.multiply(tickHours), pricing.getPricePerVcpuHour());
+                addUsage(usageByUser, vm.userId(), UsageRecord.UsageType.RAM, vm.id(), vm.name(), ramGb.multiply(tickHours), pricing.getPricePerRamGbHour());
                 counts[0]++;
             }
             if (vm.isBillableForStorage()) {
                 BigDecimal storageGb = BigDecimal.valueOf(vm.storage() != null ? vm.storage() : 0);
-                addUsage(usageByUser, vm.userId(), UsageRecord.UsageType.VM_STORAGE, storageGb.multiply(tickHours), pricing.getPricePerStorageGbHour());
+                addUsage(usageByUser, vm.userId(), UsageRecord.UsageType.VM_STORAGE, vm.id(), vm.name(), storageGb.multiply(tickHours), pricing.getPricePerStorageGbHour());
                 counts[1]++;
             }
         }
@@ -78,32 +78,34 @@ public class MeteringService {
             if (vol.userId() == null || !vol.isBillable()) continue;
             int[] counts = countsByUser.computeIfAbsent(vol.userId(), k -> new int[4]);
             BigDecimal sizeGb = BigDecimal.valueOf(vol.sizeGb() != null ? vol.sizeGb() : 0);
-            addUsage(usageByUser, vol.userId(), UsageRecord.UsageType.VOLUME, sizeGb.multiply(tickHours), pricing.getPricePerStorageGbHour());
+            addUsage(usageByUser, vol.userId(), UsageRecord.UsageType.VOLUME, vol.id(), null, sizeGb.multiply(tickHours), pricing.getPricePerStorageGbHour());
             counts[2]++;
         }
 
         for (FloatingIpSnapshot ip : floatingIps) {
             if (ip.userId() == null) continue;
             int[] counts = countsByUser.computeIfAbsent(ip.userId(), k -> new int[4]);
-            addUsage(usageByUser, ip.userId(), UsageRecord.UsageType.FLOATING_IP, tickHours, pricing.getPricePerFloatingIpHour());
+            addUsage(usageByUser, ip.userId(), UsageRecord.UsageType.FLOATING_IP, ip.id(), ip.floatingIpAddress(), tickHours, pricing.getPricePerFloatingIpHour());
             counts[3]++;
         }
 
         int billedUsers = 0;
-        for (Map.Entry<Long, Map<UsageRecord.UsageType, BigDecimal[]>> entry : usageByUser.entrySet()) {
+        for (Map.Entry<Long, Map<String, Line>> entry : usageByUser.entrySet()) {
             Long userId = entry.getKey();
 
-            // Each type's amount is rounded on its own and the ledger entry is their sum - so an
-            // invoice's line items always add up exactly to what was deducted.
+            // Each line's amount is rounded on its own and the ledger entry is their sum - so an
+            // invoice's line items (and a VM's history) always add up exactly to what was deducted.
             List<UsageRecord> breakdown = new ArrayList<>();
             BigDecimal total = BigDecimal.ZERO;
-            for (Map.Entry<UsageRecord.UsageType, BigDecimal[]> usage : entry.getValue().entrySet()) {
-                BigDecimal amount = usage.getValue()[1].setScale(4, RoundingMode.HALF_UP);
+            for (Line line : entry.getValue().values()) {
+                BigDecimal amount = line.amount.setScale(4, RoundingMode.HALF_UP);
                 if (amount.signum() <= 0) continue;
                 UsageRecord record = new UsageRecord();
-                record.setType(usage.getKey());
-                record.setQuantity(usage.getValue()[0].setScale(6, RoundingMode.HALF_UP));
-                record.setUnitPrice(unitPrice(usage.getKey(), pricing));
+                record.setType(line.type);
+                record.setResourceId(line.resourceId);
+                record.setResourceName(line.resourceName);
+                record.setQuantity(line.quantity.setScale(6, RoundingMode.HALF_UP));
+                record.setUnitPrice(unitPrice(line.type, pricing));
                 record.setAmount(amount);
                 breakdown.add(record);
                 total = total.add(amount);
@@ -127,12 +129,27 @@ public class MeteringService {
         log.info("Metering tick complete: {} user(s) billed, interval={} min", billedUsers, intervalMinutes);
     }
 
-    private static void addUsage(Map<Long, Map<UsageRecord.UsageType, BigDecimal[]>> usageByUser, Long userId,
-                                 UsageRecord.UsageType type, BigDecimal quantity, BigDecimal unitPrice) {
-        BigDecimal[] acc = usageByUser.computeIfAbsent(userId, k -> new EnumMap<>(UsageRecord.UsageType.class))
-                .computeIfAbsent(type, k -> new BigDecimal[]{BigDecimal.ZERO, BigDecimal.ZERO});
-        acc[0] = acc[0].add(quantity);
-        acc[1] = acc[1].add(quantity.multiply(unitPrice));
+    /** One billed line of a tick: a resource and a usage type. */
+    private static final class Line {
+        final UsageRecord.UsageType type;
+        final Long resourceId;
+        final String resourceName;
+        BigDecimal quantity = BigDecimal.ZERO;
+        BigDecimal amount = BigDecimal.ZERO;
+
+        Line(UsageRecord.UsageType type, Long resourceId, String resourceName) {
+            this.type = type;
+            this.resourceId = resourceId;
+            this.resourceName = resourceName;
+        }
+    }
+
+    private static void addUsage(Map<Long, Map<String, Line>> usageByUser, Long userId, UsageRecord.UsageType type,
+                                 Long resourceId, String resourceName, BigDecimal quantity, BigDecimal unitPrice) {
+        Line line = usageByUser.computeIfAbsent(userId, k -> new LinkedHashMap<>())
+                .computeIfAbsent(type + ":" + resourceId, k -> new Line(type, resourceId, resourceName));
+        line.quantity = line.quantity.add(quantity);
+        line.amount = line.amount.add(quantity.multiply(unitPrice));
     }
 
     private static BigDecimal unitPrice(UsageRecord.UsageType type, PricingConfig pricing) {

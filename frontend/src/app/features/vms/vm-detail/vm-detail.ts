@@ -11,6 +11,7 @@ import { AuthService } from '../../../core/services/auth.service';
 import { VmService } from '../../../core/services/vm.service';
 import { VolumeService } from '../../../core/services/volume.service';
 import { TelemetryService } from '../../../core/services/telemetry.service';
+import { VmUsageDialog } from '../../../shared/vm-usage-dialog/vm-usage-dialog';
 import { TimeseriesChart } from '../../../shared/timeseries-chart/timeseries-chart';
 import {
   BackupFrequency,
@@ -40,6 +41,7 @@ import { cumulativeCpuToUtilPercent } from '../../../shared/utils/telemetry.util
     SelectModule,
     TooltipModule,
     TimeseriesChart,
+    VmUsageDialog,
   ],
   templateUrl: './vm-detail.html',
   styleUrl: './vm-detail.scss',
@@ -55,6 +57,7 @@ export class VmDetail {
   readonly isAdmin = computed(() => this.auth.user()?.role === 'ADMIN');
 
   readonly vm = this.vmService.currentVm;
+  readonly usageVisible = signal(false);
   readonly loading = this.vmService.loading;
   readonly error = this.vmService.error;
 

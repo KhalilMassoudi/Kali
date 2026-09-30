@@ -28,6 +28,7 @@
           <p-button [outlined]="true" size="small" icon="pi pi-stop-circle" label="Arrêter" [loading]="actionLoading() === 'stop'" (onClick)="stop()" />
           <p-button [outlined]="true" size="small" icon="pi pi-replay" label="Redémarrer" [loading]="actionLoading() === 'restart'" (onClick)="restart()" />
         }
+        <p-button [outlined]="true" size="small" icon="pi pi-chart-line" label="Suivi de consommation" (onClick)="usageVisible.set(true)" />
         <p-button [outlined]="true" size="small" icon="pi pi-sync" [loading]="actionLoading() === 'refresh'" pTooltip="Actualiser" (onClick)="refreshStatus()" />
         @if (!confirmDelete()) {
           <p-button [outlined]="true" size="small" severity="danger" icon="pi pi-trash" label="Supprimer" (onClick)="confirmDelete.set(true)" />
@@ -423,3 +424,5 @@
     </section>
   }
 </div>
+
+<app-vm-usage-dialog [vm]="vm()" [(visible)]="usageVisible" />

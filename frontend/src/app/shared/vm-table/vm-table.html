@@ -148,6 +148,15 @@
       <p-button
         [outlined]="true"
         size="small"
+        severity="secondary"
+        icon="pi pi-chart-line"
+        pTooltip="Suivi de consommation"
+        tooltipPosition="top"
+        (onClick)="openUsage(vm)"
+      />
+      <p-button
+        [outlined]="true"
+        size="small"
         severity="danger"
         icon="pi pi-trash"
         [disabled]="!!rowState(vm).actionLoading"
@@ -160,3 +169,4 @@
 </ng-template>
 
 <app-vm-health-dialog [vm]="healthVm()" [(visible)]="healthVisible" />
+<app-vm-usage-dialog [vm]="usageVm()" [(visible)]="usageVisible" />

@@ -5,6 +5,8 @@ export interface NavItem {
   desc: string;
   /** Insert a section divider above this item (visually separates nav groups). */
   divider?: boolean;
+  /** Show the chatbot glyph instead of `icon` (PrimeIcons has no robot icon). */
+  bot?: boolean;
   /** Renders the item as a collapsible group (dropdown) of sub-pages. */
   children?: NavItem[];
 }
@@ -25,7 +27,7 @@ export const NAV_ITEMS: NavItem[] = [
   },
   { to: '/networks', icon: 'pi pi-share-alt', label: 'Réseau', desc: 'Réseaux, routeurs, sécurité, IP flottantes' },
   { to: '/projects', icon: 'pi pi-folder', label: 'Projets', desc: 'Regrouper mes ressources' },
-  { to: '/chat', icon: 'pi pi-comments', label: 'Assistant IA', desc: 'Support intelligent' },
+  { to: '/chat', icon: 'pi pi-comments', label: 'Assistant IA', desc: 'Support intelligent', bot: true },
   { to: '/support', icon: 'pi pi-ticket', label: 'Support', desc: 'Mes tickets' },
   { to: '/settings', icon: 'pi pi-cog', label: 'Paramètres', desc: 'Compte & sécurité' },
 ];
@@ -48,6 +50,6 @@ export const ADMIN_NAV_ITEMS: NavItem[] = [
   { to: '/admin/alerts', icon: 'pi pi-bell', label: 'Alertes', desc: 'Alertes actives' },
 
   // Other
-  { to: '/chat', icon: 'pi pi-comments', label: 'Assistant IA', desc: 'Support intelligent', divider: true },
+  { to: '/chat', icon: 'pi pi-comments', label: 'Assistant IA', desc: 'Support intelligent', divider: true, bot: true },
   { to: '/admin/support', icon: 'pi pi-ticket', label: 'Tickets support', desc: 'Gestion des demandes' },
 ];

@@ -16,7 +16,9 @@ import java.time.LocalDateTime;
  * add up exactly to the linked transaction's amount.
  */
 @Entity
-@Table(name = "usage_records", indexes = @Index(name = "idx_usage_records_user_created", columnList = "userId, createdAt"))
+@Table(name = "usage_records", indexes = {
+        @Index(name = "idx_usage_records_user_created", columnList = "userId, createdAt"),
+        @Index(name = "idx_usage_records_user_resource", columnList = "userId, resourceId")})
 @Data
 @NoArgsConstructor
 @AllArgsConstructor
@@ -35,6 +37,12 @@ public class UsageRecord {
     @Enumerated(EnumType.STRING)
     @Column(nullable = false)
     private UsageType type;
+
+    // Which resource this line bills (VM, volume or floating IP id, per `type`) - lets a client
+    // follow one VM's charges. Null on records metered before this was tracked.
+    private Long resourceId;
+
+    private String resourceName;
 
     // In the type's unit-hours: vCPU·h, GB RAM·h, GB·h of storage, or IP·h.
     @Column(nullable = false, precision = 18, scale = 6)

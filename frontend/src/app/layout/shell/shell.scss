@@ -250,7 +250,7 @@
     border-color: rgba(249, 115, 22, 0.2);
 
     .nav-icon { background: rgba(249, 115, 22, 0.2); }
-    .nav-icon i { color: var(--brand-primary); }
+    .nav-icon i, .nav-icon app-bot-icon { color: var(--brand-primary); }
   }
 }
 
@@ -313,6 +313,8 @@
   background: rgba(var(--overlay-rgb), 0.05);
 
   i { font-size: 0.875rem; color: #64748b; }
+
+  app-bot-icon { color: #64748b; }
 }
 
 .nav-badge {

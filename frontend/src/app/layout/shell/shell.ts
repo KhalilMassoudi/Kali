@@ -15,6 +15,8 @@ import { WalletService } from '../../core/services/wallet.service';
 import { ThemeService } from '../../core/services/theme.service';
 import { NAV_ITEMS, ADMIN_NAV_ITEMS, NavItem } from '../nav-items';
 import { GlobalSearch } from '../global-search/global-search';
+import { AssistantWidget } from '../assistant-widget/assistant-widget';
+import { BotIcon } from '../../shared/bot-icon/bot-icon';
 
 const TICKET_BADGE_ROUTES = new Set(['/support', '/admin/support']);
 const TICKET_BADGE_REFRESH_MS = 30000;
@@ -51,7 +53,7 @@ const PAGE_TITLES: Record<string, string> = {
 
 @Component({
   selector: 'app-shell',
-  imports: [CommonModule, RouterOutlet, RouterLink, RouterLinkActive, ToolbarModule, ButtonModule, AvatarModule, MenuModule, GlobalSearch],
+  imports: [CommonModule, RouterOutlet, RouterLink, RouterLinkActive, ToolbarModule, ButtonModule, AvatarModule, MenuModule, GlobalSearch, AssistantWidget, BotIcon],
   templateUrl: './shell.html',
   styleUrl: './shell.scss',
 })

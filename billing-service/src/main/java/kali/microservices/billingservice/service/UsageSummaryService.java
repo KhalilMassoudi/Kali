@@ -1,6 +1,7 @@
 package kali.microservices.billingservice.service;
 
 import kali.microservices.billingservice.dto.UsageSummary;
+import kali.microservices.billingservice.dto.VmUsage;
 import kali.microservices.billingservice.entities.UsageRecord;
 import kali.microservices.billingservice.entities.WalletTransaction;
 import kali.microservices.billingservice.repository.UsageRecordRepository;
@@ -80,6 +81,58 @@ public class UsageSummaryService {
                 scale(total.divide(BigDecimal.valueOf(days), 6, RoundingMode.HALF_UP)),
                 scale(hourlyRate), scale(hourlyRate.multiply(BigDecimal.valueOf(24L * 30))),
                 balance, runwayHours, scaleAll(byType), daily);
+    }
+
+    private static final List<UsageRecord.UsageType> VM_TYPES =
+            List.of(UsageRecord.UsageType.VCPU, UsageRecord.UsageType.RAM, UsageRecord.UsageType.VM_STORAGE);
+    private static final int MAX_VM_ENTRIES = 300;
+
+    /** Tick-by-tick charges of one VM (records metered before per-resource tracking aren't included). */
+    public VmUsage vmUsage(Long userId, Long vmId) {
+        List<UsageRecord> records = usageRecordRepository.findByUserIdAndResourceIdAndTypeInOrderByCreatedAtAsc(userId, vmId, VM_TYPES);
+        String currency = pricingService.getConfig().getCurrency() != null ? pricingService.getConfig().getCurrency() : "TND";
+
+        // One entry per tick (= per ledger transaction), oldest first while building.
+        Map<Long, List<UsageRecord>> byTick = new LinkedHashMap<>();
+        for (UsageRecord r : records) byTick.computeIfAbsent(r.getTransactionId(), k -> new ArrayList<>()).add(r);
+        Map<Long, WalletTransaction> txs = transactionRepository.findAllById(
+                        byTick.keySet().stream().filter(Objects::nonNull).toList())
+                .stream().collect(Collectors.toMap(WalletTransaction::getId, t -> t));
+
+        List<VmUsage.Entry> entries = new ArrayList<>();
+        BigDecimal total = BigDecimal.ZERO;
+        String name = null;
+        for (var tick : byTick.entrySet()) {
+            Map<String, BigDecimal> byType = new LinkedHashMap<>();
+            BigDecimal amount = BigDecimal.ZERO;
+            LocalDateTime at = null;
+            for (UsageRecord r : tick.getValue()) {
+                byType.merge(r.getType().name(), r.getAmount(), BigDecimal::add);
+                amount = amount.add(r.getAmount());
+                at = r.getCreatedAt();
+                if (r.getResourceName() != null) name = r.getResourceName();
+            }
+            WalletTransaction tx = txs.get(tick.getKey());
+            BigDecimal after = tx != null ? tx.getBalanceAfter() : null;
+            BigDecimal before = tx != null ? tx.getBalanceAfter().subtract(tx.getAmount()) : null;
+            entries.add(new VmUsage.Entry(at != null ? at.minusMinutes(intervalMinutes) : null, at, scale(amount),
+                    scaleAll(byType), before, after));
+            total = total.add(amount);
+        }
+
+        BigDecimal hourlyRate = BigDecimal.ZERO;
+        if (!entries.isEmpty()) {
+            VmUsage.Entry last = entries.get(entries.size() - 1);
+            if (last.to() != null && last.to().isAfter(LocalDateTime.now().minusMinutes(2L * intervalMinutes))) {
+                hourlyRate = last.amount().multiply(BigDecimal.valueOf(60))
+                        .divide(BigDecimal.valueOf(intervalMinutes), 6, RoundingMode.HALF_UP);
+            }
+        }
+        Collections.reverse(entries);
+        return new VmUsage(vmId, name, currency, scale(total), scale(hourlyRate),
+                entries.isEmpty() ? null : entries.get(entries.size() - 1).from(),
+                entries.isEmpty() ? null : entries.get(0).to(),
+                entries.size() > MAX_VM_ENTRIES ? entries.subList(0, MAX_VM_ENTRIES) : entries);
     }
 
     /**

@@ -4,7 +4,7 @@ import com.fasterxml.jackson.annotation.JsonIgnoreProperties;
 
 /** Mirrors just the fields the metering job needs from infrastructure-service's VpsServer. */
 @JsonIgnoreProperties(ignoreUnknown = true)
-public record VmSnapshot(Long id, Long userId, Integer ram, Integer cpu, Integer storage, String status) {
+public record VmSnapshot(Long id, Long userId, Integer ram, Integer cpu, Integer storage, String status, String name) {
     public boolean isRunning() {
         return "RUNNING".equals(status);
     }

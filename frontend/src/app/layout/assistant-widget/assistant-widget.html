@@ -1,0 +1,57 @@
+@if (!hidden()) {
+  @if (open()) {
+    <div class="panel" role="dialog" aria-label="Assistant IA">
+      <div class="panel-head">
+        <span class="panel-avatar"><app-bot-icon [size]="18" /></span>
+        <div class="panel-title">
+          <p>Assistant IA</p>
+          <span>Gérez votre infrastructure en langage naturel</span>
+        </div>
+        <button type="button" class="icon-btn" title="Nouvelle conversation" (click)="newConversation()"><i class="pi pi-plus"></i></button>
+        <a class="icon-btn" routerLink="/chat" title="Ouvrir en plein écran" (click)="open.set(false)"><i class="pi pi-window-maximize"></i></a>
+        <button type="button" class="icon-btn" title="Fermer" (click)="open.set(false)"><i class="pi pi-times"></i></button>
+      </div>
+
+      <div class="panel-messages">
+        @if (messages().length === 0) {
+          <div class="panel-empty">
+            <span class="panel-empty-icon"><app-bot-icon [size]="26" /></span>
+            <p>Comment puis-je vous aider ?</p>
+            <span>« Crée-moi une VM moyenne sous Ubuntu » · « Quel est mon solde ? »</span>
+          </div>
+        }
+        @for (m of messages(); track m.id) {
+          <div class="row" [class.mine]="m.role === 'user'">
+            <div class="bubble" [class.mine]="m.role === 'user'" [class.err]="m.role === 'error'">{{ m.content }}</div>
+          </div>
+        }
+        @if (loading()) {
+          <div class="row">
+            <div class="bubble typing"><span></span><span></span><span></span></div>
+          </div>
+        }
+        <div #scrollAnchor></div>
+      </div>
+
+      <div class="panel-composer">
+        <textarea
+          rows="1"
+          placeholder="Écrivez un message..."
+          [ngModel]="draft()"
+          (ngModelChange)="draft.set($event)"
+          (keydown)="onKeydown($event)"
+        ></textarea>
+        <p-button icon="pi pi-send" [disabled]="!draft().trim() || loading()" (onClick)="send()" />
+      </div>
+    </div>
+  }
+
+  <button type="button" class="fab" [class.active]="open()" (click)="toggle()" [attr.aria-expanded]="open()">
+    @if (open()) {
+      <i class="pi pi-times"></i>
+    } @else {
+      <app-bot-icon [size]="20" />
+    }
+    <span>Assistant IA</span>
+  </button>
+}

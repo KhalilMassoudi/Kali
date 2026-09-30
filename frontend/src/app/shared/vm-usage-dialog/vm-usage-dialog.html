@@ -1,0 +1,72 @@
+<p-dialog
+  [(visible)]="visible"
+  [modal]="true"
+  [header]="'Suivi de consommation · ' + (vm()?.name ?? '')"
+  [style]="{ width: '46rem', maxWidth: '95vw' }"
+  [dismissableMask]="true"
+>
+  @if (loading()) {
+    <p class="empty"><i class="pi pi-spin pi-spinner"></i> Chargement...</p>
+  } @else if (error()) {
+    <p class="error">{{ error() }}</p>
+  } @else if (usage(); as u) {
+    <div class="summary">
+      <div>
+        <span class="label">Total consommé</span>
+        <p class="value">{{ u.total | number: '1.2-4' }} <small>{{ currency() }}</small></p>
+      </div>
+      <div>
+        <span class="label">Coût actuel</span>
+        <p class="value">{{ u.hourlyRate | number: '1.2-4' }} <small>{{ currency() }}/h</small></p>
+      </div>
+      <div>
+        <span class="label">Période facturée</span>
+        <p class="period">
+          @if (u.firstChargeAt) {
+            du {{ u.firstChargeAt | date: 'dd/MM HH:mm' }} au {{ u.lastChargeAt | date: 'dd/MM HH:mm' }}
+          } @else {
+            —
+          }
+        </p>
+      </div>
+    </div>
+
+    @if (u.entries.length === 0) {
+      <p class="empty">
+        Aucune consommation enregistrée pour cette VM pour le moment.<br />
+        La facturation a lieu toutes les 10 minutes : revenez dans quelques minutes.
+      </p>
+    } @else {
+      <div class="table-wrap">
+        <table>
+          <thead>
+            <tr>
+              <th>Période</th>
+              <th class="num">Coût de la VM</th>
+              <th class="num">Solde avant → après</th>
+            </tr>
+          </thead>
+          <tbody>
+            @for (e of u.entries; track e.to) {
+              <tr>
+                <td>
+                  {{ e.from | date: 'dd/MM HH:mm' }} → {{ e.to | date: 'HH:mm' }}
+                  <span class="types">{{ typesOf(e.byType) }}</span>
+                </td>
+                <td class="num cost">−{{ e.amount | number: '1.4-4' }} {{ currency() }}</td>
+                <td class="num">
+                  @if (e.walletBefore !== null) {
+                    {{ e.walletBefore | number: '1.2-4' }} → {{ e.walletAfter | number: '1.2-4' }}
+                  } @else {
+                    —
+                  }
+                </td>
+              </tr>
+            }
+          </tbody>
+        </table>
+      </div>
+      <p class="hint">Le solde avant/après inclut toutes les ressources facturées au même moment (autres VMs, volumes, IP).</p>
+    }
+  }
+</p-dialog>
