@@ -312,10 +312,23 @@ export class VmDetail {
 
   // ── Console ──────────────────────────────────────────────────────
   async openConsole(): Promise<void> {
+    // Open the tab synchronously, within the click: browsers silently block window.open() once
+    // the click's user activation has expired, which happened when the console URL took a few
+    // seconds to come back through the OpenStack tunnel.
+    const tab = window.open('', '_blank');
     this.consoleLoading.set(true);
     try {
       const url = await this.vmService.getConsoleUrl(this.vmId);
-      if (url) window.open(url, '_blank', 'noopener');
+      if (url && tab) {
+        tab.opener = null;
+        tab.location.href = url;
+      } else if (url) {
+        window.location.href = url; // pop-up blocked anyway: open it in this tab
+      } else {
+        tab?.close();
+      }
+    } catch {
+      tab?.close();
     } finally {
       this.consoleLoading.set(false);
     }
